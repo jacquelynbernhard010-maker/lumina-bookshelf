@@ -1,6 +1,6 @@
 /* ========================================================
    THE COZY NOOK - Reader Stylesheet
-   Warm paper, gentle reading themes, tactile sketched UI
+   Single-page, Two-pages, Continuous Scroll, & Bookmarks
    ======================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap');
@@ -9,7 +9,7 @@
   --ink: #2c221e;
   --paper: #fbf5e8;
   --paper-chrome: #f4ecdc;
-  --paper-border: #2c221e;
+  --border-chrome: #2c221e;
   --terracotta: #e07a5f;
   --matcha: #81b29a;
   --honey: #f2cc8f;
@@ -77,7 +77,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 16px;
   position: relative;
   z-index: 40;
   flex-shrink: 0;
@@ -86,16 +86,16 @@ body {
 .nav-left, .nav-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .book-meta {
-  max-width: 320px;
+  max-width: 260px;
   margin-left: 6px;
 }
 
 .book-title {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -104,46 +104,93 @@ body {
 }
 
 .book-author {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text-chrome);
   display: block;
 }
 
-.nav-center {
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
-/* Tactile Reader Buttons */
-.btn-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+/* Mode Switcher Pills */
+.mode-switcher-wrap {
+  display: flex;
   background: #fff;
   border: 2px solid var(--border-chrome);
+  border-radius: 255px 25px 225px 25px / 25px 225px 25px 255px;
+  box-shadow: 2px 2px 0px var(--border-chrome);
+  padding: 2px;
+  gap: 2px;
+}
+
+.mode-btn {
+  padding: 4px 12px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: none;
+  background: transparent;
+  color: var(--text-reader);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mode-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.mode-btn.active {
+  background: var(--honey);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Tactile Navigation Buttons */
+.hand-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  background: #fff;
+  border: 2px solid var(--border-chrome);
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
   box-shadow: 2px 2px 0px var(--border-chrome);
   color: var(--text-reader);
   cursor: pointer;
-  font-size: 16px;
+  font-family: inherit;
+  font-size: 0.98rem;
+  font-weight: 700;
   text-decoration: none;
   transition: all 0.15s ease;
 }
 
-.btn-icon:hover {
+.hand-nav-btn:hover {
   transform: translate(-1px, -1px);
   box-shadow: 3px 3px 0px var(--border-chrome);
   background: var(--honey);
 }
 
-.btn-icon:active {
+.hand-nav-btn:active {
   transform: translate(1px, 1px);
   box-shadow: 1px 1px 0px var(--border-chrome);
 }
 
-/* Appearance Dropdown Menu */
+.hand-nav-btn.is-bookmarked {
+  background: var(--honey);
+  color: var(--ink);
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 2px solid var(--border-chrome);
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* Appearance Menu */
 .dropdown-wrapper {
   position: relative;
 }
@@ -156,7 +203,7 @@ body {
   border: 2.5px solid var(--border-chrome);
   border-radius: 14px;
   box-shadow: 4px 4px 0px var(--border-chrome);
-  padding: 18px;
+  padding: 16px;
   width: 250px;
   display: none;
   flex-direction: column;
@@ -170,7 +217,7 @@ body {
 
 .menu-section label {
   display: block;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
   margin-bottom: 6px;
 }
@@ -206,12 +253,12 @@ body {
   background: rgba(0,0,0,0.06);
   border: 1.5px solid var(--border-chrome);
   border-radius: 8px;
-  padding: 3px;
+  padding: 2px;
 }
 
 .btn-size {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 6px;
   background: none;
   border: none;
@@ -234,7 +281,7 @@ body {
   background: none;
   color: var(--text-reader);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
 }
 
 .font-btn.active {
@@ -242,7 +289,7 @@ body {
   font-weight: bold;
 }
 
-/* Reader Stage */
+/* Reader Stage & Viewport Modes */
 .reader-stage {
   flex: 1;
   position: relative;
@@ -254,9 +301,25 @@ body {
 
 .epub-viewer {
   width: 100%;
-  max-width: 860px;
   height: 100%;
   margin: 0 auto;
+  transition: max-width 0.25s ease;
+}
+
+/* Mode 1: Single Page (Focused & Centered) */
+.epub-viewer.single-page-mode {
+  max-width: 740px;
+}
+
+/* Mode 2: Two Pages Spread */
+.epub-viewer.spread-mode {
+  max-width: 1100px;
+}
+
+/* Mode 3: Continuous Scroll */
+.epub-viewer.scroll-mode {
+  max-width: 760px;
+  overflow-y: auto !important;
 }
 
 /* Turn Page Arrows */
@@ -275,7 +338,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   transition: all 0.15s ease;
   z-index: 20;
 }
@@ -288,13 +351,13 @@ body {
 .prev-btn { left: 16px; }
 .next-btn { right: 16px; }
 
-/* Table of Contents Drawer */
+/* Slide-out Drawer: Chapters & Bookmarks */
 .toc-sidebar {
   position: absolute;
   top: 0;
   left: 0;
   bottom: 0;
-  width: 320px;
+  width: 340px;
   background-color: var(--bg-chrome);
   border-right: 2.5px solid var(--border-chrome);
   box-shadow: 6px 0px 0px rgba(0,0,0,0.1);
@@ -313,8 +376,30 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: 12px 16px;
   border-bottom: 2px solid var(--border-chrome);
+}
+
+.drawer-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.drawer-tab {
+  padding: 4px 10px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  background: transparent;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.drawer-tab.active {
+  background: #fff;
+  border-color: var(--border-chrome);
+  box-shadow: 2px 2px 0px var(--border-chrome);
 }
 
 .toc-content {
@@ -338,6 +423,36 @@ body {
 .toc-item:hover {
   background: var(--honey);
   border-color: var(--border-chrome);
+}
+
+/* Bookmark Cards in Drawer */
+.bookmark-card {
+  background: #fff;
+  border: 2px solid var(--border-chrome);
+  border-radius: 8px;
+  box-shadow: 2px 2px 0px var(--border-chrome);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.bookmark-card:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px var(--border-chrome);
+  background: #fffcf5;
+}
+
+.btn-delete-bookmark {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  color: #a84242;
+  cursor: pointer;
 }
 
 /* Reader Footer */
@@ -375,7 +490,7 @@ body {
   font-weight: 700;
 }
 
-/* Loading Spinner */
+/* Spinner */
 .reader-loader {
   position: absolute;
   top: 50%;
@@ -396,3 +511,27 @@ body {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Toast */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 999;
+}
+
+.toast {
+  background: #fffdf9;
+  border: 2.5px solid var(--border-chrome);
+  box-shadow: 4px 4px 0px var(--border-chrome);
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

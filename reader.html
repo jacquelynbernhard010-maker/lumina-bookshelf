@@ -4,21 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reading - The Cozy Nook</title>
-    <!-- Fonts & Icons -->
+    <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/reader.css">
 </head>
 <body class="theme-sepia" id="readerBody">
+    
     <!-- Reader Top Navigation -->
     <header class="reader-header" id="readerHeader">
         <div class="nav-left">
-            <a href="index.html" class="btn-icon" title="Return to Wooden Shelves">
-                ←
+            <a href="index.html" class="hand-nav-btn" title="Return to Wooden Shelves">
+                ← Shelf
             </a>
-            <button class="btn-icon" id="btnToggleToc" title="Table of Contents">
-                📖
+            <button class="hand-nav-btn" id="btnToggleDrawer" title="Chapters & Bookmarks">
+                📑 Contents
             </button>
             <div class="book-meta">
                 <h1 class="book-title" id="bookTitle">Loading Book...</h1>
@@ -26,15 +27,32 @@
             </div>
         </div>
 
+        <!-- Center: Reading Mode Switcher (Single, Two-Pages, Continuous Scroll) -->
         <div class="nav-center">
-            <span class="progress-indicator" id="progressIndicator">0% read</span>
+            <div class="mode-switcher-wrap">
+                <button class="mode-btn active" id="btnModeSingle" data-mode="single" title="One Page at a time">
+                    📄 Single
+                </button>
+                <button class="mode-btn" id="btnModeSpread" data-mode="spread" title="Two Pages side-by-side">
+                    📖 Two Pages
+                </button>
+                <button class="mode-btn" id="btnModeScroll" data-mode="scroll" title="Endless Continuous Scrolling">
+                    📜 Scroll
+                </button>
+            </div>
         </div>
 
         <div class="nav-right">
-            <!-- Appearance Menu Dropdown -->
+            <!-- Bookmark Button -->
+            <button class="hand-nav-btn" id="btnAddBookmark" title="Bookmark current page">
+                <span id="bookmarkIcon">🔖</span>
+                <span id="bookmarkText">Bookmark</span>
+            </button>
+
+            <!-- Appearance Settings Menu -->
             <div class="dropdown-wrapper">
-                <button class="btn-icon" id="btnAppearance" title="Appearance Settings">
-                    Aa
+                <button class="hand-nav-btn" id="btnAppearance" title="Appearance Settings">
+                    Aa Font
                 </button>
                 <div class="appearance-menu" id="appearanceMenu">
                     <div class="menu-section">
@@ -59,42 +77,49 @@
                     <div class="menu-section">
                         <label>TYPOGRAPHY</label>
                         <div class="font-family-controls">
-                            <button class="font-btn active" data-font="'Lora', serif">Lora</button>
+                            <button class="font-btn active" data-font="'Lora', Georgia, serif">Lora</button>
                             <button class="font-btn" data-font="'Merriweather', serif">Classic</button>
-                            <button class="font-btn" data-font="'Patrick Hand', cursive">Hand</button>
+                            <button class="font-btn" data-font="'Patrick Hand', cursive">Handwritten</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <button class="btn-icon" id="btnDownloadBook" title="Download File">
+            <button class="hand-nav-btn" id="btnDownloadBook" title="Download File">
                 ⬇️
-            </button>
-
-            <button class="btn-icon" id="btnFullscreen" title="Toggle Fullscreen">
-                ⛶
             </button>
         </div>
     </header>
 
     <!-- Reader Main Stage -->
-    <div class="reader-stage">
-        <!-- Slide-out Table of Contents Sidebar -->
+    <div class="reader-stage" id="readerStage">
+        
+        <!-- Slide-out Drawer (Chapters & Saved Bookmarks) -->
         <aside class="toc-sidebar" id="tocSidebar">
             <div class="toc-header">
-                <h3>Table of Contents 📑</h3>
-                <button class="btn-icon" id="btnCloseToc">✕</button>
+                <div class="drawer-tabs">
+                    <button class="drawer-tab active" id="tabChapters">📑 Chapters</button>
+                    <button class="drawer-tab" id="tabBookmarks">🔖 Bookmarks (<span id="bookmarkCount">0</span>)</button>
+                </div>
+                <button class="btn-icon" id="btnCloseDrawer">✕</button>
             </div>
+            
+            <!-- Tab Content: Chapters -->
             <div class="toc-content" id="tocList"></div>
+
+            <!-- Tab Content: Bookmarks -->
+            <div class="toc-content hidden" id="bookmarkList">
+                <p class="text-xs text-[#786457] p-3 italic">No bookmarks yet. Click the "🔖 Bookmark" button on any page to save your favorite spots!</p>
+            </div>
         </aside>
 
-        <!-- Turn Page Click Areas & Floating Arrows -->
+        <!-- Turn Page Arrows (Shown in Paginated Modes) -->
         <button class="turn-page-btn prev-btn" id="btnPrevPage" title="Previous Page (Left Arrow)">
             ‹
         </button>
 
         <!-- Viewer Container for epub.js -->
-        <div id="epubViewer" class="epub-viewer"></div>
+        <div id="epubViewer" class="epub-viewer single-page-mode"></div>
 
         <button class="turn-page-btn next-btn" id="btnNextPage" title="Next Page (Right Arrow)">
             ›
@@ -103,7 +128,7 @@
         <!-- Loading Spinner -->
         <div class="reader-loader" id="readerLoader">
             <div class="spinner"></div>
-            <p>Turning pages...</p>
+            <p class="text-sm font-bold">Turning pages...</p>
         </div>
     </div>
 
@@ -113,12 +138,15 @@
             <div class="reading-progress-fill" id="progressFill" style="width: 0%;"></div>
         </div>
         <div class="footer-info">
-            <span id="chapterTitle">The Cozy Nook Reader</span>
+            <span id="chapterTitle">The Cozy Nook</span>
             <span id="footerProgress">0% read</span>
         </div>
     </footer>
 
-    <!-- Scripts: Supabase, JSZip, ePub.js, Storage, Reader -->
+    <!-- Notification Toast -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>

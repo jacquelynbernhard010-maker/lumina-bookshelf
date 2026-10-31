@@ -1,5 +1,6 @@
 /**
- * Lumina Bookshelf - Reader Engine (IndexedDB + Supabase)
+ * The Cozy Nook - Reader Engine
+ * Single-page / Two-page / Continuous scroll modes + Bookmark management
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -15,21 +16,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     const bookTitle = document.getElementById('bookTitle');
     const bookAuthor = document.getElementById('bookAuthor');
     const readerLoader = document.getElementById('readerLoader');
+    const epubViewer = document.getElementById('epubViewer');
     const btnPrevPage = document.getElementById('btnPrevPage');
     const btnNextPage = document.getElementById('btnNextPage');
     const progressIndicator = document.getElementById('progressIndicator');
     const progressFill = document.getElementById('progressFill');
     const footerProgress = document.getElementById('footerProgress');
+    const chapterTitleEl = document.getElementById('chapterTitle');
     const btnDownloadBook = document.getElementById('btnDownloadBook');
-    const btnFullscreen = document.getElementById('btnFullscreen');
 
-    // TOC
-    const btnToggleToc = document.getElementById('btnToggleToc');
-    const btnCloseToc = document.getElementById('btnCloseToc');
+    // Mode Switchers
+    const btnModeSingle = document.getElementById('btnModeSingle');
+    const btnModeSpread = document.getElementById('btnModeSpread');
+    const btnModeScroll = document.getElementById('btnModeScroll');
+    const modeButtons = [btnModeSingle, btnModeSpread, btnModeScroll];
+
+    // Bookmarking Elements
+    const btnAddBookmark = document.getElementById('btnAddBookmark');
+    const bookmarkIcon = document.getElementById('bookmarkIcon');
+    const bookmarkText = document.getElementById('bookmarkText');
+    const bookmarkCount = document.getElementById('bookmarkCount');
+    const bookmarkList = document.getElementById('bookmarkList');
+
+    // Drawer Elements
+    const btnToggleDrawer = document.getElementById('btnToggleDrawer');
+    const btnCloseDrawer = document.getElementById('btnCloseDrawer');
     const tocSidebar = document.getElementById('tocSidebar');
+    const tabChapters = document.getElementById('tabChapters');
+    const tabBookmarks = document.getElementById('tabBookmarks');
     const tocList = document.getElementById('tocList');
 
-    // Appearance
+    // Appearance Elements
     const btnAppearance = document.getElementById('btnAppearance');
     const appearanceMenu = document.getElementById('appearanceMenu');
     const btnFontInc = document.getElementById('btnFontInc');
@@ -39,31 +56,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     const fontButtons = document.querySelectorAll('.font-btn');
 
     // State
-    let currentFontSize = parseInt(localStorage.getItem('lumina_reader_font_size') || '105', 10);
-    let currentTheme = localStorage.getItem('lumina_reader_theme') || 'theme-sepia';
-    let currentFontFamily = localStorage.getItem('lumina_reader_font') || 'Merriweather, serif';
+    let currentReadingMode = localStorage.getItem('cozy_reading_mode') || 'single'; // 'single', 'spread', or 'scroll'
+    let currentFontSize = parseInt(localStorage.getItem('cozy_reader_font_size') || '105', 10);
+    let currentTheme = localStorage.getItem('cozy_reader_theme') || 'theme-sepia';
+    let currentFontFamily = localStorage.getItem('cozy_reader_font') || "'Lora', Georgia, serif";
 
     document.body.className = currentTheme;
     fontSizeDisplay.innerText = currentFontSize + '%';
 
-    themeChoices.forEach(btn => btn.classList.toggle('active', btn.dataset.theme === currentTheme));
-    fontButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.font === currentFontFamily));
-
-    // Initialize DB & load book
+    // Init storage & load book
     await window.storageEngine.initIndexedDB();
     const book = await window.storageEngine.getBook(bookId);
 
     if (!book) {
-        alert('Book not found in library.');
+        alert('Book not found on your shelf!');
         window.location.href = 'index.html';
         return;
     }
 
     bookTitle.innerText = book.title;
     bookAuthor.innerText = book.author || 'Unknown Author';
-    document.title = `${book.title} - Reader`;
+    document.title = `${book.title} - The Cozy Nook`;
 
-    // Download Button setup
+    // Download handler
     btnDownloadBook.addEventListener('click', () => {
         if (book.file_blob) {
             const url = URL.createObjectURL(book.file_blob);
@@ -77,10 +92,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Prepare ePub input source (Blob or URL)
+    // Prepare ePub input source
     let epubSource;
     if (book.file_blob) {
-        // Local IndexedDB blob
         epubSource = await book.file_blob.arrayBuffer();
     } else if (book.file_url) {
         epubSource = book.file_url;
@@ -88,36 +102,62 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let epubBook, rendition;
 
-    try {
-        epubBook = ePub(epubSource);
-        rendition = epubBook.renderTo("epubViewer", {
-            width: "100%",
-            height: "100%",
-            spread: window.innerWidth > 960 ? "auto" : "none",
-            flow: "paginated"
+    function renderReaderEngine(mode) {
+        currentReadingMode = mode;
+        localStorage.setItem('cozy_reading_mode', mode);
+
+        // Update mode button styles
+        modeButtons.forEach(b => {
+            b.classList.toggle('active', b.dataset.mode === mode);
         });
 
+        // Configure viewer container CSS
+        epubViewer.className = `epub-viewer ${mode}-page-mode`;
+        if (mode === 'scroll') {
+            epubViewer.className = 'epub-viewer scroll-mode';
+            btnPrevPage.style.display = 'none';
+            btnNextPage.style.display = 'none';
+        } else {
+            btnPrevPage.style.display = 'flex';
+            btnNextPage.style.display = 'flex';
+        }
+
+        // Clean existing rendition
+        if (rendition) {
+            try { rendition.destroy(); } catch(e) {}
+        }
+
+        readerLoader.style.display = 'block';
+
+        const options = {
+            width: "100%",
+            height: "100%"
+        };
+
+        if (mode === 'single') {
+            options.spread = "none";
+            options.flow = "paginated";
+        } else if (mode === 'spread') {
+            options.spread = "always";
+            options.flow = "paginated";
+        } else if (mode === 'scroll') {
+            options.flow = "scrolled-doc";
+        }
+
+        rendition = epubBook.renderTo("epubViewer", options);
         registerEpubThemes();
 
-        // Restore CFI or start from beginning
+        // Restore saved CFI or beginning
         const startTarget = book.last_cfi || undefined;
         rendition.display(startTarget).then(() => {
             readerLoader.style.display = 'none';
             applyCurrentTheme();
-        }).catch(err => {
-            console.warn('CFI fallback:', err);
+        }).catch(() => {
             rendition.display();
             readerLoader.style.display = 'none';
         });
 
-        // Generate location index for accurate percentage
-        epubBook.ready.then(() => {
-            return epubBook.locations.generate(1000);
-        }).then(() => {
-            updateProgressDisplay();
-        });
-
-        // Track pagination
+        // Relocated event: tracks location, percentage, and checks bookmark status
         rendition.on('relocated', (location) => {
             if (!location || !location.start) return;
 
@@ -129,54 +169,160 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             progressIndicator.innerText = `${percent}% read`;
-            footerProgress.innerText = `${percent}%`;
+            footerProgress.innerText = `${percent}% read`;
             progressFill.style.width = `${percent}%`;
 
-            // Debounced save to DB
+            checkIfCurrentPageIsBookmarked(cfi);
             saveReadingProgress(cfi, percent);
         });
 
-        // Populate Table of Contents
-        epubBook.loaded.navigation.then(nav => {
-            renderTableOfContents(nav.toc);
-        });
-
-    } catch (err) {
-        console.error('ePub error:', err);
-        readerLoader.innerHTML = `<p style="color:#ef4444;">Failed to load book.<br><small>${err.message}</small></p>`;
+        // Click to turn page in paginated mode
+        if (mode !== 'scroll') {
+            rendition.on('click', (e) => {
+                const width = window.innerWidth;
+                if (e.clientX < width * 0.25) rendition.prev();
+                else if (e.clientX > width * 0.75) rendition.next();
+            });
+        }
     }
 
-    // --- Navigation ---
+    try {
+        epubBook = ePub(epubSource);
+
+        // Initial render with saved mode (default: single page)
+        renderReaderEngine(currentReadingMode);
+
+        // Generate location map
+        epubBook.ready.then(() => epubBook.locations.generate(1000));
+
+        // Load chapters & bookmarks
+        epubBook.loaded.navigation.then(nav => {
+            renderChapters(nav.toc);
+        });
+        renderBookmarksList();
+
+    } catch (err) {
+        console.error('EPUB Error:', err);
+        readerLoader.innerHTML = `<p style="color:#ef4444;">Could not load book.<br><small>${err.message}</small></p>`;
+    }
+
+    // --- Mode Switcher Clicks ---
+
+    btnModeSingle.addEventListener('click', () => renderReaderEngine('single'));
+    btnModeSpread.addEventListener('click', () => renderReaderEngine('spread'));
+    btnModeScroll.addEventListener('click', () => renderReaderEngine('scroll'));
+
+    // --- Navigation Controls ---
 
     btnPrevPage.addEventListener('click', () => { if (rendition) rendition.prev(); });
     btnNextPage.addEventListener('click', () => { if (rendition) rendition.next(); });
 
     document.addEventListener('keydown', (e) => {
+        if (!rendition || currentReadingMode === 'scroll') return;
+        if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') rendition.next();
+        else if (e.key === 'ArrowLeft' || e.key === 'PageUp') rendition.prev();
+    });
+
+    // --- Bookmarks Feature ---
+
+    btnAddBookmark.addEventListener('click', async () => {
         if (!rendition) return;
-        if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
-            rendition.next();
-        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-            rendition.prev();
+        const location = rendition.currentLocation();
+        if (!location || !location.start) return;
+
+        const cfi = location.start.cfi;
+        const curChapter = chapterTitleEl.innerText || 'Bookmark';
+
+        const added = await window.storageEngine.addBookmark(book.id, {
+            cfi: cfi,
+            title: curChapter,
+            snippet: `Bookmarked on page (${progressIndicator.innerText})`
+        });
+
+        if (added) {
+            showToast('Page bookmarked! 🔖', 'success');
+            checkIfCurrentPageIsBookmarked(cfi);
+            await renderBookmarksList();
         }
     });
 
-    if (rendition) {
-        rendition.on('click', (e) => {
-            const width = window.innerWidth;
-            if (e.clientX < width * 0.25) rendition.prev();
-            else if (e.clientX > width * 0.75) rendition.next();
+    async function renderBookmarksList() {
+        const updatedBook = await window.storageEngine.getBook(book.id);
+        const bookmarks = updatedBook.bookmarks || [];
+        bookmarkCount.innerText = bookmarks.length;
+
+        if (bookmarks.length === 0) {
+            bookmarkList.innerHTML = `<p class="text-xs text-[#786457] p-3 italic">No bookmarks yet. Click "🔖 Bookmark" to save any page!</p>`;
+            return;
+        }
+
+        bookmarkList.innerHTML = '';
+        bookmarks.forEach(bm => {
+            const card = document.createElement('div');
+            card.className = 'bookmark-card';
+            card.innerHTML = `
+                <button class="btn-delete-bookmark" title="Remove bookmark">✕</button>
+                <div class="font-bold text-sm text-[#2c221e]">${escapeHtml(bm.title)}</div>
+                <div class="text-xs text-[#786457] mt-0.5">${escapeHtml(bm.snippet || '')}</div>
+                <div class="text-[10px] text-[#a39488] mt-1">${escapeHtml(bm.date || '')}</div>
+            `;
+
+            // Click jumps to bookmark
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.btn-delete-bookmark')) return;
+                rendition.display(bm.cfi);
+                tocSidebar.classList.remove('open');
+            });
+
+            // Delete bookmark
+            card.querySelector('.btn-delete-bookmark').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                await window.storageEngine.removeBookmark(book.id, bm.id);
+                showToast('Bookmark removed', 'info');
+                await renderBookmarksList();
+            });
+
+            bookmarkList.appendChild(card);
         });
     }
 
-    // --- Table of Contents ---
+    async function checkIfCurrentPageIsBookmarked(currentCfi) {
+        const curBook = await window.storageEngine.getBook(book.id);
+        const bookmarks = curBook.bookmarks || [];
+        const isBm = bookmarks.some(b => b.cfi === currentCfi);
 
-    btnToggleToc.addEventListener('click', () => tocSidebar.classList.toggle('open'));
-    btnCloseToc.addEventListener('click', () => tocSidebar.classList.remove('open'));
+        if (isBm) {
+            btnAddBookmark.classList.add('is-bookmarked');
+            bookmarkText.innerText = 'Bookmarked';
+        } else {
+            btnAddBookmark.classList.remove('is-bookmarked');
+            bookmarkText.innerText = 'Bookmark';
+        }
+    }
 
-    function renderTableOfContents(toc) {
+    // --- Drawer Tabs (Chapters vs Bookmarks) ---
+
+    btnToggleDrawer.addEventListener('click', () => tocSidebar.classList.toggle('open'));
+    btnCloseDrawer.addEventListener('click', () => tocSidebar.classList.remove('open'));
+
+    tabChapters.addEventListener('click', () => {
+        tabChapters.classList.add('active');
+        tabBookmarks.classList.remove('active');
+        tocList.classList.remove('hidden');
+        bookmarkList.classList.add('hidden');
+    });
+
+    tabBookmarks.addEventListener('click', () => {
+        tabBookmarks.classList.add('active');
+        tabChapters.classList.remove('active');
+        bookmarkList.classList.remove('hidden');
+        tocList.classList.add('hidden');
+    });
+
+    function renderChapters(toc) {
         tocList.innerHTML = '';
         if (!toc || toc.length === 0) {
-            tocList.innerHTML = '<p style="padding: 14px; color: var(--text-chrome);">No table of contents available.</p>';
+            tocList.innerHTML = '<p class="text-xs text-[#786457] p-3">No table of contents available.</p>';
             return;
         }
 
@@ -188,6 +334,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             link.addEventListener('click', () => {
                 rendition.display(item.href);
                 tocSidebar.classList.remove('open');
+                chapterTitleEl.innerText = item.label.trim();
             });
             tocList.appendChild(link);
         });
@@ -201,9 +348,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     document.addEventListener('click', (e) => {
-        if (!e.target.closest('.dropdown-wrapper')) {
-            appearanceMenu.classList.remove('show');
-        }
+        if (!e.target.closest('.dropdown-wrapper')) appearanceMenu.classList.remove('show');
     });
 
     themeChoices.forEach(btn => {
@@ -211,11 +356,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             const chosen = btn.dataset.theme;
             currentTheme = chosen;
             document.body.className = chosen;
-            localStorage.setItem('lumina_reader_theme', chosen);
+            localStorage.setItem('cozy_reader_theme', chosen);
 
             themeChoices.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-
             applyCurrentTheme();
         });
     });
@@ -224,11 +368,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.addEventListener('click', () => {
             const font = btn.dataset.font;
             currentFontFamily = font;
-            localStorage.setItem('lumina_reader_font', font);
+            localStorage.setItem('cozy_reader_font', font);
 
             fontButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-
             if (rendition) rendition.themes.font(font);
         });
     });
@@ -249,15 +392,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function updateFontSize() {
         fontSizeDisplay.innerText = currentFontSize + '%';
-        localStorage.setItem('lumina_reader_font_size', currentFontSize);
+        localStorage.setItem('cozy_reader_font_size', currentFontSize);
         if (rendition) rendition.themes.fontSize(currentFontSize + '%');
     }
 
     function registerEpubThemes() {
-        rendition.themes.register('theme-light', { body: { background: '#fcfcfc', color: '#111827', 'font-family': currentFontFamily } });
-        rendition.themes.register('theme-sepia', { body: { background: '#fbf0d9', color: '#5f4b32', 'font-family': currentFontFamily } });
-        rendition.themes.register('theme-dark',  { body: { background: '#18191c', color: '#d1d5db', 'font-family': currentFontFamily } });
-        rendition.themes.register('theme-black', { body: { background: '#000000', color: '#e5e5e5', 'font-family': currentFontFamily } });
+        rendition.themes.register('theme-light', { body: { background: '#ffffff', color: '#1a1a1a', 'font-family': currentFontFamily } });
+        rendition.themes.register('theme-sepia', { body: { background: '#fbf5e8', color: '#2c221e', 'font-family': currentFontFamily } });
+        rendition.themes.register('theme-dark',  { body: { background: '#1e1916', color: '#f2ebd9', 'font-family': currentFontFamily } });
+        rendition.themes.register('theme-black', { body: { background: '#000000', color: '#e0d6c8', 'font-family': currentFontFamily } });
     }
 
     function applyCurrentTheme() {
@@ -276,32 +419,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         saveTimer = setTimeout(async () => {
             try {
                 await window.storageEngine.updateProgress(book.id, progress, cfi);
-            } catch (err) {
-                console.warn('Progress save failed:', err);
-            }
+            } catch (err) {}
         }, 1200);
     }
 
-    function updateProgressDisplay() {
-        if (rendition && epubBook.locations) {
-            const loc = rendition.currentLocation();
-            if (loc && loc.start) {
-                const percent = Math.floor(epubBook.locations.percentageFromCfi(loc.start.cfi) * 100);
-                progressIndicator.innerText = `${percent}% read`;
-                footerProgress.innerText = `${percent}%`;
-                progressFill.style.width = `${percent}%`;
-            }
-        }
+    function showToast(msg, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `<span>${type === 'success' ? '✨' : '📖'}</span><span>${escapeHtml(msg)}</span>`;
+        document.getElementById('toastContainer').appendChild(toast);
+        setTimeout(() => toast.remove(), 2500);
     }
 
-    // Fullscreen Toggle
-    btnFullscreen.addEventListener('click', () => {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(() => {});
-        } else {
-            document.exitFullscreen().catch(() => {});
-        }
-    });
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
 
     window.addEventListener('resize', () => {
         if (rendition) rendition.resize();

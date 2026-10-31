@@ -1,10 +1,10 @@
 /**
  * The Cozy Nook - Frontend Application
- * Clean, readable, illustrated book cards standing on wooden shelves
+ * Real home bookshelf arrangement, auto-cover extraction, customizable spine positions
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Whimsical color themes for book covers
+    // Whimsical color themes for book spines
     const coverThemes = [
         { bg: '#81b29a', text: '#152b1e', emoji: '🌿', ribbon: '#e07a5f' }, // Matcha
         { bg: '#e07a5f', text: '#ffffff', emoji: '⏳', ribbon: '#f2cc8f' }, // Terracotta
@@ -22,7 +22,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         searchQuery: '',
         books: [],
         shelves: [],
-        selectedBook: null
+        selectedBook: null,
+        extractedCoverUrl: ''
     };
 
     // DOM Elements
@@ -65,6 +66,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const fileNameLabel = document.getElementById('fileNameLabel');
     const btnRemoveFile = document.getElementById('btnRemoveFile');
     const uploadShelfSelect = document.getElementById('uploadShelfSelect');
+    const bookTitleInput = document.getElementById('bookTitleInput');
+    const bookAuthorInput = document.getElementById('bookAuthorInput');
 
     // Cloud Elements
     const btnOpenCloud = document.getElementById('btnOpenCloud');
@@ -154,6 +157,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
+        // Style switcher buttons (Upright, Leaning, Stacked)
+        document.querySelectorAll('.btn-spine-style').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!state.selectedBook) return;
+                const newStyle = btn.dataset.style;
+                document.querySelectorAll('.btn-spine-style').forEach(b => b.classList.replace('hand-btn-terracotta', 'bg-white'));
+                btn.classList.add('hand-btn-terracotta');
+
+                state.selectedBook.spine_style = newStyle;
+                await window.storageEngine.updateBookSpineStyle(state.selectedBook.id, newStyle);
+                showToast(`Shelf style set to ${newStyle}`, 'success');
+                await reloadData();
+            });
+        });
+
         // Close on backdrop
         [readModal, uploadModal, cloudModal].forEach(m => {
             m.addEventListener('click', (e) => {
@@ -163,8 +181,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Drag & Drop Upload
         dropZone.addEventListener('click', () => bookFileInput.click());
-        bookFileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) handleSelectedFile(e.target.files[0]);
+        bookFileInput.addEventListener('change', async (e) => {
+            if (e.target.files.length > 0) await handleSelectedFile(e.target.files[0]);
         });
 
         dropZone.addEventListener('dragover', (e) => {
@@ -174,16 +192,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         dropZone.addEventListener('dragleave', () => {
             dropZone.style.backgroundColor = '#fdfaf3';
         });
-        dropZone.addEventListener('drop', (e) => {
+        dropZone.addEventListener('drop', async (e) => {
             e.preventDefault();
             dropZone.style.backgroundColor = '#fdfaf3';
-            if (e.dataTransfer.files.length > 0) handleSelectedFile(e.dataTransfer.files[0]);
+            if (e.dataTransfer.files.length > 0) await handleSelectedFile(e.dataTransfer.files[0]);
         });
 
         btnRemoveFile.addEventListener('click', () => {
             bookFileInput.value = '';
             fileBanner.classList.add('hidden');
             dropZone.classList.remove('hidden');
+            state.extractedCoverUrl = '';
         });
 
         uploadForm.addEventListener('submit', handleUploadSubmit);
@@ -200,14 +219,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    function handleSelectedFile(file) {
+    // Auto-extract real EPUB cover & clean metadata on file selection!
+    async function handleSelectedFile(file) {
         fileNameLabel.innerText = file.name;
         dropZone.classList.add('hidden');
         fileBanner.classList.remove('hidden');
 
-        const titleInput = document.getElementById('bookTitleInput');
-        if (!titleInput.value) {
-            titleInput.placeholder = file.name.replace(/\.[^/.]+$/, "");
+        // Extract using client-side ePub parser
+        const extracted = await window.EpubExtractor.extract(file);
+        bookTitleInput.value = extracted.title;
+        bookAuthorInput.value = extracted.author;
+        state.extractedCoverUrl = extracted.cover_url || '';
+
+        if (extracted.cover_url) {
+            showToast('Extracted real book cover & author!', 'success');
         }
     }
 
@@ -219,18 +244,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        const title = document.getElementById('bookTitleInput').value.trim();
-        const author = document.getElementById('bookAuthorInput').value.trim();
+        const title = bookTitleInput.value.trim() || file.name.replace(/\.[^/.]+$/, "").replace(/_/g, " ");
+        const author = bookAuthorInput.value.trim() || 'Unknown Author';
         const shelf_id = uploadShelfSelect.value;
+        const cover_url = state.extractedCoverUrl;
+
+        // Choose random theme color
+        const randomTheme = coverThemes[Math.floor(Math.random() * coverThemes.length)];
 
         try {
-            await window.storageEngine.saveBook({ file, title, author, shelf_id });
+            await window.storageEngine.saveBook({
+                file,
+                title,
+                author,
+                shelf_id,
+                cover_url,
+                spine_color: randomTheme.bg,
+                spine_style: 'upright'
+            });
+
             uploadModal.classList.remove('active');
             uploadForm.reset();
             fileBanner.classList.add('hidden');
             dropZone.classList.remove('hidden');
+            state.extractedCoverUrl = '';
 
-            showToast(`"${title || file.name}" placed on the shelf!`, 'success');
+            showToast(`"${title}" placed on the shelf!`, 'success');
             await reloadData();
         } catch (err) {
             showToast('Failed to save book: ' + err.message, 'error');
@@ -299,8 +338,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderShelves() {
         shelvesContainer.innerHTML = '';
 
-        // Up to 5 illustrated books per shelf row
-        const booksPerShelf = 5;
+        // Up to 6 books per shelf
+        const booksPerShelf = 6;
         const shelfCount = Math.max(1, Math.ceil(state.books.length / booksPerShelf));
 
         for (let sIdx = 0; sIdx < shelfCount; sIdx++) {
@@ -315,7 +354,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (isFirstShelf) {
                 decorHtml = `
                     <div class="shelf-room-decor">
-                        <div class="sleeping-cat flex items-center gap-2 bg-[#fdfaf3] px-3.5 py-1.5 rounded-full border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] text-sm select-none">
+                        <div class="sleeping-cat flex items-center gap-2 bg-[#fdfaf3] px-3.5 py-1 rounded-full border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] text-sm select-none">
                             <span class="text-xl">🐱</span>
                             <span class="font-bold text-xs text-[#524137]">Mochi is sleeping... zZz</span>
                         </div>
@@ -328,28 +367,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 decorHtml = `
                     <div class="shelf-room-decor justify-end">
-                        <div class="flex items-center gap-2 text-xl select-none">
+                        <div class="flex items-center gap-3 text-xl select-none">
+                            <span title="Vintage Clock">🕰️</span>
                             <span title="Candle">🕯️</span>
                         </div>
                     </div>
                 `;
             }
 
-            // Shelf Book Box
+            // Shelf Book Box (56px top padding ensures tooltips NEVER clip!)
             const box = document.createElement('div');
             box.className = 'shelf-bookcase-box';
 
             chunk.forEach((book, bIdx) => {
                 const theme = coverThemes[(sIdx * booksPerShelf + bIdx) % coverThemes.length];
-                box.appendChild(createCozyBookCard(book, theme));
+                box.appendChild(createShelfBookItem(book, theme));
             });
 
             // Empty Slot Button
             const emptySlot = document.createElement('div');
             emptySlot.className = 'empty-book-slot';
             emptySlot.innerHTML = `
-                <span class="text-2xl mb-1">+</span>
-                <span class="font-bold text-xs">Slip in a book</span>
+                <span class="text-xl mb-1">+</span>
+                <span class="font-bold text-xs">Slip in</span>
             `;
             emptySlot.addEventListener('click', () => uploadModal.classList.add('active'));
             box.appendChild(emptySlot);
@@ -370,37 +410,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Creates clean, recognizable, front-facing illustrated book cards (NO UPSIDE DOWN TEXT!)
-    function createCozyBookCard(book, theme) {
+    // Creates books sitting on the shelf (Upright, Leaning, or Stacked Flat)
+    function createShelfBookItem(book, theme) {
         const item = document.createElement('div');
-        item.className = 'cozy-book-item';
-
+        const style = book.spine_style || 'upright';
         const prog = Math.round(book.reading_progress || 0);
-        const hasProgress = prog > 0;
 
-        item.innerHTML = `
-            <div class="hover-tooltip">Take out 📖</div>
-            <div class="book-cover-card" style="background-color: ${theme.bg}; color: ${theme.text};">
-                <div class="ribbon-top" style="background-color: ${theme.ribbon};"></div>
-                
-                <!-- Top Cover Header: Icon & Type -->
-                <div class="flex items-center justify-between z-10">
-                    <span class="text-xl ml-2">${theme.emoji}</span>
-                    <span class="book-card-tag">${escapeHtml(book.file_type || 'epub')}</span>
-                </div>
+        item.className = `cozy-shelf-book ${style === 'leaning' ? 'is-leaning' : (style === 'stacked' ? 'is-stacked' : '')}`;
 
-                <!-- Middle Cover: Title -->
-                <div class="z-10 my-auto">
-                    <h4 class="book-card-title">${escapeHtml(book.title)}</h4>
-                </div>
+        const spineBg = book.spine_color || theme.bg;
 
-                <!-- Bottom Cover: Author & Progress -->
-                <div class="z-10 pt-2 flex flex-col gap-1 border-t border-black/15">
-                    <p class="book-card-author">${escapeHtml(book.author || 'Unknown')}</p>
-                    ${hasProgress ? `<span class="book-progress-pill">${prog}% read</span>` : ''}
+        if (style === 'stacked') {
+            // Horizontal stacked flat book
+            item.innerHTML = `
+                <div class="hover-tooltip">Take out 📖</div>
+                <div class="stack-book-layer" style="background-color: ${spineBg}; color: ${theme.text};">
+                    <span>${theme.emoji} ${escapeHtml(book.title)}</span>
+                    <span class="text-xs opacity-75">${prog}%</span>
                 </div>
-            </div>
-        `;
+            `;
+        } else {
+            // Upright or Leaning vertical spine (clean horizontal title block, NO rotated overflow!)
+            const height = 195 + ((book.title.length * 3) % 25);
+            item.innerHTML = `
+                <div class="hover-tooltip">Take out 📖</div>
+                <div class="book-spine-upright" style="height: ${height}px; background-color: ${spineBg}; color: ${theme.text};">
+                    <div class="dangle-ribbon" style="background-color: ${theme.ribbon};"></div>
+                    <span class="spine-top-badge">${theme.emoji}</span>
+                    <div class="spine-title-container">
+                        <span class="spine-title-text">${escapeHtml(book.title)}</span>
+                    </div>
+                    <span class="spine-author-text">${escapeHtml(book.author || 'Tome')}</span>
+                </div>
+            `;
+        }
 
         item.addEventListener('click', () => openBookModal(book, theme));
         return item;
@@ -411,8 +454,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     function openBookModal(book, theme) {
         state.selectedBook = book;
 
-        modalCover.style.backgroundColor = theme.bg;
-        modalCover.style.color = theme.text;
+        // Cover styling: if real cover image was extracted from EPUB, show it!
+        if (book.cover_url) {
+            modalCover.style.backgroundImage = `url("${book.cover_url}")`;
+            modalCover.style.backgroundColor = '#2c221e';
+        } else {
+            modalCover.style.backgroundImage = 'none';
+            modalCover.style.backgroundColor = book.spine_color || theme.bg;
+        }
+
         modalEmoji.innerText = theme.emoji;
         modalFileType.innerText = book.file_type || 'epub';
         modalBookTitle.innerText = book.title;
@@ -428,6 +478,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const prog = Math.round(book.reading_progress || 0);
         modalProgText.innerText = `${prog}% completed`;
         modalProgFill.style.width = `${prog}%`;
+
+        // Highlight active style button
+        const curStyle = book.spine_style || 'upright';
+        document.querySelectorAll('.btn-spine-style').forEach(b => {
+            if (b.dataset.style === curStyle) {
+                b.className = 'btn-spine-style hand-btn hand-btn-sm hand-btn-terracotta text-white';
+            } else {
+                b.className = 'btn-spine-style hand-btn hand-btn-sm bg-white';
+            }
+        });
 
         readModal.classList.add('active');
     }

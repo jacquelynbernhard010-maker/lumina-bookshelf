@@ -1,7 +1,6 @@
 /* ========================================================
-   THE COZY NOOK - Handcrafted Cozy Library Stylesheet
-   No weird upside-down vertical text bugs!
-   Cozy front-facing illustrated books on wooden shelves
+   THE COZY NOOK - Handcrafted Home Bookshelf Stylesheet
+   No text cut-offs! Customizable books (Upright, Leaning, Stacked)
    ======================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Gaegu:wght@400;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
@@ -55,7 +54,7 @@ body {
   border-radius: 255px 25px 225px 25px / 25px 225px 25px 255px;
 }
 
-/* Tactile UIverse Buttons */
+/* Tactile Buttons */
 .hand-btn {
   display: inline-flex;
   align-items: center;
@@ -112,7 +111,7 @@ body {
 /* Search Box */
 .search-box-wrap {
   position: relative;
-  max-width: 380px;
+  max-width: 360px;
   width: 100%;
 }
 
@@ -144,7 +143,7 @@ body {
   pointer-events: none;
 }
 
-/* Category Pills */
+/* Shelf Filter Pills */
 .shelf-pill {
   padding: 6px 18px;
   font-size: 1.05rem;
@@ -171,11 +170,11 @@ body {
 }
 
 /* ========================================================
-   COZY BOOKCASE & BOOK CARDS
+   BOOKCASE & WOODEN SHELVES (Fixed Overflow & Cutoffs)
    ======================================================== */
 .shelf-wrapper {
   position: relative;
-  margin-bottom: 48px;
+  margin-bottom: 54px;
 }
 
 .shelf-room-decor {
@@ -183,23 +182,25 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 0 16px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
-/* The Bookcase Compartment */
+/* Bookcase Box with Generous Top Padding so tooltips NEVER cut off! */
 .shelf-bookcase-box {
   background: #fffdf9;
   border-left: 3px solid var(--ink);
   border-right: 3px solid var(--ink);
   border-top: 3px solid var(--ink);
-  border-radius: 16px 16px 0 0;
+  border-radius: 18px 18px 0 0;
   box-shadow: inset 0 4px 16px rgba(44, 34, 30, 0.05);
-  padding: 28px 24px 0px 24px;
-  min-height: 250px;
+  padding: 56px 28px 0px 28px; /* 56px top padding fixes the tooltip cutoff completely */
+  min-height: 270px;
   display: flex;
   align-items: flex-end;
-  gap: 22px;
+  gap: 20px;
   overflow-x: auto;
+  overflow-y: visible; /* Prevents top clipping */
+  position: relative;
 }
 
 /* Wooden Shelf Plank */
@@ -209,7 +210,7 @@ body {
   border: 3px solid var(--ink);
   border-radius: 8px 8px 12px 12px;
   box-shadow: 0 6px 0px var(--wood-shadow), 0 10px 0px var(--ink);
-  height: 26px;
+  height: 28px;
 }
 
 .wood-knot {
@@ -223,64 +224,134 @@ body {
 }
 
 /* ========================================================
-   FRONT-FACING ILLUSTRATED COZY BOOK (No Text Bugs!)
+   REALISTIC HOME BOOKSHELF SPINES & COVERS
    ======================================================== */
-.cozy-book-item {
+.cozy-shelf-book {
   position: relative;
   cursor: pointer;
   flex-shrink: 0;
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   user-select: none;
-  margin-bottom: 0px;
+  transform-origin: bottom center;
 }
 
-.cozy-book-item:hover {
-  transform: translateY(-16px) scale(1.03);
-  z-index: 30;
+.cozy-shelf-book:hover {
+  transform: translateY(-18px) scale(1.04);
+  z-index: 40;
 }
 
-.cozy-book-item:hover .hover-tooltip {
+.cozy-shelf-book:hover .hover-tooltip {
   opacity: 1;
-  transform: translate(-50%, -10px);
+  transform: translate(-50%, -12px);
 }
 
-/* Book Body Card: Proper Proportions like a Real Book */
-.book-cover-card {
-  width: 140px;
-  height: 200px;
+/* Style A: Upright Standing Book Spine */
+.book-spine-upright {
+  width: 58px;
+  height: 205px;
   border: 2.5px solid var(--ink);
-  border-radius: 6px 12px 12px 6px;
+  border-radius: 6px 4px 4px 6px;
   box-shadow: 
-    -4px 4px 0px rgba(44, 34, 30, 0.15),
-    4px 4px 0px var(--ink);
-  padding: 12px;
+    inset 4px 0 0 rgba(255, 255, 255, 0.35),
+    inset -3px 0 0 rgba(0, 0, 0, 0.15),
+    3px 0 0 rgba(44, 34, 30, 0.15);
+  padding: 10px 4px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  align-items: center;
   position: relative;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Style B: Leaning Book */
+.cozy-shelf-book.is-leaning {
+  transform: rotate(14deg);
+  margin-right: 14px;
+}
+
+.cozy-shelf-book.is-leaning:hover {
+  transform: translateY(-16px) rotate(14deg) scale(1.04);
+}
+
+/* Style C: Stacked Flat Books */
+.cozy-shelf-book.is-stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  justify-content: flex-end;
+  margin-right: 8px;
+}
+
+.stack-book-layer {
+  width: 145px;
+  height: 34px;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Spine Crease Line on Left Edge */
-.book-cover-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 14px;
-  background: linear-gradient(90deg, rgba(0,0,0,0.18) 0%, rgba(255,255,255,0.2) 60%, rgba(0,0,0,0.08) 100%);
-  border-right: 1px solid rgba(44, 34, 30, 0.25);
-  z-index: 2;
+/* Upright Spine Text - Clean, Horizontal Blocks */
+.spine-top-badge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: rgba(0, 0, 0, 0.18);
+  padding: 1px 4px;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
 }
 
-/* Ribbon Bookmark sticking out from top */
-.ribbon-top {
+.spine-title-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  width: 100%;
+}
+
+.spine-title-text {
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  padding: 0 2px;
+}
+
+.spine-author-text {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+  opacity: 0.85;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-top: 1px solid rgba(0, 0, 0, 0.15);
+  padding-top: 4px;
+}
+
+/* Dangling Ribbon Bookmark */
+.dangle-ribbon {
   position: absolute;
-  top: -12px;
-  right: 18px;
-  width: 10px;
-  height: 22px;
+  top: -10px;
+  right: 10px;
+  width: 8px;
+  height: 20px;
   background: var(--terracotta);
   border: 1.5px solid var(--ink);
   border-bottom: none;
@@ -288,70 +359,24 @@ body {
   z-index: 5;
 }
 
-/* Book Typography - Clean & Horizontal */
-.book-card-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  line-height: 1.25;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin-left: 6px;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.3);
-}
-
-.book-card-author {
-  font-size: 0.85rem;
-  font-weight: 700;
-  opacity: 0.85;
-  margin-left: 6px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.book-card-tag {
-  font-size: 0.72rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(0,0,0,0.18);
-  align-self: flex-end;
-  border: 1px solid rgba(0,0,0,0.15);
-}
-
-.book-progress-pill {
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(255,255,255,0.7);
-  color: var(--ink);
-  border: 1px solid var(--ink);
-  align-self: flex-start;
-  margin-left: 6px;
-}
-
-/* Hover Tooltip */
+/* Hover Tooltip (Never cuts off now!) */
 .hover-tooltip {
   position: absolute;
-  top: -36px;
+  top: -42px;
   left: 50%;
   transform: translate(-50%, 0);
   background: #fff;
   border: 2px solid var(--ink);
   box-shadow: 2px 2px 0px var(--ink);
   border-radius: 8px;
-  padding: 2px 10px;
-  font-size: 14px;
+  padding: 3px 10px;
+  font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
   transition: all 0.2s ease;
-  z-index: 50;
+  z-index: 60;
 }
 
 .hover-tooltip::after {
@@ -369,21 +394,21 @@ body {
 
 /* Empty Book Slot */
 .empty-book-slot {
-  width: 140px;
-  height: 200px;
+  width: 65px;
+  height: 180px;
   border: 2px dashed #bbaaa0;
-  border-radius: 12px;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 0.85rem;
   color: #8c786c;
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
   text-align: center;
-  padding: 12px;
+  padding: 6px;
   background: #fdfbf7;
 }
 
@@ -404,9 +429,7 @@ body {
   animation: catBreathe 3s ease-in-out infinite;
 }
 
-/* ========================================================
-   MODALS
-   ======================================================== */
+/* Modals */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -432,7 +455,6 @@ body {
   100% { transform: scale(1) translateY(0); opacity: 1; }
 }
 
-/* Toasts */
 .toast-container {
   position: fixed;
   bottom: 24px;
