@@ -3,23 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reader - Lumina Bookshelf</title>
+    <title>Reading - The Cozy Nook</title>
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/reader.css">
 </head>
 <body class="theme-sepia" id="readerBody">
     <!-- Reader Top Navigation -->
     <header class="reader-header" id="readerHeader">
         <div class="nav-left">
-            <a href="index.html" class="btn-icon" title="Return to Bookshelf">
-                <i class="fa-solid fa-arrow-left"></i>
+            <a href="index.html" class="btn-icon" title="Return to Wooden Shelves">
+                ←
             </a>
             <button class="btn-icon" id="btnToggleToc" title="Table of Contents">
-                <i class="fa-solid fa-list-ul"></i>
+                📖
             </button>
             <div class="book-meta">
                 <h1 class="book-title" id="bookTitle">Loading Book...</h1>
@@ -35,45 +34,45 @@
             <!-- Appearance Menu Dropdown -->
             <div class="dropdown-wrapper">
                 <button class="btn-icon" id="btnAppearance" title="Appearance Settings">
-                    <i class="fa-solid fa-font"></i>
+                    Aa
                 </button>
                 <div class="appearance-menu" id="appearanceMenu">
                     <div class="menu-section">
-                        <label>THEME</label>
+                        <label>READING THEME</label>
                         <div class="theme-picker">
                             <button class="theme-choice btn-theme-light" data-theme="theme-light">Light</button>
-                            <button class="theme-choice btn-theme-sepia active" data-theme="theme-sepia">Sepia</button>
-                            <button class="theme-choice btn-theme-dark" data-theme="theme-dark">Dark</button>
-                            <button class="theme-choice btn-theme-black" data-theme="theme-black">Black</button>
+                            <button class="theme-choice btn-theme-sepia active" data-theme="theme-sepia">Paper</button>
+                            <button class="theme-choice btn-theme-dark" data-theme="theme-dark">Dusk</button>
+                            <button class="theme-choice btn-theme-black" data-theme="theme-black">Night</button>
                         </div>
                     </div>
 
                     <div class="menu-section">
-                        <label>FONT SIZE</label>
+                        <label>TEXT SIZE</label>
                         <div class="font-size-controls">
-                            <button class="btn-size" id="btnFontDec"><i class="fa-solid fa-minus"></i></button>
+                            <button class="btn-size" id="btnFontDec">-</button>
                             <span id="fontSizeDisplay">105%</span>
-                            <button class="btn-size" id="btnFontInc"><i class="fa-solid fa-plus"></i></button>
+                            <button class="btn-size" id="btnFontInc">+</button>
                         </div>
                     </div>
 
                     <div class="menu-section">
-                        <label>FONT FAMILY</label>
+                        <label>TYPOGRAPHY</label>
                         <div class="font-family-controls">
-                            <button class="font-btn active" data-font="Merriweather, serif">Serif</button>
-                            <button class="font-btn" data-font="Inter, sans-serif">Sans</button>
-                            <button class="font-btn" data-font="'Cinzel', serif">Cinzel</button>
+                            <button class="font-btn active" data-font="'Lora', serif">Lora</button>
+                            <button class="font-btn" data-font="'Merriweather', serif">Classic</button>
+                            <button class="font-btn" data-font="'Patrick Hand', cursive">Hand</button>
                         </div>
                     </div>
                 </div>
             </div>
 
             <button class="btn-icon" id="btnDownloadBook" title="Download File">
-                <i class="fa-solid fa-download"></i>
+                ⬇️
             </button>
 
             <button class="btn-icon" id="btnFullscreen" title="Toggle Fullscreen">
-                <i class="fa-solid fa-expand"></i>
+                ⛶
             </button>
         </div>
     </header>
@@ -83,28 +82,28 @@
         <!-- Slide-out Table of Contents Sidebar -->
         <aside class="toc-sidebar" id="tocSidebar">
             <div class="toc-header">
-                <h3>Table of Contents</h3>
-                <button class="btn-icon btn-close-toc" id="btnCloseToc">&times;</button>
+                <h3>Table of Contents 📑</h3>
+                <button class="btn-icon" id="btnCloseToc">✕</button>
             </div>
             <div class="toc-content" id="tocList"></div>
         </aside>
 
         <!-- Turn Page Click Areas & Floating Arrows -->
         <button class="turn-page-btn prev-btn" id="btnPrevPage" title="Previous Page (Left Arrow)">
-            <i class="fa-solid fa-chevron-left"></i>
+            ‹
         </button>
 
         <!-- Viewer Container for epub.js -->
         <div id="epubViewer" class="epub-viewer"></div>
 
         <button class="turn-page-btn next-btn" id="btnNextPage" title="Next Page (Right Arrow)">
-            <i class="fa-solid fa-chevron-right"></i>
+            ›
         </button>
 
         <!-- Loading Spinner -->
         <div class="reader-loader" id="readerLoader">
             <div class="spinner"></div>
-            <p>Loading digital pages...</p>
+            <p>Turning pages...</p>
         </div>
     </div>
 
@@ -114,8 +113,8 @@
             <div class="reading-progress-fill" id="progressFill" style="width: 0%;"></div>
         </div>
         <div class="footer-info">
-            <span id="chapterTitle">Reading...</span>
-            <span id="footerProgress">0%</span>
+            <span id="chapterTitle">The Cozy Nook Reader</span>
+            <span id="footerProgress">0% read</span>
         </div>
     </footer>
 

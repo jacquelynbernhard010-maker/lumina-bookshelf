@@ -3,318 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lumina Bookshelf - Cloud & Local Digital Library</title>
-    <!-- Modern Google Fonts & Icons -->
+    <title>The Cozy Nook - Hand-drawn Digital Bookshelf</title>
+    <!-- Modern Tailwind & Cozy Hand-drawn Fonts -->
+    <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Patrick+Hand&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body data-theme="dark">
-    <!-- App Shell -->
-    <div class="app-layout">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <div class="sidebar-brand">
-                <div class="brand-icon">
-                    <i class="fa-solid fa-book-bookmark"></i>
-                </div>
-                <div class="brand-text">
-                    <h1>Lumina Bookshelf</h1>
-                    <span>Digital Library</span>
-                </div>
-            </div>
+<body class="p-4 md:p-8">
 
-            <div class="sidebar-action">
-                <button class="btn btn-primary btn-block" id="btnOpenUpload">
-                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                    <span>Add New Book</span>
-                </button>
-            </div>
+    <div class="max-w-4xl mx-auto">
+        <!-- Top Hand-Drawn Header -->
+        <header class="bg-[#fffdf9] wobbly-border p-6 mb-8 shadow-[4px_4px_0px_#2c221e] relative">
+            <!-- Washi tape at top -->
+            <div class="absolute -top-3 left-12 w-28 h-6 washi-tape -rotate-2"></div>
+            <div class="absolute -top-3 right-16 w-24 h-6 washi-tape rotate-2" style="background: rgba(129, 178, 154, 0.65);"></div>
 
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">
-                    <span>SHELVES</span>
-                    <button class="btn-icon" id="btnOpenNewShelf" title="Create New Shelf">
-                        <i class="fa-solid fa-plus"></i>
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-3xl">📖</span>
+                        <h1 class="text-3xl md:text-4xl font-bold tracking-wide">The Cozy Nook</h1>
+                    </div>
+                    <p class="text-lg text-[#6b584d] -mt-1">your quiet little corner of hand-picked digital books ~</p>
+                </div>
+
+                <!-- Handcrafted UI Buttons -->
+                <div class="flex items-center gap-3">
+                    <button id="btnPlant" class="hand-btn px-4 py-2 text-base font-bold hand-btn-matcha flex items-center gap-2" title="Water the plant!">
+                        <span>🌱</span>
+                        <span id="plantLabel">Water Pothos</span>
+                    </button>
+
+                    <button id="btnOpenCloud" class="hand-btn px-4 py-2 text-base font-bold flex items-center gap-2" title="Supabase Cloud Settings">
+                        <span>☁️</span>
+                        <span id="cloudLabel">Cloud Sync</span>
+                    </button>
+
+                    <button id="btnOpenUpload" class="hand-btn px-5 py-2 text-base font-bold hand-btn-terracotta flex items-center gap-2">
+                        <span>✨</span>
+                        <span>+ Slip a Book In</span>
                     </button>
                 </div>
-                <ul class="shelf-nav" id="shelfNavList">
-                    <li class="shelf-item active" data-shelf-id="all">
-                        <a href="javascript:void(0)" class="shelf-link">
-                            <i class="fa-solid fa-layer-group shelf-icon"></i>
-                            <span class="shelf-name">All Books</span>
-                            <span class="shelf-count" id="totalBooksCount">0</span>
-                        </a>
-                    </li>
-                    <!-- Dynamic shelves rendered here -->
-                </ul>
             </div>
 
-            <div class="sidebar-footer">
-                <button class="guide-trigger-btn" id="btnOpenCloudSettings">
-                    <i class="fa-solid fa-cloud"></i>
-                    <div>
-                        <div class="guide-btn-title" id="cloudStatusTitle">Browser Storage</div>
-                        <div class="guide-btn-sub" id="cloudStatusSub">Click to link Supabase Cloud</div>
-                    </div>
-                </button>
-                <div class="system-status">
-                    <span class="status-dot" id="systemStatusDot"></span>
-                    <span id="systemStatusLabel">Storage: <strong>IndexedDB (Offline)</strong></span>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Main Content Area -->
-        <main class="main-content">
-            <!-- Top App Bar -->
-            <header class="topbar">
-                <div class="search-bar">
-                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input type="text" id="searchInput" placeholder="Search by title, author, or keywords..." autocomplete="off">
-                    <button id="searchClear" class="search-clear" style="display:none;"><i class="fa-solid fa-xmark"></i></button>
+            <!-- Search and Filter Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mt-6 pt-4 border-t-2 border-dashed border-[#e6dcce]">
+                <div class="search-box-wrap">
+                    <input type="text" id="searchInput" placeholder="Search title or author..." autocomplete="off">
+                    <span class="search-icon-decor">🔍</span>
                 </div>
 
-                <div class="topbar-actions">
-                    <div class="view-toggle">
-                        <button class="view-btn active" data-view="shelf" title="Wooden Bookshelf View">
-                            <i class="fa-solid fa-bars-staggered"></i>
-                        </button>
-                        <button class="view-btn" data-view="grid" title="Grid Card View">
-                            <i class="fa-solid fa-table-cells-large"></i>
-                        </button>
-                    </div>
-
-                    <div class="sort-dropdown">
-                        <select id="sortSelect">
-                            <option value="latest">Recently Added</option>
-                            <option value="title">Title (A - Z)</option>
-                            <option value="progress">Reading Progress</option>
-                            <option value="oldest">Oldest First</option>
-                        </select>
-                    </div>
-
-                    <button class="theme-toggle" id="themeToggle" title="Toggle Light / Dark Mode">
-                        <i class="fa-solid fa-moon"></i>
+                <!-- Category Tabs sketched as sticky notes -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-1" id="shelfNavList">
+                    <button class="shelf-pill active" data-shelf-id="all">
+                        All Books (<span id="totalBooksCount">0</span>)
                     </button>
-                </div>
-            </header>
-
-            <!-- Bookshelf View Area -->
-            <div class="shelf-container">
-                <div class="shelf-header">
-                    <div>
-                        <h2 id="currentShelfTitle">All Books</h2>
-                        <p class="text-muted" id="currentShelfDesc">Viewing all digital books in your personal library</p>
-                    </div>
-                    <div class="stats-badge" id="statsBadge">
-                        0 Books
-                    </div>
-                </div>
-
-                <!-- Empty State -->
-                <div class="empty-state" id="emptyState" style="display: none;">
-                    <div class="empty-icon"><i class="fa-solid fa-book-open-reader"></i></div>
-                    <h3>This shelf is currently empty</h3>
-                    <p>Upload your favourite EPUB, PDF or MOBI books to start building your personal library.</p>
-                    <button class="btn btn-primary" onclick="document.getElementById('btnOpenUpload').click()">
-                        <i class="fa-solid fa-plus"></i> Upload Your First Book
-                    </button>
-                </div>
-
-                <!-- Book Viewports -->
-                <div id="bookshelfView" class="shelf-display-shelf">
-                    <!-- Dynamic books will be rendered here -->
+                    <!-- Dynamically populated shelves -->
                 </div>
             </div>
+        </header>
+
+        <!-- Main Bookcase Container -->
+        <main id="shelvesContainer" class="space-y-12">
+            <!-- Dynamically generated handcrafted wooden shelves -->
         </main>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center py-16 px-4 bg-[#fffdf9] wobbly-border shadow-[4px_4px_0px_#2c221e] mt-6 hidden">
+            <span class="text-5xl block mb-2">🧺</span>
+            <h3 class="text-2xl font-bold mb-1">This wooden shelf is empty!</h3>
+            <p class="text-[#786457] text-lg mb-4">Slip your favorite .epub or .pdf book into this cozy corner</p>
+            <button class="hand-btn hand-btn-terracotta" onclick="document.getElementById('btnOpenUpload').click()">
+                + Slip Your First Book In
+            </button>
+        </div>
+
+        <!-- Hand-drawn Footer -->
+        <footer class="mt-14 text-center text-[#786457] text-base flex flex-col items-center gap-1">
+            <p>✦ Drawn with ink, tea, and warm thoughts for your digital reading ✦</p>
+            <div class="flex gap-4 text-sm mt-1">
+                <span id="storageModeLabel">📁 Stored locally in your browser (IndexedDB)</span>
+                <span>•</span>
+                <span class="cursor-pointer underline hover:text-[#2c221e]" onclick="document.getElementById('btnOpenCloud').click()">Link Supabase Cloud</span>
+            </div>
+        </footer>
     </div>
 
-    <!-- Upload Modal -->
-    <div class="modal-overlay" id="uploadModal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <div class="modal-title">
-                    <i class="fa-solid fa-cloud-arrow-up text-accent"></i>
-                    <h3>Upload Digital Book</h3>
+    <!-- ================= PULL-OUT BOOK MODAL ================= -->
+    <!-- When you click any book on the shelf, it pops off the shelf into this cozy view! -->
+    <div id="readModal" class="modal-backdrop">
+        <div class="bounce-in bg-[#fffefb] wobbly-border max-w-2xl w-full p-6 md:p-8 shadow-[8px_8px_0px_#2c221e] relative">
+            <!-- Top washi tape -->
+            <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-32 h-6 washi-tape"></div>
+
+            <!-- Close "Put back on shelf" button in top corner -->
+            <button id="btnCloseReadModal" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-[#faedcd] border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] flex items-center justify-center font-bold text-lg hover:scale-110 active:scale-95 transition-transform" title="Put back on shelf">
+                ✕
+            </button>
+
+            <div class="flex flex-col md:flex-row gap-6 items-start mt-2">
+                <!-- Book Cover Card -->
+                <div id="modalCover" class="w-full md:w-44 h-60 rounded-xl border-2 border-[#2c221e] shadow-[4px_4px_0px_#2c221e] flex flex-col justify-between p-4 flex-shrink-0 text-white relative">
+                    <div class="flex justify-between items-start">
+                        <span id="modalEmoji" class="text-2xl">📖</span>
+                        <span id="modalFileType" class="text-xs px-2 py-0.5 rounded bg-black/30 font-bold uppercase">EPUB</span>
+                    </div>
+                    <div>
+                        <h3 id="modalBookTitle" class="text-xl font-bold leading-tight">Book Title</h3>
+                        <p id="modalBookAuthor" class="text-xs opacity-90">Author Name</p>
+                    </div>
                 </div>
-                <button class="btn-close modal-close">&times;</button>
+
+                <!-- Book Details & Bookmark Note -->
+                <div class="flex-1 flex flex-col justify-between w-full">
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-xs font-bold px-2 py-0.5 bg-[#fefae0] border border-[#2c221e] rounded">CURRENTLY READING</span>
+                            <span class="text-xs text-[#8c786c]" id="modalShelfBadge">Saved to Shelf</span>
+                        </div>
+
+                        <h2 id="modalDetailTitle" class="text-2xl font-bold text-[#2c221e]">Book Title</h2>
+                        <p id="modalDetailAuthor" class="text-base font-bold text-[#e07a5f] mb-3">by Author</p>
+                        <p id="modalDetailDesc" class="font-lora text-sm leading-relaxed text-[#5c4a3e] bg-[#fdfaf3] p-3 rounded-lg border border-[#e5dac9]">
+                            Description of the book...
+                        </p>
+                    </div>
+
+                    <!-- Reading Bookmark Progress -->
+                    <div class="mt-6 pt-4 border-t-2 border-dashed border-[#e0d6c5]">
+                        <div class="flex justify-between text-xs font-bold text-[#7d695c] mb-1">
+                            <span>Bookmark Progress</span>
+                            <span id="modalProgText">0% completed</span>
+                        </div>
+                        <div class="w-full h-3 bg-[#ede2cf] rounded-full border border-[#2c221e] overflow-hidden">
+                            <div id="modalProgFill" class="h-full bg-[#e07a5f] rounded-full border-r border-[#2c221e]" style="width: 0%;"></div>
+                        </div>
+
+                        <!-- Action buttons -->
+                        <div class="flex items-center justify-between gap-3 mt-6">
+                            <button id="btnDeleteBook" class="text-xs font-bold text-[#a84242] hover:underline">
+                                🗑️ Remove from shelf
+                            </button>
+                            <div class="flex items-center gap-2">
+                                <button id="btnPutBack" class="hand-btn hand-btn-sm bg-[#faedcd]">
+                                    ↩ Put Back
+                                </button>
+                                <button id="btnOpenReader" class="hand-btn hand-btn-sm hand-btn-terracotta text-white">
+                                    Open &amp; Read ➔
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+        </div>
+    </div>
+
+    <!-- ================= ADD BOOK MODAL ================= -->
+    <div id="uploadModal" class="modal-backdrop">
+        <div class="bounce-in bg-[#fffefb] wobbly-border max-w-md w-full p-6 shadow-[8px_8px_0px_#2c221e] relative">
+            <button id="btnCloseUploadModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold">✕</button>
+            
+            <h3 class="text-2xl font-bold mb-1">Slip a New Book In 📚</h3>
+            <p class="text-sm text-[#7d695c] mb-4">Drop an .epub, .pdf, or .mobi file to place on your shelf</p>
+
             <form id="uploadForm">
-                <div class="modal-body">
-                    <!-- Drop Zone -->
-                    <div class="drop-zone" id="dropZone">
-                        <input type="file" id="bookFileInput" accept=".epub,.pdf,.mobi" required hidden>
-                        <i class="fa-solid fa-file-arrow-up drop-icon"></i>
-                        <h4>Drag & drop your digital book here</h4>
-                        <p>Supports <strong>.EPUB</strong>, <strong>.PDF</strong>, and <strong>.MOBI</strong></p>
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('bookFileInput').click()">
-                            Browse Files
-                        </button>
-                    </div>
-
-                    <div class="selected-file-banner" id="fileBanner" style="display: none;">
-                        <i class="fa-solid fa-file-lines"></i>
-                        <div class="file-info">
-                            <span class="file-name" id="fileNameLabel">sample.epub</span>
-                            <span class="file-size" id="fileSizeLabel">2.4 MB</span>
-                        </div>
-                        <button type="button" class="btn-icon text-danger" id="btnRemoveFile"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="uploadShelfSelect">Assign to Shelf</label>
-                            <select id="uploadShelfSelect" class="form-control">
-                                <!-- Populated dynamically -->
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="bookTitleInput">Title (Optional)</label>
-                            <input type="text" id="bookTitleInput" class="form-control" placeholder="Leave blank to detect">
-                        </div>
-                        <div class="form-group">
-                            <label for="bookAuthorInput">Author (Optional)</label>
-                            <input type="text" id="bookAuthorInput" class="form-control" placeholder="e.g. Isaac Asimov">
-                        </div>
-                        <div class="form-group">
-                            <label for="coverFileInput">Custom Cover Image (Optional)</label>
-                            <input type="file" id="coverFileInput" class="form-control file-input" accept="image/*">
-                        </div>
-                    </div>
-
-                    <!-- Progress bar -->
-                    <div class="upload-progress-wrapper" id="uploadProgressWrapper" style="display:none;">
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill" id="uploadProgressBar"></div>
-                        </div>
-                        <span class="progress-text" id="uploadProgressText">Processing digital book...</span>
-                    </div>
+                <input type="file" id="bookFileInput" accept=".epub,.pdf,.mobi" required hidden>
+                
+                <div id="dropZone" class="border-2 border-dashed border-[#2c221e] rounded-xl p-6 text-center bg-[#fdfaf3] mb-4 cursor-pointer hover:bg-[#f8f2e2] transition-colors">
+                    <span class="text-3xl block mb-1">📥</span>
+                    <p class="font-bold text-base">Drop your book file here</p>
+                    <p class="text-xs text-[#8c786c]">or click to browse your computer</p>
                 </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary modal-close">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="btnSubmitUpload">
-                        <i class="fa-solid fa-arrow-up-from-bracket"></i> Add to Bookshelf
-                    </button>
+                <div id="fileBanner" class="p-3 bg-[#faedcd] border-2 border-[#2c221e] rounded-lg mb-4 flex items-center justify-between hidden">
+                    <div class="flex items-center gap-2">
+                        <span>📄</span>
+                        <span id="fileNameLabel" class="font-bold text-sm truncate max-w-[220px]">book.epub</span>
+                    </div>
+                    <button type="button" id="btnRemoveFile" class="font-bold text-sm text-red-700">✕</button>
                 </div>
-            </form>
-        </div>
-    </div>
 
-    <!-- Create Shelf Modal -->
-    <div class="modal-overlay" id="newShelfModal">
-        <div class="modal-card modal-card-sm">
-            <div class="modal-header">
-                <div class="modal-title">
-                    <i class="fa-solid fa-folder-plus text-accent"></i>
-                    <h3>Create New Shelf</h3>
-                </div>
-                <button class="btn-close modal-close">&times;</button>
-            </div>
-            <form id="newShelfForm">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="shelfNameInput">Shelf Name</label>
-                        <input type="text" id="shelfNameInput" class="form-control" placeholder="e.g. Science Fiction, Philosophy..." required>
-                    </div>
-                    <div class="form-group">
-                        <label>Shelf Accent Color</label>
-                        <div class="color-picker-palette">
-                            <label class="color-option"><input type="radio" name="shelfColor" value="#3b82f6" checked><span style="background: #3b82f6;"></span></label>
-                            <label class="color-option"><input type="radio" name="shelfColor" value="#10b981"><span style="background: #10b981;"></span></label>
-                            <label class="color-option"><input type="radio" name="shelfColor" value="#f59e0b"><span style="background: #f59e0b;"></span></label>
-                            <label class="color-option"><input type="radio" name="shelfColor" value="#ec4899"><span style="background: #ec4899;"></span></label>
-                            <label class="color-option"><input type="radio" name="shelfColor" value="#8b5cf6"><span style="background: #8b5cf6;"></span></label>
-                            <label class="color-option"><input type="radio" name="shelfColor" value="#06b6d4"><span style="background: #06b6d4;"></span></label>
-                            <label class="color-option"><input type="radio" name="shelfColor" value="#ef4444"><span style="background: #ef4444;"></span></label>
-                            <label class="color-option"><input type="radio" name="shelfColor" value="#84cc16"><span style="background: #84cc16;"></span></label>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary modal-close">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create Shelf</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Edit Book Modal -->
-    <div class="modal-overlay" id="editBookModal">
-        <div class="modal-card modal-card-sm">
-            <div class="modal-header">
-                <div class="modal-title">
-                    <i class="fa-solid fa-pen-to-square text-accent"></i>
-                    <h3>Edit Book</h3>
-                </div>
-                <button class="btn-close modal-close">&times;</button>
-            </div>
-            <form id="editBookForm">
-                <input type="hidden" id="editBookId">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="editBookTitle">Title</label>
-                        <input type="text" id="editBookTitle" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="editBookAuthor">Author</label>
-                        <input type="text" id="editBookAuthor" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="editBookShelf">Move to Shelf</label>
-                        <select id="editBookShelf" class="form-control">
-                            <!-- Dynamic -->
+                <div class="space-y-3 mb-4">
+                    <div>
+                        <label class="block text-xs font-bold text-[#5a483d] mb-1">Shelf</label>
+                        <select id="uploadShelfSelect" class="w-full p-2 bg-white border-2 border-[#2c221e] rounded-lg text-sm font-bold">
+                            <!-- Populated dynamically -->
                         </select>
                     </div>
+                    <div>
+                        <label class="block text-xs font-bold text-[#5a483d] mb-1">Title (Optional)</label>
+                        <input type="text" id="bookTitleInput" class="w-full p-2 bg-white border-2 border-[#2c221e] rounded-lg text-sm" placeholder="Leave blank to detect">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-[#5a483d] mb-1">Author (Optional)</label>
+                        <input type="text" id="bookAuthorInput" class="w-full p-2 bg-white border-2 border-[#2c221e] rounded-lg text-sm" placeholder="e.g. Charlotte Brontë">
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary modal-close">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
+
+                <div class="flex justify-end gap-2">
+                    <button type="button" id="btnCancelUpload" class="hand-btn hand-btn-sm bg-[#faedcd]">Cancel</button>
+                    <button type="submit" id="btnSubmitUpload" class="hand-btn hand-btn-sm hand-btn-matcha text-white">Place on Shelf</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Supabase Cloud Sync Modal -->
-    <div class="modal-overlay" id="cloudSettingsModal">
-        <div class="modal-card modal-card-md">
-            <div class="modal-header">
-                <div class="modal-title">
-                    <i class="fa-solid fa-cloud-bolt text-accent"></i>
-                    <h3>Supabase Cloud Sync Settings</h3>
-                </div>
-                <button class="btn-close modal-close">&times;</button>
-            </div>
-            <form id="cloudSettingsForm">
-                <div class="modal-body">
-                    <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:16px;">
-                        Connect your free <strong>Supabase</strong> project to automatically backup your digital books and sync your reading progress across multiple devices.
-                    </p>
-                    
-                    <div class="form-group">
-                        <label for="supabaseUrlInput">Supabase Project URL</label>
-                        <input type="url" id="supabaseUrlInput" class="form-control" placeholder="https://xyzcompany.supabase.co">
-                    </div>
-                    <div class="form-group">
-                        <label for="supabaseKeyInput">Supabase Anon Key</label>
-                        <input type="password" id="supabaseKeyInput" class="form-control" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
-                    </div>
+    <!-- ================= SUPABASE CLOUD MODAL ================= -->
+    <div id="cloudModal" class="modal-backdrop">
+        <div class="bounce-in bg-[#fffefb] wobbly-border max-w-md w-full p-6 shadow-[8px_8px_0px_#2c221e] relative">
+            <button id="btnCloseCloudModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold">✕</button>
+            
+            <h3 class="text-2xl font-bold mb-1">Cloud Sync Settings ☁️</h3>
+            <p class="text-sm text-[#7d695c] mb-4">Connect your free Supabase project to sync across devices</p>
 
-                    <div style="background:var(--bg-base); padding:14px; border-radius:8px; border:1px solid var(--border-color); font-size:0.82rem; color:var(--text-secondary);">
-                        <strong style="color:var(--text-primary);"><i class="fa-solid fa-lightbulb text-accent"></i> How to get these keys (Free):</strong>
-                        <ol style="padding-left:18px; margin-top:6px;">
-                            <li>Create a free project at <a href="https://supabase.com" target="_blank" style="color:var(--accent-primary);">supabase.com</a></li>
-                            <li>Run the provided <code>supabase_schema.sql</code> script in Supabase's SQL Editor</li>
-                            <li>Go to <strong>Project Settings -> API</strong> to copy your Project URL and Anon Public Key</li>
-                        </ol>
-                    </div>
+            <form id="cloudForm" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-[#5a483d] mb-1">Supabase Project URL</label>
+                    <input type="url" id="supabaseUrlInput" class="w-full p-2 bg-white border-2 border-[#2c221e] rounded-lg text-sm" placeholder="https://xyz.supabase.co">
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="btnDisconnectCloud">Disconnect (Use Local Only)</button>
-                    <button type="submit" class="btn btn-primary">Save & Connect</button>
+                <div>
+                    <label class="block text-xs font-bold text-[#5a483d] mb-1">Supabase Anon Key</label>
+                    <input type="password" id="supabaseKeyInput" class="w-full p-2 bg-white border-2 border-[#2c221e] rounded-lg text-sm" placeholder="eyJhbGciOi...">
+                </div>
+
+                <div class="p-3 bg-[#fdfaf3] border border-[#2c221e] rounded-lg text-xs text-[#786457]">
+                    <strong>Free Cloud Storage:</strong> Runs with zero hosting costs. Use <code>supabase_schema.sql</code> in your Supabase SQL editor.
+                </div>
+
+                <div class="flex justify-between items-center pt-2">
+                    <button type="button" id="btnDisconnectCloud" class="text-xs font-bold text-red-700 hover:underline">Disconnect</button>
+                    <div class="flex gap-2">
+                        <button type="button" id="btnCancelCloud" class="hand-btn hand-btn-sm bg-[#faedcd]">Cancel</button>
+                        <button type="submit" class="hand-btn hand-btn-sm hand-btn-terracotta text-white">Save &amp; Connect</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -323,7 +247,7 @@
     <!-- Notification Toast -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <!-- Supabase Client JS (CDN) -->
+    <!-- Client Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="assets/js/db.js"></script>
     <script src="assets/js/app.js"></script>
