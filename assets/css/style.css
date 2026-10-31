@@ -1,24 +1,22 @@
 /* ========================================================
-   THE COZY NOOK - Handcrafted Home Bookshelf Stylesheet
-   - No top cutoffs! (80px clearance)
-   - 4 Display Modes: Front-Facing, Spine, Leaning, Stacked
-   - Shelf objects & decorations
+   THE COZY NOOK - Hand-drawn Cozy Bookshelf Stylesheet
+   Restored from approved prototype handdrawn_cozy_shelf.html
    ======================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Gaegu:wght@400;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Patrick+Hand&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
 
 :root {
   --ink: #2c221e;
-  --paper-bg: #f7f1e5;
-  --card-bg: #fffdf9;
-  --wood: #cfa170;
+  --paper: #fbf5e8;
+  --paper-warm: #f4ecdc;
+  --wood: #d4a373;
+  --wood-dark: #b07d56;
   --wood-shadow: #8c5836;
   --terracotta: #e07a5f;
   --matcha: #81b29a;
   --honey: #f2cc8f;
   --periwinkle: #9d8189;
   --sky: #8ecae6;
-  --plum: #835069;
 }
 
 *, *::before, *::after {
@@ -29,23 +27,21 @@
 
 body {
   font-family: 'Patrick Hand', cursive, sans-serif;
-  background-color: var(--paper-bg);
+  background-color: #f7f1e5;
   background-image: 
-    radial-gradient(#dfd4c0 1.2px, transparent 1.2px),
-    radial-gradient(#dfd4c0 1.2px, var(--paper-bg) 1.2px);
+    radial-gradient(#e5dbc9 1px, transparent 1px),
+    radial-gradient(#e5dbc9 1px, #f7f1e5 1px);
   background-size: 24px 24px;
   background-position: 0 0, 12px 12px;
   color: var(--ink);
-  line-height: 1.4;
-  min-height: 100vh;
-  padding: 24px 16px;
   overflow-x: hidden;
+  min-height: 100vh;
 }
 
 .font-gaegu { font-family: 'Gaegu', cursive; }
 .font-lora { font-family: 'Lora', Georgia, serif; }
 
-/* Hand-drawn Wobbly Borders */
+/* Hand-drawn wobbly border magic */
 .wobbly-border {
   border: 2.5px solid var(--ink);
   border-radius: 255px 18px 225px 15px / 15px 225px 18px 255px;
@@ -56,7 +52,7 @@ body {
   border-radius: 255px 25px 225px 25px / 25px 225px 25px 255px;
 }
 
-/* Tactile UIverse Buttons */
+/* UIverse Handcrafted Tactile Button */
 .hand-btn {
   display: inline-flex;
   align-items: center;
@@ -67,7 +63,7 @@ body {
   border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
   box-shadow: 3px 3px 0px var(--ink);
   padding: 8px 18px;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--ink);
   cursor: pointer;
@@ -101,53 +97,213 @@ body {
   font-size: 0.95rem;
 }
 
-/* Washi Tape Accent */
-.washi-tape {
-  background: rgba(242, 204, 143, 0.7);
-  border: 1px dashed rgba(44, 34, 30, 0.35);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  pointer-events: none;
-  z-index: 10;
-}
-
-/* Search Box */
-.search-box-wrap {
-  position: relative;
-  max-width: 360px;
-  width: 100%;
-}
-
-.search-box-wrap input {
-  width: 100%;
-  padding: 8px 36px 8px 16px;
-  background: #fff;
+/* Tactile Paper Tags */
+.paper-tag {
+  background: #fffdf7;
   border: 2px solid var(--ink);
-  border-radius: 255px 20px 225px 20px / 20px 225px 20px 255px;
-  font-family: inherit;
-  font-size: 1.1rem;
-  color: var(--ink);
   box-shadow: 2px 2px 0px var(--ink);
-  outline: none;
-  transition: all 0.15s ease;
+  border-radius: 4px;
 }
 
-.search-box-wrap input:focus {
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0px var(--ink);
+/* Handcrafted Wooden Plank Shelf */
+.sketch-shelf {
+  position: relative;
+  background: var(--wood);
+  border: 3px solid var(--ink);
+  border-radius: 8px 8px 12px 12px;
+  box-shadow: 0 6px 0px var(--wood-shadow), 0 9px 0px var(--ink);
+  height: 24px;
 }
 
-.search-icon-decor {
+/* Wood grain hand-drawn squiggles */
+.wood-knot {
   position: absolute;
-  right: 14px;
+  width: 14px;
+  height: 6px;
+  border: 1.5px solid rgba(44, 34, 30, 0.4);
+  border-radius: 50%;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 1.1rem;
+}
+
+/* ===================================================
+   HAND-DRAWN BOOKS ON SHELF
+   =================================================== */
+.doodle-book {
+  position: relative;
+  cursor: pointer;
+  transform-origin: bottom center;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.doodle-book:hover {
+  transform: translateY(-22px) rotate(2deg) scale(1.05);
+  z-index: 30;
+}
+
+.doodle-book:hover .hover-tooltip {
+  opacity: 1;
+  transform: translate(-50%, -10px);
+}
+
+/* Style 1: Handcrafted Book Spine */
+.book-body {
+  border: 2.5px solid var(--ink);
+  box-shadow: inset 4px 0 0 rgba(255, 255, 255, 0.35), inset -3px 0 0 rgba(0, 0, 0, 0.15), 3px 0 0 rgba(44, 34, 30, 0.15);
+  border-radius: 6px 4px 4px 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 4px;
+  position: relative;
+  background-size: cover;
+  background-position: left center;
+}
+
+/* Style 2: Front-Facing Book Cover */
+.book-front-cover {
+  width: 140px;
+  height: 200px;
+  border: 2.5px solid var(--ink);
+  border-radius: 6px 10px 10px 6px;
+  box-shadow: inset 10px 0 0 rgba(0,0,0,0.18), 3px 3px 0px var(--ink);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+
+/* Style 3: Leaning Book */
+.doodle-book.is-leaning {
+  transform: rotate(14deg);
+  transform-origin: bottom left;
+  margin-right: 14px;
+}
+
+.doodle-book.is-leaning:hover {
+  transform: translateY(-22px) rotate(14deg) scale(1.05);
+}
+
+/* Style 4: Stacked Book Layer */
+.stack-layer {
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 30px;
+  width: 140px;
+}
+
+/* Ribbon bookmark dangling down */
+.dangle-ribbon {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 14px;
+  background: var(--terracotta);
+  border: 1.5px solid var(--ink);
+  border-top: none;
+  border-radius: 0 0 3px 3px;
+  z-index: 5;
+}
+
+/* Hover Tooltip: Hand-drawn Speech Bubble */
+.hover-tooltip {
+  position: absolute;
+  top: -38px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  background: #fff;
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0px var(--ink);
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
   pointer-events: none;
+  opacity: 0;
+  transition: all 0.2s ease;
+  z-index: 50;
+}
+
+.hover-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px 5px 0;
+  border-style: solid;
+  border-color: var(--ink) transparent;
+  display: block;
+  width: 0;
+}
+
+/* Wobbly Tape decoration */
+.washi-tape {
+  background: rgba(242, 204, 143, 0.65);
+  border: 1px dashed rgba(44, 34, 30, 0.3);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  pointer-events: none;
+}
+
+/* Sleeping Cat breathing animation */
+@keyframes catBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03) translateY(-1px); }
+}
+
+.sleeping-cat {
+  animation: catBreathe 3s ease-in-out infinite;
+}
+
+/* Book Stage Modal (Pop-out Animation) */
+.modal-backdrop {
+  background: rgba(44, 34, 30, 0.45);
+  backdrop-filter: blur(4px);
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-backdrop.active {
+  display: flex;
+}
+
+.bounce-in {
+  animation: popOpen 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes popOpen {
+  0% { transform: scale(0.7) translateY(40px) rotate(-3deg); opacity: 0; }
+  100% { transform: scale(1) translateY(0) rotate(0deg); opacity: 1; }
 }
 
 /* Shelf Filter Pills */
 .shelf-pill {
-  padding: 6px 18px;
+  padding: 4px 16px;
   font-size: 1.05rem;
   font-weight: 700;
   background: #fff;
@@ -160,488 +316,44 @@ body {
 }
 
 .shelf-pill:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 3px 3px 0px var(--ink);
   background: #faedcd;
 }
 
 .shelf-pill.active {
   background: #f4a261;
   color: var(--ink);
-  box-shadow: 3px 3px 0px var(--ink);
 }
 
-/* ========================================================
-   THE AUTHENTIC WOODEN LIBRARY BOOKCASE
-   ======================================================== */
-.bookcase-wrapper {
-  background: #85532d;
-  border: 3.5px solid var(--ink);
-  border-radius: 18px 18px 8px 8px;
-  box-shadow: 
-    6px 8px 0px var(--ink),
-    inset 0 4px 0 rgba(255,255,255,0.22),
-    inset 0 -4px 0 rgba(0,0,0,0.35);
-  padding: 16px 20px 8px 20px;
+/* Search Box */
+.search-box-wrap {
   position: relative;
-  margin-bottom: 40px;
-}
-
-/* Top Crown Arch of the Wooden Bookcase */
-.bookcase-top-crown {
-  position: absolute;
-  top: -14px;
-  left: 12px;
-  right: 12px;
-  height: 14px;
-  background: #ab7343;
-  border: 3px solid var(--ink);
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
-  box-shadow: 0 -2px 0 rgba(255,255,255,0.25) inset;
-}
-
-/* Shelf Row / Inner Tier with warm backing wall */
-.shelf-tier {
-  background: #f8f1e3;
-  background-image: repeating-linear-gradient(
-    90deg,
-    transparent,
-    transparent 58px,
-    rgba(43, 31, 26, 0.05) 58px,
-    rgba(43, 31, 26, 0.05) 60px
-  );
-  border: 2px solid var(--ink);
-  border-bottom: none;
-  border-radius: 8px 8px 0 0;
-  min-height: 250px;
-  display: flex;
-  align-items: flex-end;
-  padding: 30px 24px 0 24px;
-  gap: 18px;
-  box-shadow: inset 0 8px 14px rgba(43, 31, 26, 0.12);
-  position: relative;
-  overflow-x: auto;
-  overflow-y: visible;
-}
-
-/* Heavy Wooden Shelf Plank */
-.shelf-plank {
-  height: 26px;
-  background: var(--wood);
-  border: 3px solid var(--ink);
-  border-radius: 4px;
-  box-shadow: 
-    0 6px 0px var(--wood-shadow),
-    0 9px 0px var(--ink);
-  margin-bottom: 24px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 30px;
-}
-
-.shelf-plank:last-child {
-  margin-bottom: 6px;
-}
-
-.wood-knot {
-  width: 14px;
-  height: 6px;
-  border: 1.5px solid rgba(44, 34, 30, 0.35);
-  border-radius: 50%;
-}
-
-/* ========================================================
-   THE BOOKS ON THE SHELF (Realistic Library Books)
-   ======================================================== */
-.cozy-shelf-book {
-  position: relative;
-  cursor: pointer;
-  flex-shrink: 0;
-  user-select: none;
-  transform-origin: bottom center;
-  transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-/* Authentic "Slide Book Off Shelf" Animation on Hover */
-.cozy-shelf-book:hover {
-  transform: translateY(-22px) scale(1.04);
-  z-index: 40;
-  filter: drop-shadow(0 14px 12px rgba(43, 31, 26, 0.38));
-}
-
-.cozy-shelf-book.is-dragging {
-  opacity: 0.5;
-  transform: scale(0.95) rotate(-3deg);
-}
-
-/* 1. FRONT-FACING COVER DISPLAY */
-.book-cover-front {
-  width: 140px;
-  height: 205px;
-  border: 2.5px solid var(--ink);
-  border-radius: 4px 10px 10px 4px;
-  box-shadow: 
-    inset 12px 0 0 rgba(0,0,0,0.18),
-    inset -2px 0 4px rgba(255,255,255,0.2),
-    2px 2px 0 var(--ink);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  position: relative;
-  background-size: cover;
-  background-position: center;
-  overflow: hidden;
-}
-
-/* 2. REALISTIC UPRIGHT SPINE DISPLAY */
-.book-spine-upright {
-  width: 66px;
-  height: 205px;
-  border: 2.5px solid var(--ink);
-  border-radius: 5px 3px 3px 5px;
-  box-shadow: 
-    inset 6px 0 6px rgba(255, 255, 255, 0.32),
-    inset -5px 0 6px rgba(0, 0, 0, 0.25),
-    2px 2px 0 var(--ink);
-  padding: 12px 4px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  text-align: center;
-  position: relative;
-  background-size: cover;
-  background-position: left center;
-  overflow: hidden;
-}
-
-.spine-title-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
+  max-width: 320px;
   width: 100%;
-  padding: 4px 0;
 }
 
-.spine-title-text {
-  font-weight: 700;
-  line-height: 1.15;
-  text-align: center;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  word-break: normal;
-  overflow-wrap: break-word;
-  hyphens: none;
-  -webkit-hyphens: none;
-  padding: 0 4px;
-}
-
-.spine-author-text {
-  font-size: 0.74rem;
-  font-weight: 700;
-  text-align: center;
-  opacity: 0.88;
+.search-box-wrap input {
   width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border-top: 1px solid rgba(0, 0, 0, 0.2);
-  padding-top: 3px;
-}
-
-/* 3. LEANING MODE */
-.cozy-shelf-book.is-leaning {
-  transform: rotate(13deg);
-  transform-origin: bottom left;
-  margin-right: 18px;
-}
-
-.cozy-shelf-book.is-leaning:hover {
-  transform: translateY(-22px) rotate(13deg) scale(1.04);
-}
-
-/* 4. REALISTIC STACKED BOOKS (Piled neatly on the shelf) */
-.shelf-book-stack {
-  display: flex;
-  flex-direction: column-reverse; /* Bottom book on the wood */
-  align-items: center;
-  flex-shrink: 0;
-  margin-right: 14px;
-  cursor: pointer;
-}
-
-.stack-book-layer {
-  width: 150px;
-  height: 36px;
-  border: 2.5px solid var(--ink);
-  border-radius: 4px;
-  box-shadow: 
-    inset 0 4px 0 rgba(255,255,255,0.25),
-    inset 0 -3px 0 rgba(0,0,0,0.2),
-    2px 2px 0 var(--ink);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 12px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: -1px;
-  transition: transform 0.18s ease;
-}
-
-.stack-book-layer:hover {
-  transform: scale(1.03);
-  z-index: 10;
-}
-
-/* Ribbon Bookmark */
-.dangle-ribbon {
-  position: absolute;
-  top: -8px;
-  right: 10px;
-  width: 8px;
-  height: 18px;
-  background: var(--terracotta);
-  border: 1.5px solid var(--ink);
-  border-bottom: none;
-  clip-path: polygon(0 100%, 50% 75%, 100% 100%, 100% 0, 0 0);
-  z-index: 5;
-}
-
-/* Brass Bookend */
-.shelf-bookend {
-  display: flex;
-  align-items: flex-end;
-  flex-shrink: 0;
-  margin-right: 8px;
-}
-
-/* Empty Book Slot */
-.empty-book-slot {
-  width: 65px;
-  height: 180px;
-  border: 2px dashed #bbaaa0;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  color: #8c786c;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-  text-align: center;
-  padding: 6px;
-  background: rgba(255,255,255,0.45);
-}
-
-.empty-book-slot:hover {
-  border-color: var(--ink);
+  padding: 6px 36px 6px 14px;
   background: #fff;
-  transform: translateY(-6px);
-}
-}
-
-/* Gold embossed spine ribs */
-.spine-rib {
-  width: 100%;
-  height: 4px;
-  background: rgba(255, 223, 133, 0.45);
-  border-top: 1px solid rgba(255, 255, 255, 0.6);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
-  margin: 4px 0;
-}
-
-.spine-title-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  width: 100%;
-  padding: 4px 0;
-}
-
-.spine-title-text {
-  font-weight: 700;
-  line-height: 1.15;
-  text-align: center;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  word-break: normal;
-  overflow-wrap: break-word;
-  hyphens: none;
-  -webkit-hyphens: none;
-  padding: 0 4px;
-}
-
-.spine-author-text {
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-align: center;
-  opacity: 0.9;
-  width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border-top: 1px solid rgba(0, 0, 0, 0.2);
-  padding-top: 4px;
-}
-
-/* 3. LEANING MODE */
-.cozy-shelf-book.is-leaning {
-  transform: rotate(15deg);
-  transform-origin: bottom left;
-  margin-right: 22px;
-}
-
-.cozy-shelf-book.is-leaning:hover {
-  transform: translateY(-16px) rotate(15deg) scale(1.03);
-}
-
-/* 4. REALISTIC STACKED BOOKS (Piled on top of each other!) */
-.shelf-book-stack {
-  display: flex;
-  flex-direction: column-reverse; /* Bottom book at shelf base */
-  align-items: center;
-  gap: 0;
-  margin-right: 14px;
-  position: relative;
-  flex-shrink: 0;
-  cursor: pointer;
-  user-select: none;
-  transition: transform 0.2s ease;
-}
-
-.shelf-book-stack:hover {
-  transform: translateY(-8px);
-}
-
-.stack-book-layer {
-  width: 155px;
-  height: 38px;
   border: 2px solid var(--ink);
-  border-radius: 4px;
-  box-shadow: 2px 2px 0px rgba(0,0,0,0.18);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 12px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  position: relative;
-  margin-bottom: -1px;
-  transition: transform 0.15s ease;
-}
-
-.stack-book-layer:hover {
-  transform: scale(1.03);
-  z-index: 20;
-}
-
-/* Ribbon Bookmark */
-.dangle-ribbon {
-  position: absolute;
-  top: -10px;
-  right: 12px;
-  width: 9px;
-  height: 22px;
-  background: var(--terracotta);
-  border: 1.5px solid var(--ink);
-  border-bottom: none;
-  clip-path: polygon(0 100%, 50% 70%, 100% 100%, 100% 0, 0 0);
-  z-index: 5;
-}
-
-/* Shelf Decorations (Hand-drawn SVGs) */
-.shelf-decor-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  padding-bottom: 2px;
-  cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  flex-shrink: 0;
-  user-select: none;
-}
-
-.shelf-decor-item:hover {
-  transform: scale(1.15) translateY(-6px);
-}
-
-/* Empty Book Slot */
-.empty-book-slot {
-  width: 72px;
-  height: 185px;
-  border: 2px dashed #bbaaa0;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  color: #8c786c;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-  text-align: center;
-  padding: 6px;
-  background: #fdfbf7;
-}
-
-.empty-book-slot:hover {
-  border-color: var(--ink);
-  background: #faedcd;
-  transform: translateY(-6px);
-}
-  border-color: var(--ink);
-  background-color: #f7eed8;
+  border-radius: 255px 20px 225px 20px / 20px 225px 20px 255px;
+  font-family: inherit;
+  font-size: 1rem;
   color: var(--ink);
-  transform: translateY(-4px);
+  box-shadow: 2px 2px 0px var(--ink);
+  outline: none;
 }
 
-/* Modals */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(44, 34, 30, 0.5);
-  backdrop-filter: blur(4px);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  z-index: 100;
+.search-icon-decor {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  pointer-events: none;
 }
 
-.modal-backdrop.active {
-  display: flex;
-}
-
-.bounce-in {
-  animation: popOpen 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
-@keyframes popOpen {
-  0% { transform: scale(0.8) translateY(30px); opacity: 0; }
-  100% { transform: scale(1) translateY(0); opacity: 1; }
-}
-
+/* Toast */
 .toast-container {
   position: fixed;
   bottom: 24px;
@@ -663,5 +375,4 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  animation: popOpen 0.25s ease;
 }

@@ -1,19 +1,19 @@
 /**
- * The Cozy Nook - Frontend Application
- * Real home bookshelf: Front-Facing, Spine, Leaning, Stacked, & Hand-drawn Shelf Decors
+ * The Cozy Nook - Hand-drawn Cozy Bookshelf Application
+ * Restored from approved prototype handdrawn_cozy_shelf.html
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Whimsical color themes for book spines
+    // Whimsical color themes for hand-drawn book spines
     const coverThemes = [
-        { bg: '#81b29a', text: '#152b1e', ribbon: '#e07a5f' }, // Matcha
-        { bg: '#e07a5f', text: '#ffffff', ribbon: '#f2cc8f' }, // Terracotta
-        { bg: '#f2cc8f', text: '#3f2b12', ribbon: '#81b29a' }, // Honey
-        { bg: '#9d8189', text: '#ffffff', ribbon: '#e07a5f' }, // Dusty Rose
-        { bg: '#8ecae6', text: '#103548', ribbon: '#e07a5f' }, // Sky Blue
-        { bg: '#e76f51', text: '#ffffff', ribbon: '#f2cc8f' }, // Rust
-        { bg: '#eed9c4', text: '#4a2e18', ribbon: '#81b29a' }, // Oat Bread
-        { bg: '#a3b18a', text: '#1b2c15', ribbon: '#e07a5f' }  // Sage
+        { bg: '#81b29a', text: '#1e2d24', emoji: '🌿', ribbon: '#e07a5f' }, // Matcha
+        { bg: '#e07a5f', text: '#ffffff', emoji: '⏳', ribbon: '#f2cc8f' }, // Terracotta
+        { bg: '#f2cc8f', text: '#3f2b12', emoji: '🍂', ribbon: '#81b29a' }, // Honey
+        { bg: '#9d8189', text: '#ffffff', emoji: '🌙', ribbon: '#e07a5f' }, // Dusty Rose
+        { bg: '#8ecae6', text: '#103b4f', emoji: '☁️', ribbon: '#e07a5f' }, // Sky Blue
+        { bg: '#e76f51', text: '#ffffff', emoji: '✦',  ribbon: '#f2cc8f' }, // Rust
+        { bg: '#eed9c4', text: '#4a2e18', emoji: '🕯️', ribbon: '#81b29a' }, // Soft Oat
+        { bg: '#e9c46a', text: '#2c221e', emoji: '⭐', ribbon: '#e07a5f' }  // Little Prince Yellow
     ];
 
     // State
@@ -25,8 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         selectedBook: null,
         extractedCoverUrl: '',
         extractedDominantColor: '',
-        shelfDecors: JSON.parse(localStorage.getItem('cozy_shelf_decors') || '["plant", "mug"]'),
-        draggedBookId: null
+        plantLevel: 1
     };
 
     // DOM Elements
@@ -35,6 +34,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const totalBooksCount = document.getElementById('totalBooksCount');
     const emptyState = document.getElementById('emptyState');
     const searchInput = document.getElementById('searchInput');
+    const btnPlant = document.getElementById('btnPlant');
+    const plantLabel = document.getElementById('plantLabel');
 
     // Modals
     const readModal = document.getElementById('readModal');
@@ -43,6 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Read Modal Elements
     const modalCover = document.getElementById('modalCover');
+    const modalEmoji = document.getElementById('modalEmoji');
     const modalFileType = document.getElementById('modalFileType');
     const modalBookTitle = document.getElementById('modalBookTitle');
     const modalBookAuthor = document.getElementById('modalBookAuthor');
@@ -94,7 +96,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             storageModeLabel.innerText = '☁️ Synced with Supabase Cloud';
             document.getElementById('cloudLabel').innerText = 'Cloud Connected';
         } else {
-            storageModeLabel.innerText = '📁 Stored locally in your browser (IndexedDB)';
+            storageModeLabel.innerText = '📁 Stored locally in your browser';
             document.getElementById('cloudLabel').innerText = 'Cloud Sync';
         }
     }
@@ -121,6 +123,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             pill.classList.add('active');
             state.activeShelf = pill.dataset.shelfId;
             fetchBooks();
+        });
+
+        // Plant Easter Egg
+        btnPlant.addEventListener('click', () => {
+            state.plantLevel = (state.plantLevel % 4) + 1;
+            const plantEl = document.getElementById('plantDisplay');
+            if (plantEl) {
+                const icons = ['🌱', '🪴', '🌿', '✨🪴✨'];
+                plantEl.innerText = icons[state.plantLevel - 1];
+            }
+            plantLabel.innerText = state.plantLevel === 4 ? "Pothos is thriving!" : "Water Pothos";
+            showToast('You watered the little pothos!', 'success');
         });
 
         // Modals
@@ -162,8 +176,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 state.selectedBook.spine_style = newStyle;
                 await window.storageEngine.updateBookSpineStyle(state.selectedBook.id, newStyle);
-                showToast(`Arranged as ${newStyle}`, 'success');
-                renderShelves(); // Updates shelf immediately!
+                showToast(`Shelf style: ${newStyle}`, 'success');
+                renderShelves();
             });
         });
 
@@ -210,6 +224,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         uploadForm.addEventListener('submit', handleUploadSubmit);
+
+        // Click outside backdrop to close
+        readModal.addEventListener('click', (e) => {
+            if (e.target === readModal) readModal.classList.remove('active');
+        });
+        uploadModal.addEventListener('click', (e) => {
+            if (e.target === uploadModal) uploadModal.classList.remove('active');
+        });
+        cloudModal.addEventListener('click', (e) => {
+            if (e.target === cloudModal) cloudModal.classList.remove('active');
+        });
     }
 
     async function handleFileSelected(file) {
@@ -225,7 +250,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         state.extractedDominantColor = extracted.dominant_color || '#e07a5f';
 
         if (extracted.cover_url) {
-            showToast('Extracted real cover image & book details!', 'success');
+            showToast('Extracted book cover & details!', 'success');
         }
     }
 
@@ -240,7 +265,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const title = cleanTitle(bookTitleInput.value.trim() || file.name);
         const author = bookAuthorInput.value.trim() || 'Unknown Author';
         const shelf_id = uploadShelfSelect.value;
-        const spine_style = uploadStyleSelect.value || 'front';
+        const spine_style = uploadStyleSelect.value || 'spine';
         const cover_url = state.extractedCoverUrl;
         const spine_color = state.extractedDominantColor || '#e07a5f';
 
@@ -262,7 +287,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             state.extractedCoverUrl = '';
             state.extractedDominantColor = '';
 
-            showToast(`"${title}" placed on the shelf!`, 'success');
+            showToast(`"${title}" slipped onto the shelf!`, 'success');
             await reloadData();
         } catch (err) {
             showToast('Failed to save book: ' + err.message, 'error');
@@ -331,22 +356,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderShelves() {
         shelvesContainer.innerHTML = '';
 
-        const bookcase = document.createElement('div');
-        bookcase.className = 'bookcase-wrapper';
-
-        const crown = document.createElement('div');
-        crown.className = 'bookcase-top-crown';
-        bookcase.appendChild(crown);
-
         const itemsPerShelf = 5;
         const shelfCount = Math.max(1, Math.ceil(state.books.length / itemsPerShelf));
 
         for (let sIdx = 0; sIdx < shelfCount; sIdx++) {
             const chunk = state.books.slice(sIdx * itemsPerShelf, (sIdx + 1) * itemsPerShelf);
+            const isFirstShelf = (sIdx === 0);
 
-            // Shelf Tier (Inner Wall)
-            const tier = document.createElement('div');
-            tier.className = 'shelf-tier';
+            const shelfSection = document.createElement('div');
+            shelfSection.className = 'relative';
+
+            // Top shelf accessories on first shelf: Mochi sleeping cat, vine plant, hot tea
+            let accessoriesHtml = '';
+            if (isFirstShelf) {
+                accessoriesHtml = `
+                    <div class="flex items-end justify-between px-6 mb-[-2px] relative z-10">
+                        <div class="sleeping-cat flex items-center gap-1.5 bg-[#fdfaf3] px-3 py-1 rounded-full border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] text-sm select-none">
+                            <span class="text-lg">🐱</span>
+                            <span class="font-bold text-xs text-[#524137]">Mochi is sleeping... zZz</span>
+                        </div>
+                        <div class="flex items-end gap-3 text-2xl select-none">
+                            <div id="plantDisplay" class="transition-transform hover:scale-125 cursor-pointer" title="A happy little vine">🪴</div>
+                            <div class="transition-transform hover:rotate-6 cursor-pointer" title="Hot Chamomile Tea">🍵</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                accessoriesHtml = `
+                    <div class="flex items-end justify-end px-6 mb-[-2px] relative z-10 select-none">
+                        <div class="text-2xl" title="Warm Candle">🕯️</div>
+                    </div>
+                `;
+            }
+
+            // Shelf Book Box (Exactly from handdrawn_cozy_shelf.html)
+            const box = document.createElement('div');
+            box.className = 'bg-[#fffcf7] p-6 pb-2 border-x-2 border-t-2 border-[#2c221e] rounded-t-2xl shadow-inner min-h-[220px] flex items-end gap-3 md:gap-4 overflow-x-auto';
 
             let bIdx = 0;
             while (bIdx < chunk.length) {
@@ -354,178 +399,131 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const theme = coverThemes[(sIdx * itemsPerShelf + bIdx) % coverThemes.length];
 
                 if (book.spine_style === 'stacked') {
-                    // Group consecutive stacked books together into a neat pile
+                    // Group stacked books
                     const stackPile = [book];
                     let nextIdx = bIdx + 1;
                     while (nextIdx < chunk.length && chunk[nextIdx].spine_style === 'stacked') {
                         stackPile.push(chunk[nextIdx]);
                         nextIdx++;
                     }
-                    tier.appendChild(createStackedBooksPile(stackPile, sIdx * itemsPerShelf + bIdx));
+                    box.appendChild(createStackedBooksGroup(stackPile, sIdx * itemsPerShelf + bIdx));
                     bIdx = nextIdx;
                 } else {
-                    tier.appendChild(createShelfBookItem(book, theme));
+                    box.appendChild(createDoodleBook(book, theme));
                     bIdx++;
                 }
             }
 
-            // Empty Slot Button to slip a new book in
+            // Empty Slot sketch
             const emptySlot = document.createElement('div');
-            emptySlot.className = 'empty-book-slot';
+            emptySlot.className = 'border-2 border-dashed border-[#c4b5a5] rounded-lg w-16 h-36 flex flex-col items-center justify-center p-2 text-center text-xs text-[#a89685] cursor-pointer hover:border-[#2c221e] transition-colors flex-shrink-0';
             emptySlot.innerHTML = `
-                <span style="font-size: 1.4rem;">+</span>
-                <span style="font-size: 0.8rem; font-weight: 700;">Slip in</span>
+                <span class="text-lg">+</span>
+                <span>Slip in</span>
             `;
             emptySlot.addEventListener('click', () => uploadModal.classList.add('active'));
-            tier.appendChild(emptySlot);
+            box.appendChild(emptySlot);
 
-            // Wooden Shelf Plank with wood knots
+            // Shelf label badge on right
+            const shelfBadge = document.createElement('div');
+            shelfBadge.className = 'ml-auto flex items-end pb-1 pr-2 select-none';
+            shelfBadge.innerHTML = `
+                <div class="px-3 py-1 bg-[#fffdfa] border-2 border-[#2c221e] rounded-lg shadow-[2px_2px_0px_#2c221e] text-xs font-bold flex items-center gap-1.5">
+                    <span>🏷️</span>
+                    <span>Shelf ${sIdx + 1}</span>
+                </div>
+            `;
+            box.appendChild(shelfBadge);
+
+            // Solid Wooden Shelf Plank with Knots
             const plank = document.createElement('div');
-            plank.className = 'shelf-plank';
+            plank.className = 'sketch-shelf flex items-center justify-between px-8';
             plank.innerHTML = `
-                <div class="wood-knot"></div>
-                <div class="wood-knot"></div>
-                <div class="wood-knot"></div>
+                <div class="wood-knot" style="left: ${15 + sIdx * 10}%;"></div>
+                <div class="wood-knot" style="left: ${55 - sIdx * 5}%;"></div>
+                <div class="wood-knot" style="left: 88%;"></div>
             `;
 
-            bookcase.appendChild(tier);
-            bookcase.appendChild(plank);
+            shelfSection.innerHTML = accessoriesHtml;
+            shelfSection.appendChild(box);
+            shelfSection.appendChild(plank);
+            shelvesContainer.appendChild(shelfSection);
         }
-
-        shelvesContainer.appendChild(bookcase);
     }
 
     // Creates an individual book item on the shelf
-    function createShelfBookItem(book, theme) {
+    function createDoodleBook(book, theme) {
         const item = document.createElement('div');
         const style = book.spine_style || 'spine';
-        const spineColor = book.spine_color || theme.bg;
+        const color = book.spine_color || theme.bg;
         const displayTitle = cleanTitle(book.title);
+        const displayAuthor = cleanAuthor(book.author);
 
-        item.className = `cozy-shelf-book ${style === 'leaning' ? 'is-leaning' : ''}`;
-        item.draggable = true;
-        item.dataset.bookId = book.id;
-
-        // Dynamic font size based on title length
-        let titleFontSize = '0.92rem';
-        if (displayTitle.length > 32) titleFontSize = '0.74rem';
-        else if (displayTitle.length > 20) titleFontSize = '0.80rem';
-        else if (displayTitle.length > 13) titleFontSize = '0.86rem';
+        item.className = `doodle-book ${style === 'leaning' ? 'is-leaning' : ''}`;
 
         if (style === 'front') {
-            // 1. FRONT-FACING COVER: Shows the real extracted cover image or styled cover!
-            let coverBgStyle = book.cover_url 
-                ? `background-image: url("${book.cover_url}");` 
-                : `background-color: ${spineColor}; color: ${theme.text};`;
+            // Front-Facing Cover
+            let coverBgStyle = book.cover_url
+                ? `background-image: url("${book.cover_url}"); background-color: #2c221e;`
+                : `background-color: ${color}; color: ${theme.text};`;
 
             item.innerHTML = `
-                <div class="book-cover-front" style="${coverBgStyle}">
+                <div class="hover-tooltip">Take out 📖</div>
+                <div class="book-front-cover" style="${coverBgStyle}">
                     <div class="dangle-ribbon" style="background-color: ${theme.ribbon};"></div>
-                    <div class="flex items-center justify-between z-10 ${book.cover_url ? 'bg-black/50 px-2 py-0.5 rounded text-white' : ''}">
-                        <span class="text-xs font-bold uppercase tracking-wide">${escapeHtml(book.file_type || 'epub')}</span>
-                        <span class="text-xs font-bold bg-[#f2cc8f] text-[#2c221e] px-1.5 py-0.2 rounded">${Math.round(book.reading_progress || 0)}%</span>
-                    </div>
-                    <div class="z-10 ${book.cover_url ? 'bg-black/60 p-2.5 rounded text-white' : ''}">
-                        <h4 class="font-bold line-clamp-2 leading-tight" style="font-size: ${titleFontSize};">${escapeHtml(displayTitle)}</h4>
-                        <p class="text-xs opacity-90 truncate mt-0.5">${escapeHtml(book.author || 'Unknown')}</p>
+                    <span class="text-xs font-bold uppercase tracking-wide bg-black/40 px-2 py-0.5 rounded text-white self-start">${escapeHtml(book.file_type || 'epub')}</span>
+                    <div class="bg-black/55 p-2 rounded text-white z-10">
+                        <h4 class="font-bold text-sm line-clamp-2 leading-tight">${escapeHtml(displayTitle)}</h4>
+                        <p class="text-xs opacity-90 truncate mt-0.5">${escapeHtml(displayAuthor)}</p>
                     </div>
                 </div>
             `;
         } else {
-            // 2. REALISTIC UPRIGHT OR LEANING SPINE (Clean, elegant, matches cover color)
-            const height = 205 + ((displayTitle.length * 2) % 18);
-
-            let spineBg = book.cover_url
-                ? `background-image: linear-gradient(90deg, rgba(0,0,0,0.5) 0%, rgba(255,255,255,0.15) 20%, transparent 60%, rgba(0,0,0,0.45) 100%), url("${book.cover_url}");`
-                : `background: linear-gradient(90deg, rgba(0,0,0,0.15) 0%, rgba(255,255,255,0.2) 20%, transparent 50%, rgba(0,0,0,0.18) 100%), ${spineColor}; color: ${theme.text};`;
+            // Upright Spine (Exact style from handdrawn_cozy_shelf.html)
+            const height = 190 + ((displayTitle.length * 2) % 20);
+            const spineWidth = 52;
+            const textColor = isLightColor(color) ? '#1e2d24' : '#ffffff';
 
             item.innerHTML = `
-                <div class="book-spine-upright" style="height: ${height}px; ${spineBg}">
-                    <div class="dangle-ribbon" style="background-color: ${theme.ribbon};"></div>
-                    <div></div>
-                    <div class="spine-title-container">
-                        <span class="spine-title-text ${book.cover_url ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]' : ''}" style="font-size: ${titleFontSize};">${escapeHtml(displayTitle)}</span>
-                    </div>
-                    <span class="spine-author-text ${book.cover_url ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]' : ''}">${escapeHtml(book.author || 'Tome')}</span>
+                <div class="hover-tooltip">Take out 📖</div>
+                <div class="book-body w-[${spineWidth}px] h-[${height}px]" style="background-color: ${color};">
+                    <span class="text-xs">${theme.emoji}</span>
+                    <span class="font-bold text-sm [writing-mode:vertical-rl] rotate-180 tracking-wider" style="color: ${textColor}; max-height: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(displayTitle)}</span>
+                    <span class="text-[10px] font-bold uppercase" style="color: ${textColor}; max-width: 44px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(displayAuthor)}</span>
+                    <div class="dangle-ribbon" style="background: ${theme.ribbon};"></div>
                 </div>
             `;
         }
 
-        // Click book to pull it off the shelf & open modal
         item.addEventListener('click', () => openBookModal(book, theme));
-
-        // Drag & Drop
-        setupDragEvents(item, book);
-
         return item;
     }
 
-    // Creates a physical pile of books stacked flat on top of each other
-    function createStackedBooksPile(booksInStack, baseThemeIdx) {
-        const stackWrap = document.createElement('div');
-        stackWrap.className = 'shelf-book-stack';
+    // Creates stacked books lying down
+    function createStackedBooksGroup(booksInStack, baseThemeIdx) {
+        const wrap = document.createElement('div');
+        wrap.className = 'flex flex-col gap-1 items-center pb-0.5 ml-2 flex-shrink-0';
 
         booksInStack.forEach((b, i) => {
             const theme = coverThemes[(baseThemeIdx + i) % coverThemes.length];
-            const spineColor = b.spine_color || theme.bg;
+            const color = b.spine_color || theme.bg;
             const displayTitle = cleanTitle(b.title);
+            const textColor = isLightColor(color) ? '#1e2d24' : '#ffffff';
 
             const layer = document.createElement('div');
-            layer.className = 'stack-book-layer';
-            layer.style.backgroundColor = spineColor;
-            layer.style.color = theme.text;
-            layer.draggable = true;
-            layer.dataset.bookId = b.id;
-
+            layer.className = 'doodle-book';
             layer.innerHTML = `
-                <span class="truncate max-w-[110px]">${escapeHtml(displayTitle)}</span>
-                <span class="text-xs opacity-75">${Math.round(b.reading_progress || 0)}%</span>
+                <div class="hover-tooltip">Take out 📖</div>
+                <div class="w-32 h-7 border-2 border-[#2c221e] rounded flex items-center justify-between px-2 text-xs font-bold shadow-sm" style="background: ${color}; color: ${textColor};">
+                    <span class="truncate max-w-[95px]">${escapeHtml(displayTitle)}</span>
+                    <span class="text-[10px] opacity-80">✦</span>
+                </div>
             `;
-
-            layer.addEventListener('click', (e) => {
-                e.stopPropagation();
-                openBookModal(b, theme);
-            });
-
-            setupDragEvents(layer, b);
-            stackWrap.appendChild(layer);
+            layer.addEventListener('click', () => openBookModal(b, theme));
+            wrap.appendChild(layer);
         });
 
-        return stackWrap;
-    }
-
-    // Drag and drop handler
-    function setupDragEvents(element, book) {
-        element.addEventListener('dragstart', (e) => {
-            state.draggedBookId = book.id;
-            element.classList.add('is-dragging');
-            e.dataTransfer.setData('text/plain', book.id);
-        });
-
-        element.addEventListener('dragend', () => {
-            element.classList.remove('is-dragging');
-            state.draggedBookId = null;
-        });
-
-        element.addEventListener('dragover', (e) => {
-            e.preventDefault();
-        });
-
-        element.addEventListener('drop', async (e) => {
-            e.preventDefault();
-            const sourceId = state.draggedBookId || e.dataTransfer.getData('text/plain');
-            if (!sourceId || sourceId == book.id) return;
-
-            // Reorder books on shelf
-            const fromIdx = state.books.findIndex(b => b.id == sourceId);
-            const toIdx = state.books.findIndex(b => b.id == book.id);
-            if (fromIdx !== -1 && toIdx !== -1) {
-                const [movedBook] = state.books.splice(fromIdx, 1);
-                state.books.splice(toIdx, 0, movedBook);
-                renderShelves();
-                showToast('Rearranged books on shelf', 'info');
-            }
-        });
+        return wrap;
     }
 
     // --- Pop-Out Book Modal ---
@@ -533,6 +531,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function openBookModal(book, theme) {
         state.selectedBook = book;
         const displayTitle = cleanTitle(book.title);
+        const displayAuthor = cleanAuthor(book.author);
 
         if (book.cover_url) {
             modalCover.style.backgroundImage = `url("${book.cover_url}")`;
@@ -542,23 +541,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             modalCover.style.backgroundColor = book.spine_color || theme.bg;
         }
 
+        modalEmoji.innerText = theme.emoji;
         modalFileType.innerText = book.file_type || 'epub';
         modalBookTitle.innerText = displayTitle;
-        modalBookAuthor.innerText = book.author || 'Unknown Author';
+        modalBookAuthor.innerText = displayAuthor;
 
         modalDetailTitle.innerText = displayTitle;
-        modalDetailAuthor.innerText = "by " + (book.author || 'Unknown Author');
+        modalDetailAuthor.innerText = "by " + displayAuthor;
         modalDetailDesc.innerText = book.description || 'A cozy digital volume resting on your wooden shelf.';
 
         const shelf = state.shelves.find(s => s.id == book.shelf_id);
-        modalShelfBadge.innerText = shelf ? `Shelf: ${shelf.name}` : 'Saved to shelf';
+        modalShelfBadge.innerText = shelf ? `Shelf: ${shelf.name}` : 'Saved to your shelf';
 
         const prog = Math.round(book.reading_progress || 0);
         modalProgText.innerText = `${prog}% completed`;
         modalProgFill.style.width = `${prog}%`;
 
         // Highlight active style button
-        const curStyle = book.spine_style || 'front';
+        const curStyle = book.spine_style || 'spine';
         document.querySelectorAll('.btn-spine-style').forEach(b => {
             if (b.dataset.style === curStyle) {
                 b.className = 'btn-spine-style hand-btn hand-btn-sm hand-btn-terracotta text-white';
@@ -570,105 +570,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         readModal.classList.add('active');
     }
 
-    // --- Hand-Drawn Animated SVG Illustrations (Zero Emojis!) ---
-
-    function getHanddrawnMochiSvg() {
-        return `
-            <svg class="cat-svg" width="38" height="28" viewBox="0 0 38 28" fill="none">
-                <path class="cat-tail" d="M 30 22 C 35 24 37 17 34 14 C 32 12 29 14 30 17" stroke="#2c221e" stroke-width="2" stroke-linecap="round" fill="#e07a5f"/>
-                <ellipse class="cat-body" cx="19" cy="18" rx="15" ry="9" fill="#f4a261" stroke="#2c221e" stroke-width="2"/>
-                <circle cx="10" cy="15" r="7.5" fill="#f4a261" stroke="#2c221e" stroke-width="2"/>
-                <polygon points="6,9 8,3 11,9" fill="#e07a5f" stroke="#2c221e" stroke-width="1.8"/>
-                <polygon points="11,9 13,4 15,10" fill="#e07a5f" stroke="#2c221e" stroke-width="1.8"/>
-                <path d="M 7 15 Q 9 17 11 15" stroke="#2c221e" stroke-width="1.6" stroke-linecap="round"/>
-                <path d="M 12 15 Q 14 17 16 15" stroke="#2c221e" stroke-width="1.6" stroke-linecap="round"/>
-                <circle cx="11.5" cy="17.5" r="1.2" fill="#e07a5f"/>
-            </svg>
-        `;
-    }
-
-    function getHanddrawnMugSvg() {
-        return `
-            <div class="handdrawn-mug-decor" title="Warm Cinnamon Tea">
-                <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
-                    <path class="steam-wave-1" d="M 12 10 Q 14 6 12 2" stroke="#8c786c" stroke-width="1.6" stroke-linecap="round" fill="none"/>
-                    <path class="steam-wave-2" d="M 18 11 Q 20 7 18 3" stroke="#8c786c" stroke-width="1.6" stroke-linecap="round" fill="none"/>
-                    <rect x="7" y="12" width="16" height="18" rx="4" fill="#eed9c4" stroke="#2c221e" stroke-width="2"/>
-                    <path d="M 23 15 C 28 15 28 25 23 25" stroke="#2c221e" stroke-width="2" fill="none"/>
-                    <line x1="7" y1="18" x2="23" y2="18" stroke="#e07a5f" stroke-width="1.5" stroke-dasharray="2 2"/>
-                </svg>
-            </div>
-        `;
-    }
-
-    function getHanddrawnCandleSvg() {
-        return `
-            <div class="handdrawn-candle-decor" title="Cozy Candle">
-                <svg width="28" height="42" viewBox="0 0 28 42" fill="none">
-                    <path class="candle-flame" d="M 14 4 C 11 8 10 13 14 15 C 18 13 17 8 14 4 Z" fill="#f4a261" stroke="#2c221e" stroke-width="1.5"/>
-                    <circle cx="14" cy="12" r="2.5" fill="#ffeaa7"/>
-                    <line x1="14" y1="15" x2="14" y2="18" stroke="#2c221e" stroke-width="2"/>
-                    <rect x="7" y="18" width="14" height="22" rx="3" fill="#fffdfa" stroke="#2c221e" stroke-width="2"/>
-                    <path d="M 9 18 C 9 22 11 22 11 18" fill="#fffdfa" stroke="#2c221e" stroke-width="1.5"/>
-                </svg>
-            </div>
-        `;
-    }
-
-    function getHanddrawnPlantSvg() {
-        return `
-            <div class="handdrawn-plant-decor" title="Pothos Plant">
-                <svg width="42" height="48" viewBox="0 0 42 48" fill="none">
-                    <path d="M 21 22 Q 10 18 8 12 Q 14 8 21 22" fill="#81b29a" stroke="#2c221e" stroke-width="1.8"/>
-                    <path d="M 21 22 Q 32 16 34 10 Q 26 8 21 22" fill="#a3b18a" stroke="#2c221e" stroke-width="1.8"/>
-                    <path d="M 21 20 Q 21 8 16 4 Q 14 12 21 20" fill="#588157" stroke="#2c221e" stroke-width="1.8"/>
-                    <path d="M 10 24 Q 4 30 2 36 Q 8 36 12 26" fill="#81b29a" stroke="#2c221e" stroke-width="1.8"/>
-                    <polygon points="12,22 30,22 27,42 15,42" fill="#e07a5f" stroke="#2c221e" stroke-width="2"/>
-                    <rect x="10" y="20" width="22" height="4" rx="2" fill="#cfa170" stroke="#2c221e" stroke-width="1.8"/>
-                </svg>
-            </div>
-        `;
-    }
-
-    function getHanddrawnClockSvg() {
-        return `
-            <div class="handdrawn-clock-decor" title="Vintage Clock">
-                <svg width="36" height="46" viewBox="0 0 36 46" fill="none">
-                    <rect x="6" y="6" width="24" height="26" rx="5" fill="#cfa170" stroke="#2c221e" stroke-width="2"/>
-                    <circle cx="18" cy="18" r="9" fill="#ffffff" stroke="#2c221e" stroke-width="1.8"/>
-                    <line x1="18" y1="18" x2="18" y2="12" stroke="#2c221e" stroke-width="1.8" stroke-linecap="round"/>
-                    <line x1="18" y1="18" x2="22" y2="18" stroke="#2c221e" stroke-width="1.8" stroke-linecap="round"/>
-                    <g class="clock-pendulum" style="transform-origin: 18px 32px;">
-                        <line x1="18" y1="32" x2="18" y2="42" stroke="#2c221e" stroke-width="1.8"/>
-                        <circle cx="18" cy="42" r="3" fill="#f2cc8f" stroke="#2c221e" stroke-width="1.5"/>
-                    </g>
-                </svg>
-            </div>
-        `;
-    }
-
-    function getHanddrawnBookendSvg() {
-        return `
-            <div class="handdrawn-bookend-decor" title="Brass Bookend">
-                <svg width="34" height="44" viewBox="0 0 34 44" fill="none">
-                    <path d="M 4 40 L 4 10 Q 4 4 10 4 L 14 4 L 14 36 L 30 36 L 30 40 Z" fill="#f2cc8f" stroke="#2c221e" stroke-width="2.2" stroke-linejoin="round"/>
-                    <path d="M 14 12 L 28 36" stroke="#2c221e" stroke-width="2" stroke-dasharray="2 3"/>
-                </svg>
-            </div>
-        `;
-    }
-
-    function renderHanddrawnDecor(type) {
-        switch (type) {
-            case 'plant': return getHanddrawnPlantSvg();
-            case 'mug': return getHanddrawnMugSvg();
-            case 'candle': return getHanddrawnCandleSvg();
-            case 'clock': return getHanddrawnClockSvg();
-            case 'bookend': return getHanddrawnBookendSvg();
-            default: return getHanddrawnPlantSvg();
-        }
-    }
-
     // --- Utilities ---
 
     function cleanTitle(raw) {
@@ -678,6 +579,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             .replace(/[_-]+/g, " ")
             .replace(/\s+/g, " ")
             .trim();
+    }
+
+    function cleanAuthor(raw) {
+        if (!raw || raw.toLowerCase() === 'unknown') return 'Unknown Author';
+        return raw.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+    }
+
+    function isLightColor(color) {
+        if (!color) return false;
+        if (color === '#f2cc8f' || color === '#e9c46a' || color === '#eed9c4' || color === '#81b29a') return true;
+        return false;
     }
 
     function showToast(msg, type = 'success') {
