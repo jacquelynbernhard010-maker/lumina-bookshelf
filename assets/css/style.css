@@ -1,22 +1,23 @@
 /* ========================================================
-   THE COZY NOOK - Hand-Drawn Indie Sketchbook Stylesheet
-   Inspired by UIverse tactile elements, Ghibli & cozy journals
+   THE COZY NOOK - Handcrafted Cozy Library Stylesheet
+   No weird upside-down vertical text bugs!
+   Cozy front-facing illustrated books on wooden shelves
    ======================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Patrick+Hand&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Gaegu:wght@400;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
 
 :root {
   --ink: #2c221e;
   --paper-bg: #f7f1e5;
   --card-bg: #fffdf9;
-  --wood: #d4a373;
+  --wood: #cfa170;
   --wood-shadow: #8c5836;
   --terracotta: #e07a5f;
   --matcha: #81b29a;
   --honey: #f2cc8f;
   --periwinkle: #9d8189;
   --sky: #8ecae6;
-  --toast-border: #2c221e;
+  --plum: #835069;
 }
 
 *, *::before, *::after {
@@ -29,12 +30,12 @@ body {
   font-family: 'Patrick Hand', cursive, sans-serif;
   background-color: var(--paper-bg);
   background-image: 
-    radial-gradient(#e5dbc9 1px, transparent 1px),
-    radial-gradient(#e5dbc9 1px, var(--paper-bg) 1px);
+    radial-gradient(#dfd4c0 1.2px, transparent 1.2px),
+    radial-gradient(#dfd4c0 1.2px, var(--paper-bg) 1.2px);
   background-size: 24px 24px;
   background-position: 0 0, 12px 12px;
   color: var(--ink);
-  line-height: 1.5;
+  line-height: 1.4;
   min-height: 100vh;
   padding: 24px 16px;
   overflow-x: hidden;
@@ -54,7 +55,7 @@ body {
   border-radius: 255px 25px 225px 25px / 25px 225px 25px 255px;
 }
 
-/* UIverse Tactile Hand-drawn Buttons */
+/* Tactile UIverse Buttons */
 .hand-btn {
   display: inline-flex;
   align-items: center;
@@ -65,7 +66,7 @@ body {
   border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
   box-shadow: 3px 3px 0px var(--ink);
   padding: 8px 18px;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--ink);
   cursor: pointer;
@@ -95,8 +96,8 @@ body {
 }
 
 .hand-btn-sm {
-  padding: 5px 12px;
-  font-size: 0.95rem;
+  padding: 5px 14px;
+  font-size: 1rem;
 }
 
 /* Washi Tape Accent */
@@ -108,7 +109,7 @@ body {
   z-index: 10;
 }
 
-/* Search Bar (Tactile Sketch) */
+/* Search Box */
 .search-box-wrap {
   position: relative;
   max-width: 380px;
@@ -117,12 +118,12 @@ body {
 
 .search-box-wrap input {
   width: 100%;
-  padding: 8px 36px 8px 14px;
+  padding: 8px 36px 8px 16px;
   background: #fff;
   border: 2px solid var(--ink);
   border-radius: 255px 20px 225px 20px / 20px 225px 20px 255px;
   font-family: inherit;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   color: var(--ink);
   box-shadow: 2px 2px 0px var(--ink);
   outline: none;
@@ -136,17 +137,17 @@ body {
 
 .search-icon-decor {
   position: absolute;
-  right: 12px;
+  right: 14px;
   top: 50%;
   transform: translateY(-50%);
   font-size: 1.1rem;
   pointer-events: none;
 }
 
-/* Category Shelf Pills */
+/* Category Pills */
 .shelf-pill {
-  padding: 5px 16px;
-  font-size: 1rem;
+  padding: 6px 18px;
+  font-size: 1.05rem;
   font-weight: 700;
   background: #fff;
   border: 2px solid var(--ink);
@@ -170,127 +171,181 @@ body {
 }
 
 /* ========================================================
-   THE WOODEN SHELF & BOOK ROWS
+   COZY BOOKCASE & BOOK CARDS
    ======================================================== */
 .shelf-wrapper {
   position: relative;
-  margin-bottom: 36px;
+  margin-bottom: 48px;
 }
 
 .shelf-room-decor {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
-  padding: 0 24px;
-  margin-bottom: -2px;
-  position: relative;
-  z-index: 10;
+  align-items: center;
+  padding: 0 16px;
+  margin-bottom: 8px;
 }
 
+/* The Bookcase Compartment */
 .shelf-bookcase-box {
-  background: #fffcf7;
-  border-left: 2.5px solid var(--ink);
-  border-right: 2.5px solid var(--ink);
-  border-top: 2.5px solid var(--ink);
+  background: #fffdf9;
+  border-left: 3px solid var(--ink);
+  border-right: 3px solid var(--ink);
+  border-top: 3px solid var(--ink);
   border-radius: 16px 16px 0 0;
-  box-shadow: inset 0 4px 12px rgba(44, 34, 30, 0.04);
-  padding: 24px 20px 4px 20px;
-  min-height: 220px;
+  box-shadow: inset 0 4px 16px rgba(44, 34, 30, 0.05);
+  padding: 28px 24px 0px 24px;
+  min-height: 250px;
   display: flex;
   align-items: flex-end;
-  gap: 16px;
+  gap: 22px;
   overflow-x: auto;
 }
 
-/* Sketched Wood Plank */
+/* Wooden Shelf Plank */
 .sketch-shelf-plank {
   position: relative;
   background: var(--wood);
   border: 3px solid var(--ink);
   border-radius: 8px 8px 12px 12px;
-  box-shadow: 0 6px 0px var(--wood-shadow), 0 9px 0px var(--ink);
-  height: 24px;
+  box-shadow: 0 6px 0px var(--wood-shadow), 0 10px 0px var(--ink);
+  height: 26px;
 }
 
 .wood-knot {
   position: absolute;
-  width: 14px;
-  height: 6px;
+  width: 16px;
+  height: 7px;
   border: 1.5px solid rgba(44, 34, 30, 0.35);
   border-radius: 50%;
   top: 50%;
   transform: translateY(-50%);
 }
 
-/* Hand-Drawn Book Spine */
-.doodle-book {
+/* ========================================================
+   FRONT-FACING ILLUSTRATED COZY BOOK (No Text Bugs!)
+   ======================================================== */
+.cozy-book-item {
   position: relative;
   cursor: pointer;
-  transform-origin: bottom center;
+  flex-shrink: 0;
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   user-select: none;
-  flex-shrink: 0;
+  margin-bottom: 0px;
 }
 
-.doodle-book:hover {
-  transform: translateY(-22px) rotate(2deg) scale(1.05);
+.cozy-book-item:hover {
+  transform: translateY(-16px) scale(1.03);
   z-index: 30;
 }
 
-.doodle-book:hover .hover-tooltip {
+.cozy-book-item:hover .hover-tooltip {
   opacity: 1;
   transform: translate(-50%, -10px);
 }
 
-.book-spine-card {
+/* Book Body Card: Proper Proportions like a Real Book */
+.book-cover-card {
+  width: 140px;
+  height: 200px;
   border: 2.5px solid var(--ink);
-  border-radius: 6px 4px 4px 6px;
-  box-shadow: inset 4px 0 0 rgba(255, 255, 255, 0.4), inset -3px 0 0 rgba(0, 0, 0, 0.15), 3px 0 0 rgba(44, 34, 30, 0.15);
+  border-radius: 6px 12px 12px 6px;
+  box-shadow: 
+    -4px 4px 0px rgba(44, 34, 30, 0.15),
+    4px 4px 0px var(--ink);
+  padding: 12px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  align-items: center;
-  padding: 12px 4px;
   position: relative;
-}
-
-.spine-title-vertical {
-  font-size: 0.95rem;
-  font-weight: 700;
-  [writing-mode: vertical-rl];
-  transform: rotate(180deg);
-  letter-spacing: 0.05em;
-  max-height: 125px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.dangle-ribbon {
+/* Spine Crease Line on Left Edge */
+.book-cover-card::before {
+  content: '';
   position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 7px;
-  height: 14px;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 14px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.18) 0%, rgba(255,255,255,0.2) 60%, rgba(0,0,0,0.08) 100%);
+  border-right: 1px solid rgba(44, 34, 30, 0.25);
+  z-index: 2;
+}
+
+/* Ribbon Bookmark sticking out from top */
+.ribbon-top {
+  position: absolute;
+  top: -12px;
+  right: 18px;
+  width: 10px;
+  height: 22px;
   background: var(--terracotta);
   border: 1.5px solid var(--ink);
-  border-top: none;
-  border-radius: 0 0 3px 3px;
+  border-bottom: none;
+  clip-path: polygon(0 100%, 50% 70%, 100% 100%, 100% 0, 0 0);
+  z-index: 5;
+}
+
+/* Book Typography - Clean & Horizontal */
+.book-card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-left: 6px;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+}
+
+.book-card-author {
+  font-size: 0.85rem;
+  font-weight: 700;
+  opacity: 0.85;
+  margin-left: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.book-card-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0,0,0,0.18);
+  align-self: flex-end;
+  border: 1px solid rgba(0,0,0,0.15);
+}
+
+.book-progress-pill {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.7);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  align-self: flex-start;
+  margin-left: 6px;
 }
 
 /* Hover Tooltip */
 .hover-tooltip {
   position: absolute;
-  top: -38px;
+  top: -36px;
   left: 50%;
   transform: translate(-50%, 0);
   background: #fff;
   border: 2px solid var(--ink);
   box-shadow: 2px 2px 0px var(--ink);
   border-radius: 8px;
-  padding: 2px 8px;
-  font-size: 13px;
+  padding: 2px 10px;
+  font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
   pointer-events: none;
@@ -314,33 +369,35 @@ body {
 
 /* Empty Book Slot */
 .empty-book-slot {
+  width: 140px;
+  height: 200px;
   border: 2px dashed #bbaaa0;
-  border-radius: 10px;
-  width: 60px;
-  height: 150px;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-size: 1rem;
   color: #8c786c;
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
   text-align: center;
-  padding: 6px;
+  padding: 12px;
+  background: #fdfbf7;
 }
 
 .empty-book-slot:hover {
   border-color: var(--ink);
-  background-color: rgba(242, 204, 143, 0.2);
+  background-color: #f7eed8;
   color: var(--ink);
+  transform: translateY(-4px);
 }
 
-/* Sleeping Cat Animation */
+/* Sleeping Cat */
 @keyframes catBreathe {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.03) translateY(-1px); }
+  50% { transform: scale(1.04) translateY(-1px); }
 }
 
 .sleeping-cat {
@@ -348,12 +405,12 @@ body {
 }
 
 /* ========================================================
-   MODALS & POP-OUT BOOK CARD
+   MODALS
    ======================================================== */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(44, 34, 30, 0.45);
+  background: rgba(44, 34, 30, 0.5);
   backdrop-filter: blur(4px);
   display: none;
   align-items: center;
@@ -367,15 +424,15 @@ body {
 }
 
 .bounce-in {
-  animation: popOpen 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: popOpen 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 @keyframes popOpen {
-  0% { transform: scale(0.7) translateY(40px) rotate(-3deg); opacity: 0; }
-  100% { transform: scale(1) translateY(0) rotate(0deg); opacity: 1; }
+  0% { transform: scale(0.8) translateY(30px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
 }
 
-/* Toast Notifications */
+/* Toasts */
 .toast-container {
   position: fixed;
   bottom: 24px;

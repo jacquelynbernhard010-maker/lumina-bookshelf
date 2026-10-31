@@ -1,19 +1,19 @@
 /**
  * The Cozy Nook - Frontend Application
- * Hand-drawn aesthetic + UIverse tactile micro-interactions
+ * Clean, readable, illustrated book cards standing on wooden shelves
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Palette for book spines
-    const spineColors = [
-        { bg: '#81b29a', text: '#1b2b22', emoji: '🌿' }, // Matcha
-        { bg: '#e07a5f', text: '#ffffff', emoji: '⏳' }, // Terracotta
-        { bg: '#f2cc8f', text: '#3c2b14', emoji: '🍂' }, // Honey
-        { bg: '#9d8189', text: '#ffffff', emoji: '🌙' }, // Dusty Rose
-        { bg: '#8ecae6', text: '#0e2b38', emoji: '☁️' }, // Sky Blue
-        { bg: '#e76f51', text: '#ffffff', emoji: '✦' },  // Rust
-        { bg: '#eed9c4', text: '#4a2e18', emoji: '🕯️' }, // Oat Paper
-        { bg: '#a3b18a', text: '#1f2e1a', emoji: '🌱' }  // Sage
+    // Whimsical color themes for book covers
+    const coverThemes = [
+        { bg: '#81b29a', text: '#152b1e', emoji: '🌿', ribbon: '#e07a5f' }, // Matcha
+        { bg: '#e07a5f', text: '#ffffff', emoji: '⏳', ribbon: '#f2cc8f' }, // Terracotta
+        { bg: '#f2cc8f', text: '#3f2b12', emoji: '🍂', ribbon: '#81b29a' }, // Honey
+        { bg: '#9d8189', text: '#ffffff', emoji: '🌙', ribbon: '#e07a5f' }, // Dusty Rose
+        { bg: '#8ecae6', text: '#103548', emoji: '☁️', ribbon: '#e07a5f' }, // Sky Blue
+        { bg: '#e76f51', text: '#ffffff', emoji: '✦',  ribbon: '#f2cc8f' }, // Rust
+        { bg: '#eed9c4', text: '#4a2e18', emoji: '🕯️', ribbon: '#81b29a' }, // Oat Bread
+        { bg: '#a3b18a', text: '#1b2c15', emoji: '🌱', ribbon: '#e07a5f' }  // Sage
     ];
 
     // State
@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             fileBanner.classList.add('hidden');
             dropZone.classList.remove('hidden');
 
-            showToast(`"${title || file.name}" slipped onto the shelf!`, 'success');
+            showToast(`"${title || file.name}" placed on the shelf!`, 'success');
             await reloadData();
         } catch (err) {
             showToast('Failed to save book: ' + err.message, 'error');
@@ -264,14 +264,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function fetchShelves() {
         state.shelves = await window.storageEngine.getShelves();
 
-        // Update select
         uploadShelfSelect.innerHTML = '';
         state.shelves.forEach(s => {
             const opt = new Option(s.name, s.id);
             uploadShelfSelect.add(opt);
         });
 
-        // Re-render pills
         const pills = shelfNavList.querySelectorAll('.shelf-pill:not([data-shelf-id="all"])');
         pills.forEach(p => p.remove());
 
@@ -301,8 +299,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderShelves() {
         shelvesContainer.innerHTML = '';
 
-        // Distribute books across wooden shelves (up to 6 per shelf)
-        const booksPerShelf = 6;
+        // Up to 5 illustrated books per shelf row
+        const booksPerShelf = 5;
         const shelfCount = Math.max(1, Math.ceil(state.books.length / booksPerShelf));
 
         for (let sIdx = 0; sIdx < shelfCount; sIdx++) {
@@ -312,16 +310,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             const shelfWrap = document.createElement('div');
             shelfWrap.className = 'shelf-wrapper';
 
-            // Shelf room decor on top (Sleeping Cat & Plant on Shelf 1)
+            // Top room decor: Sleeping Cat Mochi & Plant on first shelf
             let decorHtml = '';
             if (isFirstShelf) {
                 decorHtml = `
                     <div class="shelf-room-decor">
-                        <div class="sleeping-cat flex items-center gap-1.5 bg-[#fdfaf3] px-3 py-1 rounded-full border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] text-sm select-none">
-                            <span class="text-lg">🐱</span>
+                        <div class="sleeping-cat flex items-center gap-2 bg-[#fdfaf3] px-3.5 py-1.5 rounded-full border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] text-sm select-none">
+                            <span class="text-xl">🐱</span>
                             <span class="font-bold text-xs text-[#524137]">Mochi is sleeping... zZz</span>
                         </div>
-                        <div class="flex items-end gap-3 text-2xl select-none">
+                        <div class="flex items-center gap-3 text-2xl select-none">
                             <div id="shelfPlantDecor" class="transition-transform hover:scale-125 cursor-pointer" title="Water me!">🪴</div>
                             <div class="transition-transform hover:rotate-6 cursor-pointer" title="Warm Tea">🍵</div>
                         </div>
@@ -330,26 +328,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 decorHtml = `
                     <div class="shelf-room-decor justify-end">
-                        <div class="flex items-end gap-3 text-xl select-none pb-0.5">
+                        <div class="flex items-center gap-2 text-xl select-none">
                             <span title="Candle">🕯️</span>
                         </div>
                     </div>
                 `;
             }
 
-            // Bookcase Box
+            // Shelf Book Box
             const box = document.createElement('div');
             box.className = 'shelf-bookcase-box';
 
             chunk.forEach((book, bIdx) => {
-                const colorConfig = spineColors[(sIdx * booksPerShelf + bIdx) % spineColors.length];
-                box.appendChild(createDoodleBook(book, colorConfig));
+                const theme = coverThemes[(sIdx * booksPerShelf + bIdx) % coverThemes.length];
+                box.appendChild(createCozyBookCard(book, theme));
             });
 
-            // Empty Slot sketch button to add a book right on the shelf
+            // Empty Slot Button
             const emptySlot = document.createElement('div');
             emptySlot.className = 'empty-book-slot';
-            emptySlot.innerHTML = `<span class="text-xl">+</span><span>Slip in</span>`;
+            emptySlot.innerHTML = `
+                <span class="text-2xl mb-1">+</span>
+                <span class="font-bold text-xs">Slip in a book</span>
+            `;
             emptySlot.addEventListener('click', () => uploadModal.classList.add('active'));
             box.appendChild(emptySlot);
 
@@ -369,36 +370,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    function createDoodleBook(book, colorConfig) {
-        const bookEl = document.createElement('div');
-        bookEl.className = 'doodle-book';
+    // Creates clean, recognizable, front-facing illustrated book cards (NO UPSIDE DOWN TEXT!)
+    function createCozyBookCard(book, theme) {
+        const item = document.createElement('div');
+        item.className = 'cozy-book-item';
 
-        const height = 180 + ((book.title.length * 3) % 35); // organic height variation
-        const width = 44 + ((book.author ? book.author.length : 5) % 10);
-        const hasRibbon = book.reading_progress > 0;
+        const prog = Math.round(book.reading_progress || 0);
+        const hasProgress = prog > 0;
 
-        bookEl.innerHTML = `
+        item.innerHTML = `
             <div class="hover-tooltip">Take out 📖</div>
-            <div class="book-spine-card" style="width: ${width}px; height: ${height}px; background-color: ${colorConfig.bg}; color: ${colorConfig.text};">
-                <span class="text-xs">${colorConfig.emoji}</span>
-                <span class="spine-title-vertical">${escapeHtml(book.title)}</span>
-                <span class="text-[10px] font-bold opacity-80 uppercase">${escapeHtml(book.author || 'TOME')}</span>
-                ${hasRibbon ? `<div class="dangle-ribbon"></div>` : ''}
+            <div class="book-cover-card" style="background-color: ${theme.bg}; color: ${theme.text};">
+                <div class="ribbon-top" style="background-color: ${theme.ribbon};"></div>
+                
+                <!-- Top Cover Header: Icon & Type -->
+                <div class="flex items-center justify-between z-10">
+                    <span class="text-xl ml-2">${theme.emoji}</span>
+                    <span class="book-card-tag">${escapeHtml(book.file_type || 'epub')}</span>
+                </div>
+
+                <!-- Middle Cover: Title -->
+                <div class="z-10 my-auto">
+                    <h4 class="book-card-title">${escapeHtml(book.title)}</h4>
+                </div>
+
+                <!-- Bottom Cover: Author & Progress -->
+                <div class="z-10 pt-2 flex flex-col gap-1 border-t border-black/15">
+                    <p class="book-card-author">${escapeHtml(book.author || 'Unknown')}</p>
+                    ${hasProgress ? `<span class="book-progress-pill">${prog}% read</span>` : ''}
+                </div>
             </div>
         `;
 
-        bookEl.addEventListener('click', () => openBookModal(book, colorConfig));
-        return bookEl;
+        item.addEventListener('click', () => openBookModal(book, theme));
+        return item;
     }
 
     // --- Pop-Out Book Modal ---
 
-    function openBookModal(book, colorConfig) {
+    function openBookModal(book, theme) {
         state.selectedBook = book;
 
-        modalCover.style.backgroundColor = colorConfig.bg;
-        modalCover.style.color = colorConfig.text;
-        modalEmoji.innerText = colorConfig.emoji;
+        modalCover.style.backgroundColor = theme.bg;
+        modalCover.style.color = theme.text;
+        modalEmoji.innerText = theme.emoji;
         modalFileType.innerText = book.file_type || 'epub';
         modalBookTitle.innerText = book.title;
         modalBookAuthor.innerText = book.author || 'Unknown Author';
