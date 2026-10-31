@@ -29,9 +29,9 @@
 
                 <!-- Handcrafted UI Buttons -->
                 <div class="flex items-center gap-3">
-                    <button id="btnPlant" class="hand-btn px-4 py-2 text-base font-bold hand-btn-matcha flex items-center gap-2" title="Water the plant!">
-                        <span>🌱</span>
-                        <span id="plantLabel">Water Pothos</span>
+                    <button id="btnAddDecor" class="hand-btn px-4 py-2 text-base font-bold flex items-center gap-2" style="background-color: var(--honey);" title="Add shelf decorations!">
+                        <span>🪴</span>
+                        <span>+ Shelf Decor</span>
                     </button>
 
                     <button id="btnOpenCloud" class="hand-btn px-4 py-2 text-base font-bold flex items-center gap-2" title="Supabase Cloud Settings">
@@ -97,7 +97,7 @@
             </button>
 
             <div class="flex flex-col md:flex-row gap-6 items-start mt-2">
-                <!-- Book Cover Card (Showing true extracted cover image if available!) -->
+                <!-- Book Cover Card -->
                 <div id="modalCover" class="w-full md:w-48 h-64 rounded-xl border-2 border-[#2c221e] shadow-[4px_4px_0px_#2c221e] flex flex-col justify-between p-4 flex-shrink-0 relative overflow-hidden bg-cover bg-center">
                     <div class="flex justify-between items-start z-10">
                         <span id="modalEmoji" class="text-2xl">📖</span>
@@ -109,28 +109,29 @@
                     </div>
                 </div>
 
-                <!-- Book Details & Controls -->
+                <!-- Book Details & Placement Controls -->
                 <div class="flex-1 flex flex-col justify-between w-full">
                     <div>
                         <div class="flex items-center gap-2 mb-2">
-                            <span class="text-xs font-bold px-2 py-0.5 bg-[#fefae0] border border-[#2c221e] rounded">COZY VOLUME</span>
+                            <span class="text-xs font-bold px-2 py-0.5 bg-[#fefae0] border border-[#2c221e] rounded">SHELF POSITION</span>
                             <span class="text-xs text-[#8c786c]" id="modalShelfBadge">Saved to Shelf</span>
                         </div>
 
                         <h2 id="modalDetailTitle" class="text-2xl font-bold text-[#2c221e] leading-snug">Book Title</h2>
-                        <p id="modalDetailAuthor" class="text-base font-bold text-[#e07a5f] mb-3">by Author</p>
+                        <p id="modalDetailAuthor" class="text-base font-bold text-[#e07a5f] mb-2">by Author</p>
                         <p id="modalDetailDesc" class="font-lora text-sm leading-relaxed text-[#5c4a3e] bg-[#fdfaf3] p-3 rounded-lg border border-[#e5dac9] max-h-24 overflow-y-auto">
-                            Description of the book...
+                            Description...
                         </p>
                     </div>
 
-                    <!-- Shelf Placement Customization: Upright, Leaning, Stacked -->
+                    <!-- 4 SHELF STYLES: Front-Facing, Spine, Leaning, Stacked -->
                     <div class="my-4 pt-3 border-t-2 border-dashed border-[#e0d6c5]">
                         <label class="block text-xs font-bold text-[#5a483d] mb-1.5">Shelf Arrangement Style:</label>
-                        <div class="flex items-center gap-2">
-                            <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="upright">📚 Upright</button>
-                            <button type="button" class="btn-spine-style hand-btn hand-btn-sm bg-white" data-style="leaning">📐 Leaning</button>
-                            <button type="button" class="btn-spine-style hand-btn hand-btn-sm bg-white" data-style="stacked">🥞 Stack Flat</button>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="front">📖 Front</button>
+                            <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="spine">📚 Spine</button>
+                            <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="leaning">📐 Lean</button>
+                            <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="stacked">🥞 Stack</button>
                         </div>
                     </div>
 
@@ -169,7 +170,7 @@
             <button id="btnCloseUploadModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold">✕</button>
             
             <h3 class="text-2xl font-bold mb-1">Slip a New Book In 📚</h3>
-            <p class="text-sm text-[#7d695c] mb-3">Drop an .epub or .pdf file (covers and titles auto-detected!)</p>
+            <p class="text-sm text-[#7d695c] mb-3">Drop an .epub or .pdf file (covers, colors &amp; titles auto-extracted!)</p>
 
             <form id="uploadForm">
                 <input type="file" id="bookFileInput" accept=".epub,.pdf,.mobi" required hidden>
@@ -203,6 +204,15 @@
                         <label class="block text-xs font-bold text-[#5a483d] mb-1">Author (Auto-extracted)</label>
                         <input type="text" id="bookAuthorInput" class="w-full p-2 bg-white border-2 border-[#2c221e] rounded-lg text-sm" placeholder="Auto-detected from EPUB">
                     </div>
+                    <div>
+                        <label class="block text-xs font-bold text-[#5a483d] mb-1">Initial Display Style</label>
+                        <select id="uploadStyleSelect" class="w-full p-2 bg-white border-2 border-[#2c221e] rounded-lg text-sm font-bold">
+                            <option value="front">📖 Front-Facing Cover</option>
+                            <option value="spine" selected>📚 Standing Spine</option>
+                            <option value="leaning">📐 Leaning Book</option>
+                            <option value="stacked">🥞 Stacked Flat</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="flex justify-end gap-2">
@@ -210,6 +220,44 @@
                     <button type="submit" id="btnSubmitUpload" class="hand-btn hand-btn-sm hand-btn-matcha text-white">Place on Shelf</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- ================= ADD DECOR MODAL ================= -->
+    <div id="decorModal" class="modal-backdrop">
+        <div class="bounce-in bg-[#fffefb] wobbly-border max-w-md w-full p-6 shadow-[8px_8px_0px_#2c221e] relative">
+            <button id="btnCloseDecorModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold">✕</button>
+            
+            <h3 class="text-2xl font-bold mb-1">Add Shelf Decor ✨</h3>
+            <p class="text-sm text-[#7d695c] mb-4">Pick a hand-drawn object to place between your books</p>
+
+            <div class="grid grid-cols-3 gap-3 mb-5">
+                <button type="button" class="btn-pick-decor p-3 bg-white border-2 border-[#2c221e] rounded-xl hover:bg-[#faedcd] transition-all text-center flex flex-col items-center gap-1 shadow-[2px_2px_0px_#2c221e]" data-decor="plant" data-label="Pothos Plant">
+                    <svg width="32" height="32" viewBox="0 0 42 48" fill="none"><path d="M 21 22 Q 10 18 8 12 Q 14 8 21 22" fill="#81b29a" stroke="#2c221e" stroke-width="2"/><polygon points="12,22 30,22 27,42 15,42" fill="#e07a5f" stroke="#2c221e" stroke-width="2"/></svg>
+                    <span class="text-xs font-bold">Pothos</span>
+                </button>
+                <button type="button" class="btn-pick-decor p-3 bg-white border-2 border-[#2c221e] rounded-xl hover:bg-[#faedcd] transition-all text-center flex flex-col items-center gap-1 shadow-[2px_2px_0px_#2c221e]" data-decor="mug" data-label="Tea Mug">
+                    <svg width="30" height="30" viewBox="0 0 34 34" fill="none"><rect x="7" y="12" width="16" height="18" rx="4" fill="#eed9c4" stroke="#2c221e" stroke-width="2"/><path d="M 23 15 C 28 15 28 25 23 25" stroke="#2c221e" stroke-width="2" fill="none"/></svg>
+                    <span class="text-xs font-bold">Tea Mug</span>
+                </button>
+                <button type="button" class="btn-pick-decor p-3 bg-white border-2 border-[#2c221e] rounded-xl hover:bg-[#faedcd] transition-all text-center flex flex-col items-center gap-1 shadow-[2px_2px_0px_#2c221e]" data-decor="clock" data-label="Vintage Clock">
+                    <svg width="28" height="32" viewBox="0 0 36 46" fill="none"><rect x="6" y="6" width="24" height="26" rx="5" fill="#cfa170" stroke="#2c221e" stroke-width="2"/><circle cx="18" cy="18" r="9" fill="#ffffff" stroke="#2c221e" stroke-width="2"/></svg>
+                    <span class="text-xs font-bold">Clock</span>
+                </button>
+                <button type="button" class="btn-pick-decor p-3 bg-white border-2 border-[#2c221e] rounded-xl hover:bg-[#faedcd] transition-all text-center flex flex-col items-center gap-1 shadow-[2px_2px_0px_#2c221e]" data-decor="candle" data-label="Cozy Candle">
+                    <svg width="24" height="32" viewBox="0 0 28 42" fill="none"><path d="M 14 4 C 11 8 10 13 14 15 C 18 13 17 8 14 4 Z" fill="#f4a261" stroke="#2c221e" stroke-width="1.8"/><rect x="7" y="18" width="14" height="22" rx="3" fill="#fffdfa" stroke="#2c221e" stroke-width="2"/></svg>
+                    <span class="text-xs font-bold">Candle</span>
+                </button>
+                <button type="button" class="btn-pick-decor p-3 bg-white border-2 border-[#2c221e] rounded-xl hover:bg-[#faedcd] transition-all text-center flex flex-col items-center gap-1 shadow-[2px_2px_0px_#2c221e]" data-decor="bookend" data-label="Brass Bookend">
+                    <svg width="28" height="32" viewBox="0 0 34 44" fill="none"><path d="M 4 40 L 4 10 Q 4 4 10 4 L 14 4 L 14 36 L 30 36 L 30 40 Z" fill="#f2cc8f" stroke="#2c221e" stroke-width="2"/></svg>
+                    <span class="text-xs font-bold">Bookend</span>
+                </button>
+            </div>
+
+            <div class="flex justify-between items-center pt-2 border-t border-[#e0d6c5]">
+                <button type="button" id="btnClearDecors" class="text-xs font-bold text-red-700 hover:underline">Reset Decors</button>
+                <button type="button" id="btnDoneDecor" class="hand-btn hand-btn-sm hand-btn-matcha text-white">Done</button>
+            </div>
         </div>
     </div>
 
@@ -249,7 +297,7 @@
     <!-- Notification Toast -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <!-- Client Scripts (including ePub.js & JSZip for instant cover extraction on upload!) -->
+    <!-- Client Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

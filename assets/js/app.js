@@ -1,19 +1,19 @@
 /**
  * The Cozy Nook - Frontend Application
- * Real home bookshelf arrangement, auto-cover extraction, customizable spine positions
+ * Real home bookshelf: Front-Facing, Spine, Leaning, Stacked, & Hand-drawn Shelf Decors
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Whimsical color themes for book spines
     const coverThemes = [
-        { bg: '#81b29a', text: '#152b1e', emoji: '🌿', ribbon: '#e07a5f' }, // Matcha
-        { bg: '#e07a5f', text: '#ffffff', emoji: '⏳', ribbon: '#f2cc8f' }, // Terracotta
-        { bg: '#f2cc8f', text: '#3f2b12', emoji: '🍂', ribbon: '#81b29a' }, // Honey
-        { bg: '#9d8189', text: '#ffffff', emoji: '🌙', ribbon: '#e07a5f' }, // Dusty Rose
-        { bg: '#8ecae6', text: '#103548', emoji: '☁️', ribbon: '#e07a5f' }, // Sky Blue
-        { bg: '#e76f51', text: '#ffffff', emoji: '✦',  ribbon: '#f2cc8f' }, // Rust
-        { bg: '#eed9c4', text: '#4a2e18', emoji: '🕯️', ribbon: '#81b29a' }, // Oat Bread
-        { bg: '#a3b18a', text: '#1b2c15', emoji: '🌱', ribbon: '#e07a5f' }  // Sage
+        { bg: '#81b29a', text: '#152b1e', ribbon: '#e07a5f' }, // Matcha
+        { bg: '#e07a5f', text: '#ffffff', ribbon: '#f2cc8f' }, // Terracotta
+        { bg: '#f2cc8f', text: '#3f2b12', ribbon: '#81b29a' }, // Honey
+        { bg: '#9d8189', text: '#ffffff', ribbon: '#e07a5f' }, // Dusty Rose
+        { bg: '#8ecae6', text: '#103548', ribbon: '#e07a5f' }, // Sky Blue
+        { bg: '#e76f51', text: '#ffffff', ribbon: '#f2cc8f' }, // Rust
+        { bg: '#eed9c4', text: '#4a2e18', ribbon: '#81b29a' }, // Oat Bread
+        { bg: '#a3b18a', text: '#1b2c15', ribbon: '#e07a5f' }  // Sage
     ];
 
     // State
@@ -23,7 +23,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         books: [],
         shelves: [],
         selectedBook: null,
-        extractedCoverUrl: ''
+        extractedCoverUrl: '',
+        extractedDominantColor: '',
+        shelfDecors: JSON.parse(localStorage.getItem('cozy_shelf_decors') || '["plant", "mug"]'),
+        draggedBookId: null
     };
 
     // DOM Elements
@@ -37,10 +40,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const readModal = document.getElementById('readModal');
     const uploadModal = document.getElementById('uploadModal');
     const cloudModal = document.getElementById('cloudModal');
+    const decorModal = document.getElementById('decorModal');
 
     // Read Modal Elements
     const modalCover = document.getElementById('modalCover');
-    const modalEmoji = document.getElementById('modalEmoji');
     const modalFileType = document.getElementById('modalFileType');
     const modalBookTitle = document.getElementById('modalBookTitle');
     const modalBookAuthor = document.getElementById('modalBookAuthor');
@@ -66,8 +69,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const fileNameLabel = document.getElementById('fileNameLabel');
     const btnRemoveFile = document.getElementById('btnRemoveFile');
     const uploadShelfSelect = document.getElementById('uploadShelfSelect');
+    const uploadStyleSelect = document.getElementById('uploadStyleSelect');
     const bookTitleInput = document.getElementById('bookTitleInput');
     const bookAuthorInput = document.getElementById('bookAuthorInput');
+
+    // Decor Elements
+    const btnAddDecor = document.getElementById('btnAddDecor');
+    const btnCloseDecorModal = document.getElementById('btnCloseDecorModal');
+    const btnDoneDecor = document.getElementById('btnDoneDecor');
+    const btnClearDecors = document.getElementById('btnClearDecors');
 
     // Cloud Elements
     const btnOpenCloud = document.getElementById('btnOpenCloud');
@@ -76,10 +86,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cloudForm = document.getElementById('cloudForm');
     const btnDisconnectCloud = document.getElementById('btnDisconnectCloud');
     const storageModeLabel = document.getElementById('storageModeLabel');
-
-    // Easter Egg Plant
-    const btnPlant = document.getElementById('btnPlant');
-    let plantClicks = 1;
 
     // Initialize Storage
     await window.storageEngine.initIndexedDB();
@@ -129,14 +135,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnCloseUploadModal.addEventListener('click', () => uploadModal.classList.remove('active'));
         btnCancelUpload.addEventListener('click', () => uploadModal.classList.remove('active'));
 
+        btnAddDecor.addEventListener('click', () => decorModal.classList.add('active'));
+        btnCloseDecorModal.addEventListener('click', () => decorModal.classList.remove('active'));
+        btnDoneDecor.addEventListener('click', () => decorModal.classList.remove('active'));
+
+        btnClearDecors.addEventListener('click', () => {
+            state.shelfDecors = [];
+            localStorage.setItem('cozy_shelf_decors', JSON.stringify([]));
+            renderShelves();
+            showToast('Cleared shelf decor', 'info');
+        });
+
+        // Decor picker buttons
+        document.querySelectorAll('.btn-pick-decor').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const decorType = btn.dataset.decor || 'plant';
+                state.shelfDecors.push(decorType);
+                localStorage.setItem('cozy_shelf_decors', JSON.stringify(state.shelfDecors));
+                showToast(`Placed ${btn.dataset.label || 'decor'} on shelf!`, 'success');
+                renderShelves();
+            });
+        });
+
         btnOpenCloud.addEventListener('click', () => {
             const cfg = window.storageEngine.getSupabaseConfig();
-            document.getElementById('supabaseUrlInput').value = cfg.url;
-            document.getElementById('supabaseKeyInput').value = cfg.key;
+            document.getElementById('supabaseUrlInput').value = cfg.url || '';
+            document.getElementById('supabaseKeyInput').value = cfg.key || '';
+            btnDisconnectCloud.style.display = cfg.isEnabled ? 'block' : 'none';
             cloudModal.classList.add('active');
         });
+
         btnCloseCloudModal.addEventListener('click', () => cloudModal.classList.remove('active'));
         btnCancelCloud.addEventListener('click', () => cloudModal.classList.remove('active'));
+        cloudForm.addEventListener('submit', handleCloudSubmit);
+        btnDisconnectCloud.addEventListener('click', handleDisconnectCloud);
 
         // Read Modal Actions
         btnCloseReadModal.addEventListener('click', () => readModal.classList.remove('active'));
@@ -147,92 +179,82 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
+        // 4 Shelf Style switcher buttons inside Read Modal
+        document.querySelectorAll('.btn-spine-style').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!state.selectedBook) return;
+                const newStyle = btn.dataset.style;
+                document.querySelectorAll('.btn-spine-style').forEach(b => {
+                    b.className = 'btn-spine-style hand-btn hand-btn-sm bg-white';
+                });
+                btn.className = 'btn-spine-style hand-btn hand-btn-sm hand-btn-terracotta text-white';
+
+                state.selectedBook.spine_style = newStyle;
+                await window.storageEngine.updateBookSpineStyle(state.selectedBook.id, newStyle);
+                showToast(`Arranged as ${newStyle}`, 'success');
+                renderShelves(); // Updates shelf immediately!
+            });
+        });
+
         btnDeleteBook.addEventListener('click', async () => {
             if (!state.selectedBook) return;
             if (confirm(`Remove "${state.selectedBook.title}" from your shelf?`)) {
                 await window.storageEngine.deleteBook(state.selectedBook.id);
                 readModal.classList.remove('active');
-                showToast(`"${state.selectedBook.title}" put away`, 'info');
+                showToast('Book removed from shelf', 'info');
                 await reloadData();
             }
         });
 
-        // Style switcher buttons (Upright, Leaning, Stacked)
-        document.querySelectorAll('.btn-spine-style').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                if (!state.selectedBook) return;
-                const newStyle = btn.dataset.style;
-                document.querySelectorAll('.btn-spine-style').forEach(b => b.classList.replace('hand-btn-terracotta', 'bg-white'));
-                btn.classList.add('hand-btn-terracotta');
-
-                state.selectedBook.spine_style = newStyle;
-                await window.storageEngine.updateBookSpineStyle(state.selectedBook.id, newStyle);
-                showToast(`Shelf style set to ${newStyle}`, 'success');
-                await reloadData();
-            });
-        });
-
-        // Close on backdrop
-        [readModal, uploadModal, cloudModal].forEach(m => {
-            m.addEventListener('click', (e) => {
-                if (e.target === m) m.classList.remove('active');
-            });
-        });
-
-        // Drag & Drop Upload
+        // Drag & Drop Upload Handlers
         dropZone.addEventListener('click', () => bookFileInput.click());
-        bookFileInput.addEventListener('change', async (e) => {
-            if (e.target.files.length > 0) await handleSelectedFile(e.target.files[0]);
+        bookFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) handleFileSelected(e.target.files[0]);
         });
 
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            dropZone.style.backgroundColor = '#f4ecd8';
+            dropZone.classList.add('bg-[#f3ebd7]');
         });
+
         dropZone.addEventListener('dragleave', () => {
-            dropZone.style.backgroundColor = '#fdfaf3';
+            dropZone.classList.remove('bg-[#f3ebd7]');
         });
-        dropZone.addEventListener('drop', async (e) => {
+
+        dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
-            dropZone.style.backgroundColor = '#fdfaf3';
-            if (e.dataTransfer.files.length > 0) await handleSelectedFile(e.dataTransfer.files[0]);
+            dropZone.classList.remove('bg-[#f3ebd7]');
+            if (e.dataTransfer.files.length) {
+                bookFileInput.files = e.dataTransfer.files;
+                handleFileSelected(e.dataTransfer.files[0]);
+            }
         });
 
         btnRemoveFile.addEventListener('click', () => {
-            bookFileInput.value = '';
+            uploadForm.reset();
             fileBanner.classList.add('hidden');
             dropZone.classList.remove('hidden');
             state.extractedCoverUrl = '';
+            state.extractedDominantColor = '';
         });
 
         uploadForm.addEventListener('submit', handleUploadSubmit);
-        cloudForm.addEventListener('submit', handleCloudSubmit);
-        btnDisconnectCloud.addEventListener('click', handleDisconnectCloud);
-
-        // Easter Egg: Water Pothos
-        btnPlant.addEventListener('click', () => {
-            plantClicks = (plantClicks % 4) + 1;
-            const stages = ['🌱', '🪴', '🌿', '✨🪴✨'];
-            const plantEl = document.getElementById('shelfPlantDecor');
-            if (plantEl) plantEl.innerText = stages[plantClicks - 1];
-            document.getElementById('plantLabel').innerText = plantClicks === 4 ? "Pothos is thriving!" : "Water Pothos";
-        });
     }
 
-    // Auto-extract real EPUB cover & clean metadata on file selection!
-    async function handleSelectedFile(file) {
+    async function handleFileSelected(file) {
         fileNameLabel.innerText = file.name;
         dropZone.classList.add('hidden');
         fileBanner.classList.remove('hidden');
 
         // Extract using client-side ePub parser
         const extracted = await window.EpubExtractor.extract(file);
-        bookTitleInput.value = extracted.title;
-        bookAuthorInput.value = extracted.author;
+        bookTitleInput.value = cleanTitle(extracted.title);
+        bookAuthorInput.value = extracted.author || 'Unknown Author';
         state.extractedCoverUrl = extracted.cover_url || '';
+        state.extractedDominantColor = extracted.dominant_color || '#e07a5f';
 
         if (extracted.cover_url) {
-            showToast('Extracted real book cover & author!', 'success');
+            showToast('Extracted real cover image & book details!', 'success');
         }
     }
 
@@ -244,13 +266,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        const title = bookTitleInput.value.trim() || file.name.replace(/\.[^/.]+$/, "").replace(/_/g, " ");
+        const title = cleanTitle(bookTitleInput.value.trim() || file.name);
         const author = bookAuthorInput.value.trim() || 'Unknown Author';
         const shelf_id = uploadShelfSelect.value;
+        const spine_style = uploadStyleSelect.value || 'front';
         const cover_url = state.extractedCoverUrl;
-
-        // Choose random theme color
-        const randomTheme = coverThemes[Math.floor(Math.random() * coverThemes.length)];
+        const spine_color = state.extractedDominantColor || '#e07a5f';
 
         try {
             await window.storageEngine.saveBook({
@@ -259,8 +280,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 author,
                 shelf_id,
                 cover_url,
-                spine_color: randomTheme.bg,
-                spine_style: 'upright'
+                spine_color,
+                spine_style
             });
 
             uploadModal.classList.remove('active');
@@ -268,6 +289,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             fileBanner.classList.add('hidden');
             dropZone.classList.remove('hidden');
             state.extractedCoverUrl = '';
+            state.extractedDominantColor = '';
 
             showToast(`"${title}" placed on the shelf!`, 'success');
             await reloadData();
@@ -338,51 +360,89 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderShelves() {
         shelvesContainer.innerHTML = '';
 
-        // Up to 6 books per shelf
-        const booksPerShelf = 6;
-        const shelfCount = Math.max(1, Math.ceil(state.books.length / booksPerShelf));
+        const itemsPerShelf = 5;
+        const shelfCount = Math.max(1, Math.ceil(state.books.length / itemsPerShelf));
 
         for (let sIdx = 0; sIdx < shelfCount; sIdx++) {
-            const chunk = state.books.slice(sIdx * booksPerShelf, (sIdx + 1) * booksPerShelf);
+            const chunk = state.books.slice(sIdx * itemsPerShelf, (sIdx + 1) * itemsPerShelf);
             const isFirstShelf = (sIdx === 0);
 
             const shelfWrap = document.createElement('div');
             shelfWrap.className = 'shelf-wrapper';
 
-            // Top room decor: Sleeping Cat Mochi & Plant on first shelf
-            let decorHtml = '';
+            // Top room decor: Sleeping Cat Mochi on first shelf
+            let decorTopHtml = '';
             if (isFirstShelf) {
-                decorHtml = `
+                decorTopHtml = `
                     <div class="shelf-room-decor">
-                        <div class="sleeping-cat flex items-center gap-2 bg-[#fdfaf3] px-3.5 py-1 rounded-full border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] text-sm select-none">
-                            <span class="text-xl">🐱</span>
-                            <span class="font-bold text-xs text-[#524137]">Mochi is sleeping... zZz</span>
+                        <div class="handdrawn-cat-widget flex items-center gap-2.5 bg-[#fdfaf3] px-4 py-1.5 rounded-full border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] select-none">
+                            <div class="cat-illustration-box">
+                                ${getHanddrawnMochiSvg()}
+                                <div class="floating-zzz">z</div>
+                                <div class="floating-zzz z2">z</div>
+                                <div class="floating-zzz z3">Z</div>
+                            </div>
+                            <span class="font-bold text-xs text-[#524137]">Mochi is napping... zZz</span>
                         </div>
-                        <div class="flex items-center gap-3 text-2xl select-none">
-                            <div id="shelfPlantDecor" class="transition-transform hover:scale-125 cursor-pointer" title="Water me!">🪴</div>
-                            <div class="transition-transform hover:rotate-6 cursor-pointer" title="Warm Tea">🍵</div>
+                        <div class="flex items-center gap-3">
+                            ${getHanddrawnMugSvg()}
                         </div>
                     </div>
                 `;
             } else {
-                decorHtml = `
+                decorTopHtml = `
                     <div class="shelf-room-decor justify-end">
-                        <div class="flex items-center gap-3 text-xl select-none">
-                            <span title="Vintage Clock">🕰️</span>
-                            <span title="Candle">🕯️</span>
+                        <div class="flex items-center gap-2">
+                            ${getHanddrawnCandleSvg()}
                         </div>
                     </div>
                 `;
             }
 
-            // Shelf Book Box (56px top padding ensures tooltips NEVER clip!)
+            // Shelf Book Box (85px top clearance completely prevents cutoffs!)
             const box = document.createElement('div');
             box.className = 'shelf-bookcase-box';
+            box.dataset.shelfIndex = sIdx;
 
-            chunk.forEach((book, bIdx) => {
-                const theme = coverThemes[(sIdx * booksPerShelf + bIdx) % coverThemes.length];
-                box.appendChild(createShelfBookItem(book, theme));
-            });
+            // Group consecutive stacked books together!
+            let bIdx = 0;
+            while (bIdx < chunk.length) {
+                const book = chunk[bIdx];
+                const theme = coverThemes[(sIdx * itemsPerShelf + bIdx) % coverThemes.length];
+
+                if (book.spine_style === 'stacked') {
+                    // Collect consecutive stacked books into a pile
+                    const stackPile = [book];
+                    let nextIdx = bIdx + 1;
+                    while (nextIdx < chunk.length && chunk[nextIdx].spine_style === 'stacked') {
+                        stackPile.push(chunk[nextIdx]);
+                        nextIdx++;
+                    }
+
+                    // Render as a stacked pile
+                    box.appendChild(createStackedBooksPile(stackPile, sIdx * itemsPerShelf + bIdx));
+                    bIdx = nextIdx;
+                } else {
+                    box.appendChild(createShelfBookItem(book, theme));
+                    bIdx++;
+                }
+
+                // Insert a decor item between books if user added any!
+                const decorIndex = bIdx - 1;
+                if (decorIndex < state.shelfDecors.length && (decorIndex % 2 === 1)) {
+                    const decorEl = document.createElement('div');
+                    decorEl.className = 'shelf-decor-item';
+                    decorEl.innerHTML = renderHanddrawnDecor(state.shelfDecors[decorIndex]);
+                    decorEl.title = 'Shelf Decor (Click to remove)';
+                    decorEl.addEventListener('click', () => {
+                        state.shelfDecors.splice(decorIndex, 1);
+                        localStorage.setItem('cozy_shelf_decors', JSON.stringify(state.shelfDecors));
+                        showToast('Decor removed from shelf', 'info');
+                        renderShelves();
+                    });
+                    box.appendChild(decorEl);
+                }
+            }
 
             // Empty Slot Button
             const emptySlot = document.createElement('div');
@@ -403,58 +463,178 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="wood-knot" style="left: 85%;"></div>
             `;
 
-            shelfWrap.innerHTML = decorHtml;
+            shelfWrap.innerHTML = decorTopHtml;
             shelfWrap.appendChild(box);
             shelfWrap.appendChild(plank);
             shelvesContainer.appendChild(shelfWrap);
         }
     }
 
-    // Creates books sitting on the shelf (Upright, Leaning, or Stacked Flat)
+    // Creates an individual book item on the shelf
     function createShelfBookItem(book, theme) {
         const item = document.createElement('div');
-        const style = book.spine_style || 'upright';
-        const prog = Math.round(book.reading_progress || 0);
+        const style = book.spine_style || 'front';
+        const spineColor = book.spine_color || theme.bg;
+        const displayTitle = cleanTitle(book.title);
 
-        item.className = `cozy-shelf-book ${style === 'leaning' ? 'is-leaning' : (style === 'stacked' ? 'is-stacked' : '')}`;
+        item.className = `cozy-shelf-book ${style === 'leaning' ? 'is-leaning' : ''}`;
+        item.draggable = true;
+        item.dataset.bookId = book.id;
 
-        const spineBg = book.spine_color || theme.bg;
+        // Dynamic font size based on title length so words NEVER hyphen-split!
+        let titleFontSize = '0.96rem';
+        if (displayTitle.length > 32) titleFontSize = '0.74rem';
+        else if (displayTitle.length > 20) titleFontSize = '0.82rem';
+        else if (displayTitle.length > 13) titleFontSize = '0.90rem';
 
-        if (style === 'stacked') {
-            // Horizontal stacked flat book
+        // Floating tactile action pills to switch styles directly on the shelf!
+        const actionPills = `
+            <div class="book-action-pills">
+                <button type="button" class="action-pill-btn ${style === 'front' ? 'active' : ''}" data-action="front" title="Front-facing cover">📖 Front</button>
+                <button type="button" class="action-pill-btn ${style === 'spine' ? 'active' : ''}" data-action="spine" title="Upright spine">📚 Spine</button>
+                <button type="button" class="action-pill-btn ${style === 'leaning' ? 'active' : ''}" data-action="leaning" title="Lean against neighbor">📐 Lean</button>
+                <button type="button" class="action-pill-btn ${style === 'stacked' ? 'active' : ''}" data-action="stacked" title="Lay flat or stack">🥞 Stack</button>
+            </div>
+        `;
+
+        if (style === 'front') {
+            // 1. FRONT-FACING COVER: Shows the real extracted cover image or styled cover!
+            let coverBgStyle = book.cover_url 
+                ? `background-image: url("${book.cover_url}");` 
+                : `background-color: ${spineColor}; color: ${theme.text};`;
+
             item.innerHTML = `
-                <div class="hover-tooltip">Take out 📖</div>
-                <div class="stack-book-layer" style="background-color: ${spineBg}; color: ${theme.text};">
-                    <span>${theme.emoji} ${escapeHtml(book.title)}</span>
-                    <span class="text-xs opacity-75">${prog}%</span>
+                ${actionPills}
+                <div class="book-cover-front" style="${coverBgStyle}">
+                    <div class="dangle-ribbon" style="background-color: ${theme.ribbon};"></div>
+                    <div class="flex items-center justify-between z-10 ${book.cover_url ? 'bg-black/40 px-2 py-0.5 rounded text-white' : ''}">
+                        <span class="text-xs font-bold uppercase tracking-wide">${escapeHtml(book.file_type || 'epub')}</span>
+                        <span class="text-xs font-bold bg-[#f2cc8f] text-[#2c221e] px-1.5 py-0.2 rounded">${Math.round(book.reading_progress || 0)}%</span>
+                    </div>
+                    <div class="z-10 ${book.cover_url ? 'bg-black/60 p-2.5 rounded text-white' : ''}">
+                        <h4 class="font-bold line-clamp-2 leading-tight" style="font-size: ${titleFontSize};">${escapeHtml(displayTitle)}</h4>
+                        <p class="text-xs opacity-90 truncate mt-0.5">${escapeHtml(book.author || 'Unknown')}</p>
+                    </div>
                 </div>
             `;
         } else {
-            // Upright or Leaning vertical spine (clean horizontal title block, NO rotated overflow!)
-            const height = 195 + ((book.title.length * 3) % 25);
+            // 2. REALISTIC UPRIGHT OR LEANING SPINE (82px wide, cover artwork texture, gold ribbing)
+            const height = 210 + ((displayTitle.length * 2) % 20);
+
+            // If real cover extracted, blend it on the spine!
+            let spineBg = book.cover_url
+                ? `background-image: linear-gradient(90deg, rgba(0,0,0,0.5) 0%, rgba(255,255,255,0.12) 20%, transparent 60%, rgba(0,0,0,0.45) 100%), url("${book.cover_url}");`
+                : `background: linear-gradient(90deg, rgba(0,0,0,0.15) 0%, rgba(255,255,255,0.2) 20%, transparent 50%, rgba(0,0,0,0.18) 100%), ${spineColor}; color: ${theme.text};`;
+
             item.innerHTML = `
-                <div class="hover-tooltip">Take out 📖</div>
-                <div class="book-spine-upright" style="height: ${height}px; background-color: ${spineBg}; color: ${theme.text};">
+                ${actionPills}
+                <div class="book-spine-upright" style="height: ${height}px; ${spineBg}">
                     <div class="dangle-ribbon" style="background-color: ${theme.ribbon};"></div>
-                    <span class="spine-top-badge">${theme.emoji}</span>
+                    <div class="spine-rib"></div>
                     <div class="spine-title-container">
-                        <span class="spine-title-text">${escapeHtml(book.title)}</span>
+                        <span class="spine-title-text ${book.cover_url ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]' : ''}" style="font-size: ${titleFontSize};">${escapeHtml(displayTitle)}</span>
                     </div>
-                    <span class="spine-author-text">${escapeHtml(book.author || 'Tome')}</span>
+                    <div class="spine-rib"></div>
+                    <span class="spine-author-text ${book.cover_url ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]' : ''}">${escapeHtml(book.author || 'Tome')}</span>
                 </div>
             `;
         }
 
+        // Action Pill Clicks (Direct switch right on the shelf!)
+        item.querySelectorAll('.action-pill-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const newStyle = btn.dataset.action;
+                book.spine_style = newStyle;
+                await window.storageEngine.updateBookSpineStyle(book.id, newStyle);
+                showToast(`Switched "${displayTitle}" to ${newStyle}`, 'success');
+                renderShelves();
+            });
+        });
+
+        // Click book to pop open details & reading modal
         item.addEventListener('click', () => openBookModal(book, theme));
+
+        // Drag & Drop
+        setupDragEvents(item, book);
+
         return item;
+    }
+
+    // Creates a physical pile of books stacked flat on top of each other
+    function createStackedBooksPile(booksInStack, baseThemeIdx) {
+        const stackWrap = document.createElement('div');
+        stackWrap.className = 'shelf-book-stack';
+
+        booksInStack.forEach((b, i) => {
+            const theme = coverThemes[(baseThemeIdx + i) % coverThemes.length];
+            const spineColor = b.spine_color || theme.bg;
+            const displayTitle = cleanTitle(b.title);
+
+            const layer = document.createElement('div');
+            layer.className = 'stack-book-layer';
+            layer.style.backgroundColor = spineColor;
+            layer.style.color = theme.text;
+            layer.draggable = true;
+            layer.dataset.bookId = b.id;
+
+            layer.innerHTML = `
+                <span class="truncate max-w-[110px]">${escapeHtml(displayTitle)}</span>
+                <span class="text-xs opacity-75">${Math.round(b.reading_progress || 0)}%</span>
+            `;
+
+            layer.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openBookModal(b, theme);
+            });
+
+            setupDragEvents(layer, b);
+            stackWrap.appendChild(layer);
+        });
+
+        return stackWrap;
+    }
+
+    // Drag and drop handler
+    function setupDragEvents(element, book) {
+        element.addEventListener('dragstart', (e) => {
+            state.draggedBookId = book.id;
+            element.classList.add('is-dragging');
+            e.dataTransfer.setData('text/plain', book.id);
+        });
+
+        element.addEventListener('dragend', () => {
+            element.classList.remove('is-dragging');
+            state.draggedBookId = null;
+        });
+
+        element.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        element.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            const sourceId = state.draggedBookId || e.dataTransfer.getData('text/plain');
+            if (!sourceId || sourceId == book.id) return;
+
+            // Reorder books on shelf
+            const fromIdx = state.books.findIndex(b => b.id == sourceId);
+            const toIdx = state.books.findIndex(b => b.id == book.id);
+            if (fromIdx !== -1 && toIdx !== -1) {
+                const [movedBook] = state.books.splice(fromIdx, 1);
+                state.books.splice(toIdx, 0, movedBook);
+                renderShelves();
+                showToast('Rearranged books on shelf', 'info');
+            }
+        });
     }
 
     // --- Pop-Out Book Modal ---
 
     function openBookModal(book, theme) {
         state.selectedBook = book;
+        const displayTitle = cleanTitle(book.title);
 
-        // Cover styling: if real cover image was extracted from EPUB, show it!
         if (book.cover_url) {
             modalCover.style.backgroundImage = `url("${book.cover_url}")`;
             modalCover.style.backgroundColor = '#2c221e';
@@ -463,12 +643,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             modalCover.style.backgroundColor = book.spine_color || theme.bg;
         }
 
-        modalEmoji.innerText = theme.emoji;
         modalFileType.innerText = book.file_type || 'epub';
-        modalBookTitle.innerText = book.title;
+        modalBookTitle.innerText = displayTitle;
         modalBookAuthor.innerText = book.author || 'Unknown Author';
 
-        modalDetailTitle.innerText = book.title;
+        modalDetailTitle.innerText = displayTitle;
         modalDetailAuthor.innerText = "by " + (book.author || 'Unknown Author');
         modalDetailDesc.innerText = book.description || 'A cozy digital volume resting on your wooden shelf.';
 
@@ -480,7 +659,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         modalProgFill.style.width = `${prog}%`;
 
         // Highlight active style button
-        const curStyle = book.spine_style || 'upright';
+        const curStyle = book.spine_style || 'front';
         document.querySelectorAll('.btn-spine-style').forEach(b => {
             if (b.dataset.style === curStyle) {
                 b.className = 'btn-spine-style hand-btn hand-btn-sm hand-btn-terracotta text-white';
@@ -492,7 +671,115 @@ document.addEventListener('DOMContentLoaded', async () => {
         readModal.classList.add('active');
     }
 
+    // --- Hand-Drawn Animated SVG Illustrations (Zero Emojis!) ---
+
+    function getHanddrawnMochiSvg() {
+        return `
+            <svg class="cat-svg" width="38" height="28" viewBox="0 0 38 28" fill="none">
+                <path class="cat-tail" d="M 30 22 C 35 24 37 17 34 14 C 32 12 29 14 30 17" stroke="#2c221e" stroke-width="2" stroke-linecap="round" fill="#e07a5f"/>
+                <ellipse class="cat-body" cx="19" cy="18" rx="15" ry="9" fill="#f4a261" stroke="#2c221e" stroke-width="2"/>
+                <circle cx="10" cy="15" r="7.5" fill="#f4a261" stroke="#2c221e" stroke-width="2"/>
+                <polygon points="6,9 8,3 11,9" fill="#e07a5f" stroke="#2c221e" stroke-width="1.8"/>
+                <polygon points="11,9 13,4 15,10" fill="#e07a5f" stroke="#2c221e" stroke-width="1.8"/>
+                <path d="M 7 15 Q 9 17 11 15" stroke="#2c221e" stroke-width="1.6" stroke-linecap="round"/>
+                <path d="M 12 15 Q 14 17 16 15" stroke="#2c221e" stroke-width="1.6" stroke-linecap="round"/>
+                <circle cx="11.5" cy="17.5" r="1.2" fill="#e07a5f"/>
+            </svg>
+        `;
+    }
+
+    function getHanddrawnMugSvg() {
+        return `
+            <div class="handdrawn-mug-decor" title="Warm Cinnamon Tea">
+                <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+                    <path class="steam-wave-1" d="M 12 10 Q 14 6 12 2" stroke="#8c786c" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+                    <path class="steam-wave-2" d="M 18 11 Q 20 7 18 3" stroke="#8c786c" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+                    <rect x="7" y="12" width="16" height="18" rx="4" fill="#eed9c4" stroke="#2c221e" stroke-width="2"/>
+                    <path d="M 23 15 C 28 15 28 25 23 25" stroke="#2c221e" stroke-width="2" fill="none"/>
+                    <line x1="7" y1="18" x2="23" y2="18" stroke="#e07a5f" stroke-width="1.5" stroke-dasharray="2 2"/>
+                </svg>
+            </div>
+        `;
+    }
+
+    function getHanddrawnCandleSvg() {
+        return `
+            <div class="handdrawn-candle-decor" title="Cozy Candle">
+                <svg width="28" height="42" viewBox="0 0 28 42" fill="none">
+                    <path class="candle-flame" d="M 14 4 C 11 8 10 13 14 15 C 18 13 17 8 14 4 Z" fill="#f4a261" stroke="#2c221e" stroke-width="1.5"/>
+                    <circle cx="14" cy="12" r="2.5" fill="#ffeaa7"/>
+                    <line x1="14" y1="15" x2="14" y2="18" stroke="#2c221e" stroke-width="2"/>
+                    <rect x="7" y="18" width="14" height="22" rx="3" fill="#fffdfa" stroke="#2c221e" stroke-width="2"/>
+                    <path d="M 9 18 C 9 22 11 22 11 18" fill="#fffdfa" stroke="#2c221e" stroke-width="1.5"/>
+                </svg>
+            </div>
+        `;
+    }
+
+    function getHanddrawnPlantSvg() {
+        return `
+            <div class="handdrawn-plant-decor" title="Pothos Plant">
+                <svg width="42" height="48" viewBox="0 0 42 48" fill="none">
+                    <path d="M 21 22 Q 10 18 8 12 Q 14 8 21 22" fill="#81b29a" stroke="#2c221e" stroke-width="1.8"/>
+                    <path d="M 21 22 Q 32 16 34 10 Q 26 8 21 22" fill="#a3b18a" stroke="#2c221e" stroke-width="1.8"/>
+                    <path d="M 21 20 Q 21 8 16 4 Q 14 12 21 20" fill="#588157" stroke="#2c221e" stroke-width="1.8"/>
+                    <path d="M 10 24 Q 4 30 2 36 Q 8 36 12 26" fill="#81b29a" stroke="#2c221e" stroke-width="1.8"/>
+                    <polygon points="12,22 30,22 27,42 15,42" fill="#e07a5f" stroke="#2c221e" stroke-width="2"/>
+                    <rect x="10" y="20" width="22" height="4" rx="2" fill="#cfa170" stroke="#2c221e" stroke-width="1.8"/>
+                </svg>
+            </div>
+        `;
+    }
+
+    function getHanddrawnClockSvg() {
+        return `
+            <div class="handdrawn-clock-decor" title="Vintage Clock">
+                <svg width="36" height="46" viewBox="0 0 36 46" fill="none">
+                    <rect x="6" y="6" width="24" height="26" rx="5" fill="#cfa170" stroke="#2c221e" stroke-width="2"/>
+                    <circle cx="18" cy="18" r="9" fill="#ffffff" stroke="#2c221e" stroke-width="1.8"/>
+                    <line x1="18" y1="18" x2="18" y2="12" stroke="#2c221e" stroke-width="1.8" stroke-linecap="round"/>
+                    <line x1="18" y1="18" x2="22" y2="18" stroke="#2c221e" stroke-width="1.8" stroke-linecap="round"/>
+                    <g class="clock-pendulum" style="transform-origin: 18px 32px;">
+                        <line x1="18" y1="32" x2="18" y2="42" stroke="#2c221e" stroke-width="1.8"/>
+                        <circle cx="18" cy="42" r="3" fill="#f2cc8f" stroke="#2c221e" stroke-width="1.5"/>
+                    </g>
+                </svg>
+            </div>
+        `;
+    }
+
+    function getHanddrawnBookendSvg() {
+        return `
+            <div class="handdrawn-bookend-decor" title="Brass Bookend">
+                <svg width="34" height="44" viewBox="0 0 34 44" fill="none">
+                    <path d="M 4 40 L 4 10 Q 4 4 10 4 L 14 4 L 14 36 L 30 36 L 30 40 Z" fill="#f2cc8f" stroke="#2c221e" stroke-width="2.2" stroke-linejoin="round"/>
+                    <path d="M 14 12 L 28 36" stroke="#2c221e" stroke-width="2" stroke-dasharray="2 3"/>
+                </svg>
+            </div>
+        `;
+    }
+
+    function renderHanddrawnDecor(type) {
+        switch (type) {
+            case 'plant': return getHanddrawnPlantSvg();
+            case 'mug': return getHanddrawnMugSvg();
+            case 'candle': return getHanddrawnCandleSvg();
+            case 'clock': return getHanddrawnClockSvg();
+            case 'bookend': return getHanddrawnBookendSvg();
+            default: return getHanddrawnPlantSvg();
+        }
+    }
+
     // --- Utilities ---
+
+    function cleanTitle(raw) {
+        if (!raw) return 'Untitled';
+        return raw
+            .replace(/\.[^/.]+$/, "")
+            .replace(/[_-]+/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+    }
 
     function showToast(msg, type = 'success') {
         const toast = document.createElement('div');

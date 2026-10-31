@@ -1,6 +1,8 @@
 /* ========================================================
    THE COZY NOOK - Handcrafted Home Bookshelf Stylesheet
-   No text cut-offs! Customizable books (Upright, Leaning, Stacked)
+   - No top cutoffs! (80px clearance)
+   - 4 Display Modes: Front-Facing, Spine, Leaning, Stacked
+   - Shelf objects & decorations
    ======================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Gaegu:wght@400;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
@@ -54,7 +56,7 @@ body {
   border-radius: 255px 25px 225px 25px / 25px 225px 25px 255px;
 }
 
-/* Tactile Buttons */
+/* Tactile UIverse Buttons */
 .hand-btn {
   display: inline-flex;
   align-items: center;
@@ -95,8 +97,8 @@ body {
 }
 
 .hand-btn-sm {
-  padding: 5px 14px;
-  font-size: 1rem;
+  padding: 5px 12px;
+  font-size: 0.95rem;
 }
 
 /* Washi Tape Accent */
@@ -170,37 +172,137 @@ body {
 }
 
 /* ========================================================
-   BOOKCASE & WOODEN SHELVES (Fixed Overflow & Cutoffs)
+   BOOKCASE & WOODEN SHELVES (Generous Clearance - No Cutoffs!)
    ======================================================== */
 .shelf-wrapper {
   position: relative;
-  margin-bottom: 54px;
+  margin-bottom: 58px;
 }
 
 .shelf-room-decor {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 16px;
-  margin-bottom: 12px;
+  padding: 0 18px;
+  margin-bottom: 10px;
 }
 
-/* Bookcase Box with Generous Top Padding so tooltips NEVER cut off! */
+/* 85px top padding ensures bookmarks, tall books & action pills NEVER touch or clip the frame */
 .shelf-bookcase-box {
   background: #fffdf9;
   border-left: 3px solid var(--ink);
   border-right: 3px solid var(--ink);
   border-top: 3px solid var(--ink);
-  border-radius: 18px 18px 0 0;
+  border-radius: 20px 20px 0 0;
   box-shadow: inset 0 4px 16px rgba(44, 34, 30, 0.05);
-  padding: 56px 28px 0px 28px; /* 56px top padding fixes the tooltip cutoff completely */
-  min-height: 270px;
+  padding: 85px 28px 0px 28px;
+  min-height: 330px;
   display: flex;
   align-items: flex-end;
   gap: 20px;
   overflow-x: auto;
-  overflow-y: visible; /* Prevents top clipping */
+  overflow-y: visible;
   position: relative;
+}
+
+/* ========================================================
+   ANIMATED HAND-DRAWN ELEMENTS (NO EMOJIS!)
+   ======================================================== */
+
+/* 1. Mochi the Sleeping Cat */
+.cat-illustration-box {
+  display: inline-block;
+  position: relative;
+}
+
+.cat-body {
+  animation: catBreathe 3s ease-in-out infinite;
+  transform-origin: 17px 16px;
+}
+
+.cat-tail {
+  animation: tailWag 3.5s ease-in-out infinite;
+  transform-origin: 28px 18px;
+}
+
+@keyframes catBreathe {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.05); }
+}
+
+@keyframes tailWag {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(7deg); }
+}
+
+/* Floating Zzz */
+.floating-zzz {
+  position: absolute;
+  top: -4px;
+  right: -2px;
+  font-family: 'Patrick Hand', cursive;
+  font-weight: 700;
+  font-size: 11px;
+  color: #7d695c;
+  animation: floatZzz 2.6s ease-in infinite;
+  pointer-events: none;
+}
+
+.floating-zzz.z2 {
+  top: -12px;
+  right: -6px;
+  font-size: 13px;
+  animation-delay: 0.8s;
+}
+
+.floating-zzz.z3 {
+  top: -20px;
+  right: -10px;
+  font-size: 15px;
+  animation-delay: 1.6s;
+}
+
+@keyframes floatZzz {
+  0% { opacity: 0; transform: translateY(0) scale(0.7); }
+  40% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateY(-16px) translateX(6px) scale(1.1); }
+}
+
+/* 2. Tea Mug with Rising Steam */
+.steam-wave-1 {
+  animation: steamRise 2.4s ease-out infinite;
+}
+.steam-wave-2 {
+  animation: steamRise 2.4s ease-out infinite 1.2s;
+}
+
+@keyframes steamRise {
+  0% { opacity: 0; transform: translateY(0); }
+  40% { opacity: 0.75; }
+  100% { opacity: 0; transform: translateY(-10px) translateX(2px); }
+}
+
+/* 3. Cozy Candle with Flickering Flame */
+.candle-flame {
+  animation: candleFlicker 1.8s ease-in-out infinite;
+  transform-origin: 14px 15px;
+}
+
+@keyframes candleFlicker {
+  0%, 100% { transform: scale(1) rotate(-1deg); }
+  25% { transform: scale(1.08, 0.95) rotate(2deg); }
+  50% { transform: scale(0.96, 1.06) rotate(-2deg); }
+  75% { transform: scale(1.05, 0.98) rotate(1deg); }
+}
+
+/* 4. Vintage Mantle Clock with Swinging Pendulum */
+.clock-pendulum {
+  animation: swingPendulum 2s ease-in-out infinite;
+}
+
+@keyframes swingPendulum {
+  0%, 100% { transform: rotate(-14deg); }
+  50% { transform: rotate(14deg); }
 }
 
 /* Wooden Shelf Plank */
@@ -224,91 +326,138 @@ body {
 }
 
 /* ========================================================
-   REALISTIC HOME BOOKSHELF SPINES & COVERS
+   THE 4 BOOK DISPLAY MODES & DRAG/DROP
    ======================================================== */
 .cozy-shelf-book {
   position: relative;
-  cursor: pointer;
+  cursor: grab;
   flex-shrink: 0;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
   user-select: none;
   transform-origin: bottom center;
 }
 
+.cozy-shelf-book:active {
+  cursor: grabbing;
+}
+
+.cozy-shelf-book.is-dragging {
+  opacity: 0.45;
+  transform: scale(0.95) rotate(-3deg);
+}
+
 .cozy-shelf-book:hover {
-  transform: translateY(-18px) scale(1.04);
-  z-index: 40;
+  transform: translateY(-16px) scale(1.03);
+  z-index: 50;
 }
 
-.cozy-shelf-book:hover .hover-tooltip {
+/* Tactile Floating Quick Action Bar on each book */
+.book-action-pills {
+  position: absolute;
+  top: -50px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  background: #fffdf9;
+  border: 2px solid var(--ink);
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  box-shadow: 2px 2px 0px var(--ink);
+  display: flex;
+  gap: 3px;
+  padding: 3px 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 70;
+  white-space: nowrap;
+}
+
+.cozy-shelf-book:hover .book-action-pills {
   opacity: 1;
-  transform: translate(-50%, -12px);
+  pointer-events: auto;
+  transform: translateX(-50%) scale(1);
 }
 
-/* Style A: Upright Standing Book Spine */
+.action-pill-btn {
+  padding: 2px 8px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  color: var(--ink);
+}
+
+.action-pill-btn:hover {
+  background: var(--honey);
+  transform: translateY(-1px);
+}
+
+.action-pill-btn.active {
+  background: var(--terracotta);
+  color: #fff;
+}
+
+/* 1. FRONT-FACING COVER MODE */
+.book-cover-front {
+  width: 145px;
+  height: 215px;
+  border: 2.5px solid var(--ink);
+  border-radius: 6px 12px 12px 6px;
+  box-shadow: -4px 4px 0px rgba(44, 34, 30, 0.18), 3px 3px 0px var(--ink);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+
+.book-cover-front::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 14px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.2) 0%, rgba(255,255,255,0.28) 50%, rgba(0,0,0,0.1) 100%);
+  border-right: 1.5px solid rgba(44, 34, 30, 0.25);
+  z-index: 2;
+}
+
+/* 2. REALISTIC SPINE MODE (82px wide, cover artwork texture, gold ribbing) */
 .book-spine-upright {
-  width: 58px;
-  height: 205px;
+  width: 82px;
+  height: 215px;
   border: 2.5px solid var(--ink);
   border-radius: 6px 4px 4px 6px;
   box-shadow: 
-    inset 4px 0 0 rgba(255, 255, 255, 0.35),
-    inset -3px 0 0 rgba(0, 0, 0, 0.15),
-    3px 0 0 rgba(44, 34, 30, 0.15);
-  padding: 10px 4px;
+    inset 5px 0 6px rgba(255, 255, 255, 0.35),
+    inset -5px 0 6px rgba(0, 0, 0, 0.22),
+    3px 2px 0px rgba(44, 34, 30, 0.18);
+  padding: 14px 6px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
   position: relative;
   background-size: cover;
-  background-position: center;
-}
-
-/* Style B: Leaning Book */
-.cozy-shelf-book.is-leaning {
-  transform: rotate(14deg);
-  margin-right: 14px;
-}
-
-.cozy-shelf-book.is-leaning:hover {
-  transform: translateY(-16px) rotate(14deg) scale(1.04);
-}
-
-/* Style C: Stacked Flat Books */
-.cozy-shelf-book.is-stacked {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  justify-content: flex-end;
-  margin-right: 8px;
-}
-
-.stack-book-layer {
-  width: 145px;
-  height: 34px;
-  border: 2px solid var(--ink);
-  border-radius: 4px;
-  box-shadow: 2px 2px 0px rgba(0,0,0,0.15);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 10px;
-  font-size: 0.88rem;
-  font-weight: 700;
-  white-space: nowrap;
+  background-position: left center;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-/* Upright Spine Text - Clean, Horizontal Blocks */
-.spine-top-badge {
-  font-size: 0.75rem;
-  font-weight: 800;
-  background: rgba(0, 0, 0, 0.18);
-  padding: 1px 4px;
-  border-radius: 3px;
-  letter-spacing: 0.05em;
+/* Gold embossed spine ribs */
+.spine-rib {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 223, 133, 0.45);
+  border-top: 1px solid rgba(255, 255, 255, 0.6);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  margin: 4px 0;
 }
 
 .spine-title-container {
@@ -317,10 +466,10 @@ body {
   justify-content: center;
   flex: 1;
   width: 100%;
+  padding: 4px 0;
 }
 
 .spine-title-text {
-  font-size: 0.88rem;
   font-weight: 700;
   line-height: 1.15;
   text-align: center;
@@ -328,30 +477,87 @@ body {
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  word-break: break-word;
-  padding: 0 2px;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: none;
+  -webkit-hyphens: none;
+  padding: 0 4px;
 }
 
 .spine-author-text {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 700;
   text-align: center;
-  opacity: 0.85;
+  opacity: 0.9;
   width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  border-top: 1px solid rgba(0, 0, 0, 0.15);
+  border-top: 1px solid rgba(0, 0, 0, 0.2);
   padding-top: 4px;
 }
 
-/* Dangling Ribbon Bookmark */
+/* 3. LEANING MODE */
+.cozy-shelf-book.is-leaning {
+  transform: rotate(15deg);
+  transform-origin: bottom left;
+  margin-right: 22px;
+}
+
+.cozy-shelf-book.is-leaning:hover {
+  transform: translateY(-16px) rotate(15deg) scale(1.03);
+}
+
+/* 4. REALISTIC STACKED BOOKS (Piled on top of each other!) */
+.shelf-book-stack {
+  display: flex;
+  flex-direction: column-reverse; /* Bottom book at shelf base */
+  align-items: center;
+  gap: 0;
+  margin-right: 14px;
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.2s ease;
+}
+
+.shelf-book-stack:hover {
+  transform: translateY(-8px);
+}
+
+.stack-book-layer {
+  width: 155px;
+  height: 38px;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  margin-bottom: -1px;
+  transition: transform 0.15s ease;
+}
+
+.stack-book-layer:hover {
+  transform: scale(1.03);
+  z-index: 20;
+}
+
+/* Ribbon Bookmark */
 .dangle-ribbon {
   position: absolute;
   top: -10px;
-  right: 10px;
-  width: 8px;
-  height: 20px;
+  right: 12px;
+  width: 9px;
+  height: 22px;
   background: var(--terracotta);
   border: 1.5px solid var(--ink);
   border-bottom: none;
@@ -359,50 +565,34 @@ body {
   z-index: 5;
 }
 
-/* Hover Tooltip (Never cuts off now!) */
-.hover-tooltip {
-  position: absolute;
-  top: -42px;
-  left: 50%;
-  transform: translate(-50%, 0);
-  background: #fff;
-  border: 2px solid var(--ink);
-  box-shadow: 2px 2px 0px var(--ink);
-  border-radius: 8px;
-  padding: 3px 10px;
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transition: all 0.2s ease;
-  z-index: 60;
+/* Shelf Decorations (Hand-drawn SVGs) */
+.shelf-decor-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 2px;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  flex-shrink: 0;
+  user-select: none;
 }
 
-.hover-tooltip::after {
-  content: '';
-  position: absolute;
-  bottom: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  border-width: 6px 5px 0;
-  border-style: solid;
-  border-color: var(--ink) transparent;
-  display: block;
-  width: 0;
+.shelf-decor-item:hover {
+  transform: scale(1.15) translateY(-6px);
 }
 
 /* Empty Book Slot */
 .empty-book-slot {
-  width: 65px;
-  height: 180px;
+  width: 72px;
+  height: 185px;
   border: 2px dashed #bbaaa0;
   border-radius: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: #8c786c;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -414,19 +604,13 @@ body {
 
 .empty-book-slot:hover {
   border-color: var(--ink);
+  background: #faedcd;
+  transform: translateY(-6px);
+}
+  border-color: var(--ink);
   background-color: #f7eed8;
   color: var(--ink);
   transform: translateY(-4px);
-}
-
-/* Sleeping Cat */
-@keyframes catBreathe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.04) translateY(-1px); }
-}
-
-.sleeping-cat {
-  animation: catBreathe 3s ease-in-out infinite;
 }
 
 /* Modals */

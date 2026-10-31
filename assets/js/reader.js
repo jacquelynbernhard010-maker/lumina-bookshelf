@@ -141,11 +141,51 @@ document.addEventListener('DOMContentLoaded', async () => {
             options.spread = "always";
             options.flow = "paginated";
         } else if (mode === 'scroll') {
-            options.flow = "scrolled-doc";
+            options.manager = "continuous";
+            options.flow = "scrolled";
         }
 
         rendition = epubBook.renderTo("epubViewer", options);
         registerEpubThemes();
+
+        // Injected rules: completely hide scrollbars inside reader iframe & add bottom breathing space
+        rendition.hooks.content.register((contents) => {
+            contents.addStylesheetRules({
+                "html, body": {
+                    "scrollbar-width": "none !important",
+                    "-ms-overflow-style": "none !important",
+                    "padding-bottom": "80px !important",
+                    "overflow-x": "hidden !important"
+                },
+                "::-webkit-scrollbar": {
+                    "display": "none !important",
+                    "width": "0px !important",
+                    "height": "0px !important"
+                }
+            });
+
+            // Smooth mousewheel & touch scroll forwarding in scroll mode
+            const doc = contents.document;
+            if (doc) {
+                doc.addEventListener('wheel', (e) => {
+                    if (currentReadingMode === 'scroll') {
+                        epubViewer.scrollBy({ top: e.deltaY, behavior: 'auto' });
+                    }
+                }, { passive: true });
+            }
+        });
+
+        // Infinite Scroll listener: when nearing the bottom, auto-trigger next section so user never gets stuck!
+        let scrollThrottle = false;
+        epubViewer.onscroll = () => {
+            if (currentReadingMode !== 'scroll' || !rendition || scrollThrottle) return;
+            const { scrollTop, scrollHeight, clientHeight } = epubViewer;
+            if (scrollHeight - (scrollTop + clientHeight) < 450) {
+                scrollThrottle = true;
+                rendition.next();
+                setTimeout(() => { scrollThrottle = false; }, 300);
+            }
+        };
 
         // Restore saved CFI or beginning
         const startTarget = book.last_cfi || undefined;
