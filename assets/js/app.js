@@ -40,7 +40,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const readModal = document.getElementById('readModal');
     const uploadModal = document.getElementById('uploadModal');
     const cloudModal = document.getElementById('cloudModal');
-    const decorModal = document.getElementById('decorModal');
 
     // Read Modal Elements
     const modalCover = document.getElementById('modalCover');
@@ -72,12 +71,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const uploadStyleSelect = document.getElementById('uploadStyleSelect');
     const bookTitleInput = document.getElementById('bookTitleInput');
     const bookAuthorInput = document.getElementById('bookAuthorInput');
-
-    // Decor Elements
-    const btnAddDecor = document.getElementById('btnAddDecor');
-    const btnCloseDecorModal = document.getElementById('btnCloseDecorModal');
-    const btnDoneDecor = document.getElementById('btnDoneDecor');
-    const btnClearDecors = document.getElementById('btnClearDecors');
 
     // Cloud Elements
     const btnOpenCloud = document.getElementById('btnOpenCloud');
@@ -134,28 +127,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnOpenUpload.addEventListener('click', () => uploadModal.classList.add('active'));
         btnCloseUploadModal.addEventListener('click', () => uploadModal.classList.remove('active'));
         btnCancelUpload.addEventListener('click', () => uploadModal.classList.remove('active'));
-
-        btnAddDecor.addEventListener('click', () => decorModal.classList.add('active'));
-        btnCloseDecorModal.addEventListener('click', () => decorModal.classList.remove('active'));
-        btnDoneDecor.addEventListener('click', () => decorModal.classList.remove('active'));
-
-        btnClearDecors.addEventListener('click', () => {
-            state.shelfDecors = [];
-            localStorage.setItem('cozy_shelf_decors', JSON.stringify([]));
-            renderShelves();
-            showToast('Cleared shelf decor', 'info');
-        });
-
-        // Decor picker buttons
-        document.querySelectorAll('.btn-pick-decor').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const decorType = btn.dataset.decor || 'plant';
-                state.shelfDecors.push(decorType);
-                localStorage.setItem('cozy_shelf_decors', JSON.stringify(state.shelfDecors));
-                showToast(`Placed ${btn.dataset.label || 'decor'} on shelf!`, 'success');
-                renderShelves();
-            });
-        });
 
         btnOpenCloud.addEventListener('click', () => {
             const cfg = window.storageEngine.getSupabaseConfig();
@@ -360,120 +331,74 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderShelves() {
         shelvesContainer.innerHTML = '';
 
+        const bookcase = document.createElement('div');
+        bookcase.className = 'bookcase-wrapper';
+
+        const crown = document.createElement('div');
+        crown.className = 'bookcase-top-crown';
+        bookcase.appendChild(crown);
+
         const itemsPerShelf = 5;
         const shelfCount = Math.max(1, Math.ceil(state.books.length / itemsPerShelf));
 
         for (let sIdx = 0; sIdx < shelfCount; sIdx++) {
             const chunk = state.books.slice(sIdx * itemsPerShelf, (sIdx + 1) * itemsPerShelf);
-            const isFirstShelf = (sIdx === 0);
 
-            const shelfWrap = document.createElement('div');
-            shelfWrap.className = 'shelf-wrapper';
+            // Shelf Tier (Inner Wall)
+            const tier = document.createElement('div');
+            tier.className = 'shelf-tier';
 
-            // Top room decor: Sleeping Cat Mochi on first shelf
-            let decorTopHtml = '';
-            if (isFirstShelf) {
-                decorTopHtml = `
-                    <div class="shelf-room-decor">
-                        <div class="handdrawn-cat-widget flex items-center gap-2.5 bg-[#fdfaf3] px-4 py-1.5 rounded-full border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] select-none">
-                            <div class="cat-illustration-box">
-                                ${getHanddrawnMochiSvg()}
-                                <div class="floating-zzz">z</div>
-                                <div class="floating-zzz z2">z</div>
-                                <div class="floating-zzz z3">Z</div>
-                            </div>
-                            <span class="font-bold text-xs text-[#524137]">Mochi is napping... zZz</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            ${getHanddrawnMugSvg()}
-                        </div>
-                    </div>
-                `;
-            } else {
-                decorTopHtml = `
-                    <div class="shelf-room-decor justify-end">
-                        <div class="flex items-center gap-2">
-                            ${getHanddrawnCandleSvg()}
-                        </div>
-                    </div>
-                `;
-            }
-
-            // Shelf Book Box (85px top clearance completely prevents cutoffs!)
-            const box = document.createElement('div');
-            box.className = 'shelf-bookcase-box';
-            box.dataset.shelfIndex = sIdx;
-
-            // Group consecutive stacked books together!
             let bIdx = 0;
             while (bIdx < chunk.length) {
                 const book = chunk[bIdx];
                 const theme = coverThemes[(sIdx * itemsPerShelf + bIdx) % coverThemes.length];
 
                 if (book.spine_style === 'stacked') {
-                    // Collect consecutive stacked books into a pile
+                    // Group consecutive stacked books together into a neat pile
                     const stackPile = [book];
                     let nextIdx = bIdx + 1;
                     while (nextIdx < chunk.length && chunk[nextIdx].spine_style === 'stacked') {
                         stackPile.push(chunk[nextIdx]);
                         nextIdx++;
                     }
-
-                    // Render as a stacked pile
-                    box.appendChild(createStackedBooksPile(stackPile, sIdx * itemsPerShelf + bIdx));
+                    tier.appendChild(createStackedBooksPile(stackPile, sIdx * itemsPerShelf + bIdx));
                     bIdx = nextIdx;
                 } else {
-                    box.appendChild(createShelfBookItem(book, theme));
+                    tier.appendChild(createShelfBookItem(book, theme));
                     bIdx++;
-                }
-
-                // Insert a decor item between books if user added any!
-                const decorIndex = bIdx - 1;
-                if (decorIndex < state.shelfDecors.length && (decorIndex % 2 === 1)) {
-                    const decorEl = document.createElement('div');
-                    decorEl.className = 'shelf-decor-item';
-                    decorEl.innerHTML = renderHanddrawnDecor(state.shelfDecors[decorIndex]);
-                    decorEl.title = 'Shelf Decor (Click to remove)';
-                    decorEl.addEventListener('click', () => {
-                        state.shelfDecors.splice(decorIndex, 1);
-                        localStorage.setItem('cozy_shelf_decors', JSON.stringify(state.shelfDecors));
-                        showToast('Decor removed from shelf', 'info');
-                        renderShelves();
-                    });
-                    box.appendChild(decorEl);
                 }
             }
 
-            // Empty Slot Button
+            // Empty Slot Button to slip a new book in
             const emptySlot = document.createElement('div');
             emptySlot.className = 'empty-book-slot';
             emptySlot.innerHTML = `
-                <span class="text-xl mb-1">+</span>
-                <span class="font-bold text-xs">Slip in</span>
+                <span style="font-size: 1.4rem;">+</span>
+                <span style="font-size: 0.8rem; font-weight: 700;">Slip in</span>
             `;
             emptySlot.addEventListener('click', () => uploadModal.classList.add('active'));
-            box.appendChild(emptySlot);
+            tier.appendChild(emptySlot);
 
-            // Wooden Shelf Plank
+            // Wooden Shelf Plank with wood knots
             const plank = document.createElement('div');
-            plank.className = 'sketch-shelf-plank flex items-center justify-between px-8';
+            plank.className = 'shelf-plank';
             plank.innerHTML = `
-                <div class="wood-knot" style="left: ${20 + sIdx * 15}%;"></div>
-                <div class="wood-knot" style="left: ${60 - sIdx * 10}%;"></div>
-                <div class="wood-knot" style="left: 85%;"></div>
+                <div class="wood-knot"></div>
+                <div class="wood-knot"></div>
+                <div class="wood-knot"></div>
             `;
 
-            shelfWrap.innerHTML = decorTopHtml;
-            shelfWrap.appendChild(box);
-            shelfWrap.appendChild(plank);
-            shelvesContainer.appendChild(shelfWrap);
+            bookcase.appendChild(tier);
+            bookcase.appendChild(plank);
         }
+
+        shelvesContainer.appendChild(bookcase);
     }
 
     // Creates an individual book item on the shelf
     function createShelfBookItem(book, theme) {
         const item = document.createElement('div');
-        const style = book.spine_style || 'front';
+        const style = book.spine_style || 'spine';
         const spineColor = book.spine_color || theme.bg;
         const displayTitle = cleanTitle(book.title);
 
@@ -481,21 +406,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         item.draggable = true;
         item.dataset.bookId = book.id;
 
-        // Dynamic font size based on title length so words NEVER hyphen-split!
-        let titleFontSize = '0.96rem';
+        // Dynamic font size based on title length
+        let titleFontSize = '0.92rem';
         if (displayTitle.length > 32) titleFontSize = '0.74rem';
-        else if (displayTitle.length > 20) titleFontSize = '0.82rem';
-        else if (displayTitle.length > 13) titleFontSize = '0.90rem';
-
-        // Floating tactile action pills to switch styles directly on the shelf!
-        const actionPills = `
-            <div class="book-action-pills">
-                <button type="button" class="action-pill-btn ${style === 'front' ? 'active' : ''}" data-action="front" title="Front-facing cover">📖 Front</button>
-                <button type="button" class="action-pill-btn ${style === 'spine' ? 'active' : ''}" data-action="spine" title="Upright spine">📚 Spine</button>
-                <button type="button" class="action-pill-btn ${style === 'leaning' ? 'active' : ''}" data-action="leaning" title="Lean against neighbor">📐 Lean</button>
-                <button type="button" class="action-pill-btn ${style === 'stacked' ? 'active' : ''}" data-action="stacked" title="Lay flat or stack">🥞 Stack</button>
-            </div>
-        `;
+        else if (displayTitle.length > 20) titleFontSize = '0.80rem';
+        else if (displayTitle.length > 13) titleFontSize = '0.86rem';
 
         if (style === 'front') {
             // 1. FRONT-FACING COVER: Shows the real extracted cover image or styled cover!
@@ -504,10 +419,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 : `background-color: ${spineColor}; color: ${theme.text};`;
 
             item.innerHTML = `
-                ${actionPills}
                 <div class="book-cover-front" style="${coverBgStyle}">
                     <div class="dangle-ribbon" style="background-color: ${theme.ribbon};"></div>
-                    <div class="flex items-center justify-between z-10 ${book.cover_url ? 'bg-black/40 px-2 py-0.5 rounded text-white' : ''}">
+                    <div class="flex items-center justify-between z-10 ${book.cover_url ? 'bg-black/50 px-2 py-0.5 rounded text-white' : ''}">
                         <span class="text-xs font-bold uppercase tracking-wide">${escapeHtml(book.file_type || 'epub')}</span>
                         <span class="text-xs font-bold bg-[#f2cc8f] text-[#2c221e] px-1.5 py-0.2 rounded">${Math.round(book.reading_progress || 0)}%</span>
                     </div>
@@ -518,41 +432,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             `;
         } else {
-            // 2. REALISTIC UPRIGHT OR LEANING SPINE (82px wide, cover artwork texture, gold ribbing)
-            const height = 210 + ((displayTitle.length * 2) % 20);
+            // 2. REALISTIC UPRIGHT OR LEANING SPINE (Clean, elegant, matches cover color)
+            const height = 205 + ((displayTitle.length * 2) % 18);
 
-            // If real cover extracted, blend it on the spine!
             let spineBg = book.cover_url
-                ? `background-image: linear-gradient(90deg, rgba(0,0,0,0.5) 0%, rgba(255,255,255,0.12) 20%, transparent 60%, rgba(0,0,0,0.45) 100%), url("${book.cover_url}");`
+                ? `background-image: linear-gradient(90deg, rgba(0,0,0,0.5) 0%, rgba(255,255,255,0.15) 20%, transparent 60%, rgba(0,0,0,0.45) 100%), url("${book.cover_url}");`
                 : `background: linear-gradient(90deg, rgba(0,0,0,0.15) 0%, rgba(255,255,255,0.2) 20%, transparent 50%, rgba(0,0,0,0.18) 100%), ${spineColor}; color: ${theme.text};`;
 
             item.innerHTML = `
-                ${actionPills}
                 <div class="book-spine-upright" style="height: ${height}px; ${spineBg}">
                     <div class="dangle-ribbon" style="background-color: ${theme.ribbon};"></div>
-                    <div class="spine-rib"></div>
+                    <div></div>
                     <div class="spine-title-container">
                         <span class="spine-title-text ${book.cover_url ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]' : ''}" style="font-size: ${titleFontSize};">${escapeHtml(displayTitle)}</span>
                     </div>
-                    <div class="spine-rib"></div>
                     <span class="spine-author-text ${book.cover_url ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]' : ''}">${escapeHtml(book.author || 'Tome')}</span>
                 </div>
             `;
         }
 
-        // Action Pill Clicks (Direct switch right on the shelf!)
-        item.querySelectorAll('.action-pill-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const newStyle = btn.dataset.action;
-                book.spine_style = newStyle;
-                await window.storageEngine.updateBookSpineStyle(book.id, newStyle);
-                showToast(`Switched "${displayTitle}" to ${newStyle}`, 'success');
-                renderShelves();
-            });
-        });
-
-        // Click book to pop open details & reading modal
+        // Click book to pull it off the shelf & open modal
         item.addEventListener('click', () => openBookModal(book, theme));
 
         // Drag & Drop

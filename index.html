@@ -29,11 +29,6 @@
 
                 <!-- Handcrafted UI Buttons -->
                 <div class="flex items-center gap-3">
-                    <button id="btnAddDecor" class="hand-btn px-4 py-2 text-base font-bold flex items-center gap-2" style="background-color: var(--honey);" title="Add shelf decorations!">
-                        <span>🪴</span>
-                        <span>+ Shelf Decor</span>
-                    </button>
-
                     <button id="btnOpenCloud" class="hand-btn px-4 py-2 text-base font-bold flex items-center gap-2" title="Supabase Cloud Settings">
                         <span>☁️</span>
                         <span id="cloudLabel">Cloud Sync</span>
@@ -220,44 +215,6 @@
                     <button type="submit" id="btnSubmitUpload" class="hand-btn hand-btn-sm hand-btn-matcha text-white">Place on Shelf</button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- ================= ADD DECOR MODAL ================= -->
-    <div id="decorModal" class="modal-backdrop">
-        <div class="bounce-in bg-[#fffefb] wobbly-border max-w-md w-full p-6 shadow-[8px_8px_0px_#2c221e] relative">
-            <button id="btnCloseDecorModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold">✕</button>
-            
-            <h3 class="text-2xl font-bold mb-1">Add Shelf Decor ✨</h3>
-            <p class="text-sm text-[#7d695c] mb-4">Pick a hand-drawn object to place between your books</p>
-
-            <div class="grid grid-cols-3 gap-3 mb-5">
-                <button type="button" class="btn-pick-decor p-3 bg-white border-2 border-[#2c221e] rounded-xl hover:bg-[#faedcd] transition-all text-center flex flex-col items-center gap-1 shadow-[2px_2px_0px_#2c221e]" data-decor="plant" data-label="Pothos Plant">
-                    <svg width="32" height="32" viewBox="0 0 42 48" fill="none"><path d="M 21 22 Q 10 18 8 12 Q 14 8 21 22" fill="#81b29a" stroke="#2c221e" stroke-width="2"/><polygon points="12,22 30,22 27,42 15,42" fill="#e07a5f" stroke="#2c221e" stroke-width="2"/></svg>
-                    <span class="text-xs font-bold">Pothos</span>
-                </button>
-                <button type="button" class="btn-pick-decor p-3 bg-white border-2 border-[#2c221e] rounded-xl hover:bg-[#faedcd] transition-all text-center flex flex-col items-center gap-1 shadow-[2px_2px_0px_#2c221e]" data-decor="mug" data-label="Tea Mug">
-                    <svg width="30" height="30" viewBox="0 0 34 34" fill="none"><rect x="7" y="12" width="16" height="18" rx="4" fill="#eed9c4" stroke="#2c221e" stroke-width="2"/><path d="M 23 15 C 28 15 28 25 23 25" stroke="#2c221e" stroke-width="2" fill="none"/></svg>
-                    <span class="text-xs font-bold">Tea Mug</span>
-                </button>
-                <button type="button" class="btn-pick-decor p-3 bg-white border-2 border-[#2c221e] rounded-xl hover:bg-[#faedcd] transition-all text-center flex flex-col items-center gap-1 shadow-[2px_2px_0px_#2c221e]" data-decor="clock" data-label="Vintage Clock">
-                    <svg width="28" height="32" viewBox="0 0 36 46" fill="none"><rect x="6" y="6" width="24" height="26" rx="5" fill="#cfa170" stroke="#2c221e" stroke-width="2"/><circle cx="18" cy="18" r="9" fill="#ffffff" stroke="#2c221e" stroke-width="2"/></svg>
-                    <span class="text-xs font-bold">Clock</span>
-                </button>
-                <button type="button" class="btn-pick-decor p-3 bg-white border-2 border-[#2c221e] rounded-xl hover:bg-[#faedcd] transition-all text-center flex flex-col items-center gap-1 shadow-[2px_2px_0px_#2c221e]" data-decor="candle" data-label="Cozy Candle">
-                    <svg width="24" height="32" viewBox="0 0 28 42" fill="none"><path d="M 14 4 C 11 8 10 13 14 15 C 18 13 17 8 14 4 Z" fill="#f4a261" stroke="#2c221e" stroke-width="1.8"/><rect x="7" y="18" width="14" height="22" rx="3" fill="#fffdfa" stroke="#2c221e" stroke-width="2"/></svg>
-                    <span class="text-xs font-bold">Candle</span>
-                </button>
-                <button type="button" class="btn-pick-decor p-3 bg-white border-2 border-[#2c221e] rounded-xl hover:bg-[#faedcd] transition-all text-center flex flex-col items-center gap-1 shadow-[2px_2px_0px_#2c221e]" data-decor="bookend" data-label="Brass Bookend">
-                    <svg width="28" height="32" viewBox="0 0 34 44" fill="none"><path d="M 4 40 L 4 10 Q 4 4 10 4 L 14 4 L 14 36 L 30 36 L 30 40 Z" fill="#f2cc8f" stroke="#2c221e" stroke-width="2"/></svg>
-                    <span class="text-xs font-bold">Bookend</span>
-                </button>
-            </div>
-
-            <div class="flex justify-between items-center pt-2 border-t border-[#e0d6c5]">
-                <button type="button" id="btnClearDecors" class="text-xs font-bold text-red-700 hover:underline">Reset Decors</button>
-                <button type="button" id="btnDoneDecor" class="hand-btn hand-btn-sm hand-btn-matcha text-white">Done</button>
-            </div>
         </div>
     </div>
 
