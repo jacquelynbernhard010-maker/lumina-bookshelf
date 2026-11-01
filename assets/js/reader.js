@@ -208,9 +208,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 percent = Math.floor(epubBook.locations.percentageFromCfi(cfi) * 100);
             }
 
-            progressIndicator.innerText = `${percent}% read`;
-            footerProgress.innerText = `${percent}% read`;
-            progressFill.style.width = `${percent}%`;
+            if (footerProgress) footerProgress.innerText = `${percent}% read`;
+            if (progressFill) progressFill.style.width = `${percent}%`;
 
             checkIfCurrentPageIsBookmarked(cfi);
             saveReadingProgress(cfi, percent);
@@ -264,47 +263,103 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // --- Bookmarks Feature ---
+    const pageBookmarkRibbon = document.getElementById('pageBookmarkRibbon');
+    const headerBookmarkBadge = document.getElementById('headerBookmarkBadge');
 
-    btnAddBookmark.addEventListener('click', async () => {
+    async function toggleBookmarkCurrentPage() {
         if (!rendition) return;
         const location = rendition.currentLocation();
         if (!location || !location.start) return;
 
         const cfi = location.start.cfi;
-        const curChapter = chapterTitleEl.innerText || 'Bookmark';
+        const curBook = await window.storageEngine.getBook(book.id);
+        const bookmarks = curBook.bookmarks || [];
+        const existingIndex = bookmarks.findIndex(b => b.cfi === cfi);
 
-        const added = await window.storageEngine.addBookmark(book.id, {
-            cfi: cfi,
-            title: curChapter,
-            snippet: `Bookmarked on page (${progressIndicator.innerText})`
-        });
+        if (existingIndex !== -1) {
+            // Already bookmarked -> Remove bookmark
+            const bmId = bookmarks[existingIndex].id;
+            await window.storageEngine.removeBookmark(book.id, bmId);
+            showToast('Bookmark removed ✕', 'info');
+        } else {
+            // Calculate progress percentage
+            let percent = 0;
+            if (epubBook.locations && epubBook.locations.total > 0) {
+                percent = Math.floor(epubBook.locations.percentageFromCfi(cfi) * 100);
+            } else if (footerProgress) {
+                percent = parseInt(footerProgress.innerText) || 0;
+            }
 
-        if (added) {
-            showToast('Page bookmarked! 🔖', 'success');
-            checkIfCurrentPageIsBookmarked(cfi);
-            await renderBookmarksList();
+            const curChapter = (chapterTitleEl && chapterTitleEl.innerText.trim()) ? chapterTitleEl.innerText.trim() : 'Bookmarked Page';
+            const pageText = location.start.displayed && location.start.displayed.page 
+                ? `Page ${location.start.displayed.page} (${percent}%)` 
+                : `${percent}% read`;
+
+            await window.storageEngine.addBookmark(book.id, {
+                cfi: cfi,
+                title: curChapter,
+                snippet: `${pageText} • Saved spot`
+            });
+
+            showToast(`🔖 Page bookmarked (${percent}% read)!`, 'success');
+            
+            // Auto switch drawer to Bookmarks tab so it's ready when user opens Contents
+            showBookmarksTab();
         }
-    });
+
+        await checkIfCurrentPageIsBookmarked(cfi);
+        await renderBookmarksList();
+    }
+
+    btnAddBookmark.addEventListener('click', toggleBookmarkCurrentPage);
+    if (pageBookmarkRibbon) {
+        pageBookmarkRibbon.addEventListener('click', toggleBookmarkCurrentPage);
+    }
 
     async function renderBookmarksList() {
         const updatedBook = await window.storageEngine.getBook(book.id);
         const bookmarks = updatedBook.bookmarks || [];
         bookmarkCount.innerText = bookmarks.length;
 
+        if (headerBookmarkBadge) {
+            if (bookmarks.length > 0) {
+                headerBookmarkBadge.innerText = bookmarks.length;
+                headerBookmarkBadge.classList.remove('hidden');
+            } else {
+                headerBookmarkBadge.classList.add('hidden');
+            }
+        }
+
         if (bookmarks.length === 0) {
-            bookmarkList.innerHTML = `<p class="text-xs text-[#786457] p-3 italic">No bookmarks yet. Click "🔖 Bookmark" to save any page!</p>`;
+            bookmarkList.innerHTML = `
+                <div class="p-4 text-center">
+                    <span class="text-3xl block mb-2">🔖</span>
+                    <p class="font-bold text-sm text-[#2c221e] mb-1">No bookmarks yet</p>
+                    <p class="text-xs text-[#786457]">Click "🔖 Bookmark" at the top to save your favorite spots!</p>
+                </div>
+            `;
             return;
         }
 
         bookmarkList.innerHTML = '';
-        bookmarks.forEach(bm => {
+        bookmarks.forEach((bm, idx) => {
             const card = document.createElement('div');
             card.className = 'bookmark-card';
             card.innerHTML = `
-                <button class="btn-delete-bookmark" title="Remove bookmark">✕</button>
-                <div class="font-bold text-sm text-[#2c221e]">${escapeHtml(bm.title)}</div>
-                <div class="text-xs text-[#786457] mt-0.5">${escapeHtml(bm.snippet || '')}</div>
-                <div class="text-[10px] text-[#a39488] mt-1">${escapeHtml(bm.date || '')}</div>
+                <div class="flex items-start justify-between">
+                    <div class="font-bold text-sm text-[#2c221e] flex items-center gap-1.5">
+                        <span>🔖</span>
+                        <span>${escapeHtml(bm.title || `Bookmark #${idx + 1}`)}</span>
+                    </div>
+                    <button class="btn-delete-bookmark text-xs font-bold text-red-600 hover:text-red-800 p-1" title="Remove bookmark">✕</button>
+                </div>
+                <div class="text-xs text-[#786457] mt-1 flex items-center justify-between">
+                    <span>${escapeHtml(bm.snippet || '')}</span>
+                    <span class="text-[10px] text-[#a39488]">${escapeHtml(bm.date || '')}</span>
+                </div>
+                <div class="mt-2 pt-1 border-t border-[#f0e7d8] text-right">
+                    <span class="text-xs font-bold text-[#e07a5f] hover:underline">Jump to page ➔</span>
+                </div>
             `;
 
             // Click jumps to bookmark
@@ -312,6 +367,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (e.target.closest('.btn-delete-bookmark')) return;
                 rendition.display(bm.cfi);
                 tocSidebar.classList.remove('open');
+                showToast(`Jumped to ${bm.title || 'bookmark'}`, 'info');
             });
 
             // Delete bookmark
@@ -319,6 +375,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 e.stopPropagation();
                 await window.storageEngine.removeBookmark(book.id, bm.id);
                 showToast('Bookmark removed', 'info');
+                const curLoc = rendition.currentLocation();
+                if (curLoc && curLoc.start) checkIfCurrentPageIsBookmarked(curLoc.start.cfi);
                 await renderBookmarksList();
             });
 
@@ -328,16 +386,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function checkIfCurrentPageIsBookmarked(currentCfi) {
         const curBook = await window.storageEngine.getBook(book.id);
+        if (!curBook) return;
         const bookmarks = curBook.bookmarks || [];
         const isBm = bookmarks.some(b => b.cfi === currentCfi);
 
         if (isBm) {
             btnAddBookmark.classList.add('is-bookmarked');
+            bookmarkIcon.innerText = '🔖';
             bookmarkText.innerText = 'Bookmarked';
+            if (pageBookmarkRibbon) pageBookmarkRibbon.classList.add('active');
         } else {
             btnAddBookmark.classList.remove('is-bookmarked');
+            bookmarkIcon.innerText = '🔖';
             bookmarkText.innerText = 'Bookmark';
+            if (pageBookmarkRibbon) pageBookmarkRibbon.classList.remove('active');
         }
+    }
+
+    function showBookmarksTab() {
+        tabBookmarks.classList.add('active');
+        tabChapters.classList.remove('active');
+        bookmarkList.classList.remove('hidden');
+        tocList.classList.add('hidden');
+    }
+
+    function showChaptersTab() {
+        tabChapters.classList.add('active');
+        tabBookmarks.classList.remove('active');
+        tocList.classList.remove('hidden');
+        bookmarkList.classList.add('hidden');
     }
 
     // --- Drawer Tabs (Chapters vs Bookmarks) ---
@@ -345,19 +422,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnToggleDrawer.addEventListener('click', () => tocSidebar.classList.toggle('open'));
     btnCloseDrawer.addEventListener('click', () => tocSidebar.classList.remove('open'));
 
-    tabChapters.addEventListener('click', () => {
-        tabChapters.classList.add('active');
-        tabBookmarks.classList.remove('active');
-        tocList.classList.remove('hidden');
-        bookmarkList.classList.add('hidden');
-    });
-
-    tabBookmarks.addEventListener('click', () => {
-        tabBookmarks.classList.add('active');
-        tabChapters.classList.remove('active');
-        bookmarkList.classList.remove('hidden');
-        tocList.classList.add('hidden');
-    });
+    tabChapters.addEventListener('click', showChaptersTab);
+    tabBookmarks.addEventListener('click', showBookmarksTab);
 
     function renderChapters(toc) {
         tocList.innerHTML = '';

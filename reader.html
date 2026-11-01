@@ -19,7 +19,8 @@
                 ← Shelf
             </a>
             <button class="hand-nav-btn" id="btnToggleDrawer" title="Chapters & Bookmarks">
-                📑 Contents
+                <span>📑 Contents</span>
+                <span id="headerBookmarkBadge" class="hidden text-xs bg-[#e07a5f] text-white px-1.5 py-0.2 rounded-full font-bold">0</span>
             </button>
             <div class="book-meta">
                 <h1 class="book-title" id="bookTitle">Loading Book...</h1>
@@ -93,6 +94,8 @@
 
     <!-- Reader Main Stage -->
     <div class="reader-stage" id="readerStage">
+        <!-- Visual Bookmark Ribbon on Page Corner -->
+        <div id="pageBookmarkRibbon" class="page-corner-ribbon" title="Click to bookmark this page"></div>
         
         <!-- Slide-out Drawer (Chapters & Saved Bookmarks) -->
         <aside class="toc-sidebar" id="tocSidebar">
