@@ -329,6 +329,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: var(--bg-reader);
+  transition: background-color 0.25s ease;
 }
 
 .epub-viewer {
@@ -336,6 +338,13 @@ body {
   height: 100%;
   margin: 0 auto;
   transition: max-width 0.25s ease;
+  background-color: var(--bg-reader);
+}
+
+.epub-viewer iframe,
+.epub-container,
+.epub-view {
+  background-color: var(--bg-reader) !important;
 }
 
 /* Complete scrollbar hiding for smooth phone-like scrolling */

@@ -64,6 +64,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.body.className = currentTheme;
     fontSizeDisplay.innerText = currentFontSize + '%';
 
+    // Synchronize active states on UI buttons immediately
+    themeChoices.forEach(b => {
+        b.classList.toggle('active', b.dataset.theme === currentTheme);
+    });
+    fontButtons.forEach(b => {
+        b.classList.toggle('active', b.dataset.font === currentFontFamily);
+    });
+
     // Init storage & load book
     await window.storageEngine.initIndexedDB();
     const book = await window.storageEngine.getBook(bookId);
@@ -152,36 +160,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Injected rules: cleanly configured without breaking column navigation
         rendition.hooks.content.register((contents) => {
-            if (currentReadingMode === 'scroll') {
-                contents.addStylesheetRules({
-                    "html, body": {
-                        "scrollbar-width": "none !important",
-                        "-ms-overflow-style": "none !important",
-                        "padding-bottom": "80px !important"
-                    },
-                    "::-webkit-scrollbar": {
-                        "display": "none !important",
-                        "width": "0px !important",
-                        "height": "0px !important"
-                    }
-                });
-            } else {
-                contents.addStylesheetRules({
-                    "html, body": {
-                        "scrollbar-width": "none !important",
-                        "-ms-overflow-style": "none !important"
-                    },
-                    "::-webkit-scrollbar": {
-                        "display": "none !important",
-                        "width": "0px !important",
-                        "height": "0px !important"
-                    }
-                });
-            }
-
-            // Click inside page to turn pages, or mousewheel in scroll mode
             const doc = contents.document;
             if (doc) {
+                injectStylesIntoDoc(doc);
+
+                // Click inside page to turn pages, or mousewheel in scroll mode
                 if (currentReadingMode === 'scroll') {
                     doc.addEventListener('wheel', (e) => {
                         epubViewer.scrollBy({ top: e.deltaY, behavior: 'auto' });
@@ -480,7 +463,153 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // --- Appearance Controls ---
+    // --- Appearance Controls & Custom Typography ---
+
+    const THEME_CONFIG = {
+        'theme-light': {
+            bg: '#ffffff',
+            text: '#1a1a1a',
+            accent: '#2a6f97',
+            heading: '#111111'
+        },
+        'theme-sepia': {
+            bg: '#fbf5e8',
+            text: '#2c221e',
+            accent: '#e07a5f',
+            heading: '#1a120e'
+        },
+        'theme-dark': {
+            bg: '#1e1916',
+            text: '#f2ebd9',
+            accent: '#f2cc8f',
+            heading: '#fff5e4'
+        },
+        'theme-black': {
+            bg: '#000000',
+            text: '#e0d6c8',
+            accent: '#f2cc8f',
+            heading: '#ffffff'
+        }
+    };
+
+    function generateReaderCSS(themeKey, fontFamily, fontSizePercent) {
+        const theme = THEME_CONFIG[themeKey] || THEME_CONFIG['theme-sepia'];
+        return `
+            @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap');
+
+            html {
+                background-color: ${theme.bg} !important;
+                background: ${theme.bg} !important;
+                color: ${theme.text} !important;
+                font-size: ${fontSizePercent}% !important;
+            }
+
+            body {
+                background-color: ${theme.bg} !important;
+                background: ${theme.bg} !important;
+                color: ${theme.text} !important;
+                font-family: ${fontFamily} !important;
+                font-size: 1rem !important;
+                line-height: 1.65 !important;
+                -webkit-font-smoothing: antialiased !important;
+                -moz-osx-font-smoothing: grayscale !important;
+            }
+
+            /* Unconditionally override publisher CSS on all inner text containers */
+            body, p, span, div, blockquote, article, section, em, strong, b, i, li, ul, ol, dl, dt, dd {
+                color: ${theme.text} !important;
+                font-family: ${fontFamily} !important;
+                background-color: transparent !important;
+                background: transparent !important;
+            }
+
+            h1, h2, h3, h4, h5, h6 {
+                color: ${theme.heading} !important;
+                font-family: ${fontFamily} !important;
+                background-color: transparent !important;
+                background: transparent !important;
+                font-weight: 700 !important;
+                line-height: 1.3 !important;
+            }
+
+            p {
+                line-height: 1.65 !important;
+                margin-bottom: 0.9em !important;
+            }
+
+            a, a:link, a:visited {
+                color: ${theme.accent} !important;
+                text-decoration: underline !important;
+                background-color: transparent !important;
+            }
+
+            img, svg, image {
+                max-width: 100% !important;
+                height: auto !important;
+                display: block !important;
+                margin: 12px auto !important;
+            }
+
+            /* Hide scrollbars inside iframe */
+            html, body {
+                scrollbar-width: none !important;
+                -ms-overflow-style: none !important;
+            }
+            ::-webkit-scrollbar {
+                display: none !important;
+                width: 0px !important;
+                height: 0px !important;
+            }
+        `;
+    }
+
+    function injectStylesIntoDoc(doc) {
+        if (!doc) return;
+        const head = doc.head || doc.getElementsByTagName('head')[0] || doc.documentElement;
+        if (!head) return;
+
+        // 1. Ensure Google Fonts stylesheet link is present in iframe head
+        if (!doc.getElementById('cozy-google-fonts')) {
+            const fontLink = doc.createElement('link');
+            fontLink.id = 'cozy-google-fonts';
+            fontLink.rel = 'stylesheet';
+            fontLink.href = 'https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap';
+            head.appendChild(fontLink);
+        }
+
+        // 2. Inject or update custom theme & typography stylesheet
+        let styleTag = doc.getElementById('cozy-reader-injected-style');
+        if (!styleTag) {
+            styleTag = doc.createElement('style');
+            styleTag.id = 'cozy-reader-injected-style';
+            head.appendChild(styleTag);
+        }
+        styleTag.textContent = generateReaderCSS(currentTheme, currentFontFamily, currentFontSize);
+    }
+
+    function applyCurrentTheme() {
+        document.body.className = currentTheme;
+
+        // Immediately update all loaded iframes
+        const iframes = epubViewer.querySelectorAll('iframe');
+        iframes.forEach(iframe => {
+            try {
+                const doc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+                if (doc) injectStylesIntoDoc(doc);
+            } catch (e) {
+                console.warn('Cannot inject styles into iframe:', e);
+            }
+        });
+
+        // Also keep ePub.js rendition updated
+        if (rendition) {
+            try {
+                rendition.themes.select(currentTheme);
+                rendition.themes.fontSize(currentFontSize + '%');
+                rendition.themes.font(currentFontFamily);
+            } catch (e) {}
+        }
+    }
 
     btnAppearance.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -495,7 +624,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.addEventListener('click', () => {
             const chosen = btn.dataset.theme;
             currentTheme = chosen;
-            document.body.className = chosen;
             localStorage.setItem('cozy_reader_theme', chosen);
 
             themeChoices.forEach(b => b.classList.remove('active'));
@@ -512,7 +640,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             fontButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            if (rendition) rendition.themes.font(font);
+            applyCurrentTheme();
         });
     });
 
@@ -533,22 +661,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     function updateFontSize() {
         fontSizeDisplay.innerText = currentFontSize + '%';
         localStorage.setItem('cozy_reader_font_size', currentFontSize);
-        if (rendition) rendition.themes.fontSize(currentFontSize + '%');
+        applyCurrentTheme();
     }
 
     function registerEpubThemes() {
-        rendition.themes.register('theme-light', { body: { background: '#ffffff', color: '#1a1a1a', 'font-family': currentFontFamily } });
-        rendition.themes.register('theme-sepia', { body: { background: '#fbf5e8', color: '#2c221e', 'font-family': currentFontFamily } });
-        rendition.themes.register('theme-dark',  { body: { background: '#1e1916', color: '#f2ebd9', 'font-family': currentFontFamily } });
-        rendition.themes.register('theme-black', { body: { background: '#000000', color: '#e0d6c8', 'font-family': currentFontFamily } });
-    }
-
-    function applyCurrentTheme() {
-        if (rendition) {
-            rendition.themes.select(currentTheme);
-            rendition.themes.fontSize(currentFontSize + '%');
-            rendition.themes.font(currentFontFamily);
-        }
+        Object.keys(THEME_CONFIG).forEach(themeKey => {
+            const t = THEME_CONFIG[themeKey];
+            rendition.themes.register(themeKey, {
+                'html': { 'background': `${t.bg} !important`, 'background-color': `${t.bg} !important`, 'color': `${t.text} !important` },
+                'body': { 'background': `${t.bg} !important`, 'background-color': `${t.bg} !important`, 'color': `${t.text} !important`, 'font-family': `${currentFontFamily} !important` },
+                'p, span, div, h1, h2, h3, h4, em, strong, li': { 'color': `${t.text} !important`, 'background': 'transparent !important', 'background-color': 'transparent !important', 'font-family': `${currentFontFamily} !important` }
+            });
+        });
     }
 
     // --- Progress Persistence ---

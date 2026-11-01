@@ -479,18 +479,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             `;
         } else {
-            // Upright Spine (Exact style from handdrawn_cozy_shelf.html)
+            // Upright Spine with clean horizontal title wrapping (as shown in user's shelf view)
             const height = 190 + ((displayTitle.length * 2) % 20);
-            const spineWidth = 52;
+            const spineWidth = 54;
             const textColor = isLightColor(color) ? '#1e2d24' : '#ffffff';
 
             item.innerHTML = `
                 <div class="hover-tooltip">Take out 📖</div>
-                <div class="book-body w-[${spineWidth}px] h-[${height}px]" style="background-color: ${color};">
-                    <span class="text-xs">${theme.emoji}</span>
-                    <span class="font-bold text-sm [writing-mode:vertical-rl] rotate-180 tracking-wider" style="color: ${textColor}; max-height: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(displayTitle)}</span>
-                    <span class="text-[10px] font-bold uppercase" style="color: ${textColor}; max-width: 44px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(displayAuthor)}</span>
+                <div class="book-body w-[${spineWidth}px] h-[${height}px] flex flex-col items-center justify-between py-2 px-1 relative select-none" style="background-color: ${color};">
                     <div class="dangle-ribbon" style="background: ${theme.ribbon};"></div>
+                    <span class="text-xs mt-0.5">${theme.emoji}</span>
+                    <div class="flex-1 flex items-center justify-center text-center my-1 w-full overflow-hidden">
+                        <span class="font-bold text-xs leading-snug line-clamp-4 break-words" style="color: ${textColor};">${escapeHtml(displayTitle)}</span>
+                    </div>
+                    <span class="text-[10px] font-bold text-center w-full truncate px-0.5" style="color: ${textColor};">${escapeHtml(displayAuthor)}</span>
                 </div>
             `;
         }
