@@ -137,9 +137,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (mode === 'single') {
             options.spread = "none";
             options.flow = "paginated";
+            options.minSpreadWidth = 10000; // Never collapse into two-page spread in single mode
         } else if (mode === 'spread') {
             options.spread = "always";
             options.flow = "paginated";
+            options.minSpreadWidth = 0;
         } else if (mode === 'scroll') {
             options.manager = "continuous";
             options.flow = "scrolled";
@@ -148,30 +150,53 @@ document.addEventListener('DOMContentLoaded', async () => {
         rendition = epubBook.renderTo("epubViewer", options);
         registerEpubThemes();
 
-        // Injected rules: completely hide scrollbars inside reader iframe & add bottom breathing space
+        // Injected rules: cleanly configured without breaking column navigation
         rendition.hooks.content.register((contents) => {
-            contents.addStylesheetRules({
-                "html, body": {
-                    "scrollbar-width": "none !important",
-                    "-ms-overflow-style": "none !important",
-                    "padding-bottom": "80px !important",
-                    "overflow-x": "hidden !important"
-                },
-                "::-webkit-scrollbar": {
-                    "display": "none !important",
-                    "width": "0px !important",
-                    "height": "0px !important"
-                }
-            });
+            if (currentReadingMode === 'scroll') {
+                contents.addStylesheetRules({
+                    "html, body": {
+                        "scrollbar-width": "none !important",
+                        "-ms-overflow-style": "none !important",
+                        "padding-bottom": "80px !important"
+                    },
+                    "::-webkit-scrollbar": {
+                        "display": "none !important",
+                        "width": "0px !important",
+                        "height": "0px !important"
+                    }
+                });
+            } else {
+                contents.addStylesheetRules({
+                    "html, body": {
+                        "scrollbar-width": "none !important",
+                        "-ms-overflow-style": "none !important"
+                    },
+                    "::-webkit-scrollbar": {
+                        "display": "none !important",
+                        "width": "0px !important",
+                        "height": "0px !important"
+                    }
+                });
+            }
 
-            // Smooth mousewheel & touch scroll forwarding in scroll mode
+            // Click inside page to turn pages, or mousewheel in scroll mode
             const doc = contents.document;
             if (doc) {
-                doc.addEventListener('wheel', (e) => {
-                    if (currentReadingMode === 'scroll') {
+                if (currentReadingMode === 'scroll') {
+                    doc.addEventListener('wheel', (e) => {
                         epubViewer.scrollBy({ top: e.deltaY, behavior: 'auto' });
-                    }
-                }, { passive: true });
+                    }, { passive: true });
+                } else {
+                    doc.addEventListener('click', (e) => {
+                        // In single or spread mode: tap/click right side -> next page, left side -> prev page!
+                        const pageWidth = contents.window.innerWidth;
+                        if (e.clientX < pageWidth * 0.35) {
+                            if (rendition) rendition.prev();
+                        } else if (e.clientX > pageWidth * 0.65) {
+                            if (rendition) rendition.next();
+                        }
+                    });
+                }
             }
         });
 
@@ -253,8 +278,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Navigation Controls ---
 
-    btnPrevPage.addEventListener('click', () => { if (rendition) rendition.prev(); });
-    btnNextPage.addEventListener('click', () => { if (rendition) rendition.next(); });
+    btnPrevPage.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (rendition) rendition.prev();
+    });
+
+    btnNextPage.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (rendition) rendition.next();
+    });
 
     document.addEventListener('keydown', (e) => {
         if (!rendition || currentReadingMode === 'scroll') return;
