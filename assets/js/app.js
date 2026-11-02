@@ -178,16 +178,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (!state.selectedBook) return;
                 const newStyle = btn.dataset.style;
 
-                // Enforce max 5 stacked books per shelf
-                if (newStyle === 'stacked' && state.selectedBook.spine_style !== 'stacked') {
-                    const currentShelvesCount = Math.max(1, document.querySelectorAll('.bookcase-bay').length);
-                    const currentStackedCount = state.books.filter(b => b.spine_style === 'stacked').length;
-                    if (currentStackedCount >= currentShelvesCount * MAX_STACK_SIZE) {
-                        showToast(`Stack is full (max ${MAX_STACK_SIZE} books per shelf)`, 'info');
-                        return;
-                    }
-                }
-
                 document.querySelectorAll('.btn-spine-style').forEach(b => {
                     b.className = 'btn-spine-style hand-btn hand-btn-sm bg-white';
                 });
@@ -534,64 +524,73 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Estimates the horizontal pixel width an upright book occupies on the shelf
-    function getUprightBookWidth(book) {
+    // Consecutive leaning books tuck parallel against each other (-3px), while the last leaning book needs +26px for its tilted top-right corner
+    function getUprightBookWidth(book, nextBookOnShelf) {
         const style = book.spine_style || 'spine';
         if (style === 'front') return 140;
-        if (style === 'leaning') return 82; // 64px spine + 18px leaning margin
+        if (style === 'leaning') {
+            const nextIsLeaning = nextBookOnShelf && (nextBookOnShelf.spine_style === 'leaning');
+            return nextIsLeaning ? 61 : 90;
+        }
         return 64; // standing spine
     }
 
     /**
-     * Automatically optimizes stacking and packs each shelf up to the right border:
-     * - Groups up to MAX_STACK_SIZE (5) stacked books into a single neat pile at the left of the shelf.
-     * - Fills the remaining shelf width with standing spines / front / leaning books right up to the border.
-     * - If extra stacked books exist beyond 5 when upright books run out on a shelf, stands them upright as spines so a shelf never has >1 stack or >5 books in a stack.
+     * Automatically optimizes stacking and packs each shelf right up to the right border:
+     * - Groups stacked books into neat piles of up to MAX_STACK_SIZE (5) books each.
+     * - Allows multiple stacks on the same shelf right up to the right border of the bookshelf.
+     * - Fills remaining shelf space with upright books (spines / leaning / front) right up to the border.
      */
     function packBooksIntoShelves(booksList, bayInnerWidth) {
         const GAP = 5;
         const STACK_WIDTH = 174; // 168px stack layer + 6px right margin
-        const stackedPool = booksList.filter(b => b.spine_style === 'stacked');
+        const stackedBooks = booksList.filter(b => b.spine_style === 'stacked');
         const uprightPool = booksList.filter(b => b.spine_style !== 'stacked');
+
+        // Break stacked books into stacks of up to 5 books each
+        const stackGroups = [];
+        for (let i = 0; i < stackedBooks.length; i += MAX_STACK_SIZE) {
+            stackGroups.push(stackedBooks.slice(i, i + MAX_STACK_SIZE));
+        }
 
         const shelves = [];
         let sPtr = 0;
         let uPtr = 0;
 
-        while (sPtr < stackedPool.length || uPtr < uprightPool.length) {
-            const shelf = { stack: [], upright: [], usedWidth: 0 };
+        while (sPtr < stackGroups.length || uPtr < uprightPool.length) {
+            const shelf = { stacks: [], upright: [], usedWidth: 0 };
 
-            // 1. Place at most one stack of up to 5 books at the left wall of this shelf
-            if (sPtr < stackedPool.length) {
-                const stackSlice = stackedPool.slice(sPtr, sPtr + MAX_STACK_SIZE);
-                shelf.stack = stackSlice;
-                sPtr += stackSlice.length;
-                shelf.usedWidth += STACK_WIDTH;
-            }
-
-            // 2. Pack upright books (spines / front / leaning) all the way up to the right border of the shelf
-            while (uPtr < uprightPool.length) {
-                const candidate = uprightPool[uPtr];
-                const bookW = getUprightBookWidth(candidate);
-                const gapNeeded = (shelf.stack.length > 0 || shelf.upright.length > 0) ? GAP : 0;
-
-                if (shelf.usedWidth + gapNeeded + bookW <= bayInnerWidth || (shelf.stack.length === 0 && shelf.upright.length === 0)) {
-                    shelf.upright.push({ book: candidate, forceSpine: false });
-                    shelf.usedWidth += gapNeeded + bookW;
-                    uPtr++;
+            // 1. Place as many 5-book stacks on this shelf as fit up to the right border
+            while (sPtr < stackGroups.length) {
+                const gapNeeded = (shelf.stacks.length > 0 || shelf.upright.length > 0) ? GAP : 0;
+                if (shelf.usedWidth + gapNeeded + STACK_WIDTH <= bayInnerWidth || (shelf.stacks.length === 0 && shelf.upright.length === 0)) {
+                    shelf.stacks.push(stackGroups[sPtr]);
+                    shelf.usedWidth += gapNeeded + STACK_WIDTH;
+                    sPtr++;
                 } else {
                     break;
                 }
             }
 
-            // 3. If upright books are finished but there are still leftover stacked books (>5),
-            // stand them upright as spines in the remaining space of this shelf so they don't create a second stack on the same shelf
-            while (uPtr >= uprightPool.length && sPtr < stackedPool.length) {
-                const bookW = 64; // standing spine width
-                const gapNeeded = (shelf.stack.length > 0 || shelf.upright.length > 0) ? GAP : 0;
-                if (shelf.usedWidth + gapNeeded + bookW <= bayInnerWidth) {
-                    shelf.upright.push({ book: stackedPool[sPtr], forceSpine: true });
-                    shelf.usedWidth += gapNeeded + bookW;
-                    sPtr++;
+            // 2. Pack upright books (spines / front / leaning) into the remaining width right up to the right border
+            while (uPtr < uprightPool.length) {
+                const candidate = uprightPool[uPtr];
+                const nextCandidate = uprightPool[uPtr + 1] || null;
+                // Even if the next book in uprightPool is leaning, if it won't fit on this shelf, candidate will be the last book on this shelf
+                const WorstCaseW = getUprightBookWidth(candidate, null);
+                const pairW = getUprightBookWidth(candidate, nextCandidate);
+                const gapNeeded = (shelf.stacks.length > 0 || shelf.upright.length > 0) ? GAP : 0;
+
+                // Ensure if candidate is leaning, its tilted top corner (+26px) fits inside the right border if nextCandidate doesn't also fit
+                const nextFitsToo = nextCandidate && (
+                    shelf.usedWidth + gapNeeded + pairW + GAP + getUprightBookWidth(nextCandidate, null) <= bayInnerWidth
+                );
+                const effectiveW = nextFitsToo ? pairW : WorstCaseW;
+
+                if (shelf.usedWidth + gapNeeded + effectiveW <= bayInnerWidth || (shelf.stacks.length === 0 && shelf.upright.length === 0)) {
+                    shelf.upright.push(candidate);
+                    shelf.usedWidth += gapNeeded + effectiveW;
+                    uPtr++;
                 } else {
                     break;
                 }
@@ -601,7 +600,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if (shelves.length === 0) {
-            shelves.push({ stack: [], upright: [], usedWidth: 0 });
+            shelves.push({ stacks: [], upright: [], usedWidth: 0 });
         }
 
         return shelves;
@@ -641,17 +640,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             const bay = document.createElement('div');
             bay.className = 'bookcase-bay';
 
-            // Render the auto-optimized stack (max 5 books) on the left of the shelf
-            if (shelfData.stack.length > 0) {
-                bay.appendChild(createStackedBooksGroup(shelfData.stack, globalThemeCounter));
-                globalThemeCounter += shelfData.stack.length;
-            }
+            // Render all stacks (up to 5 books per stack, multiple stacks allowed across the shelf)
+            shelfData.stacks.forEach((stackPile) => {
+                bay.appendChild(createStackedBooksGroup(stackPile, globalThemeCounter));
+                globalThemeCounter += stackPile.length;
+            });
 
             // Render all upright spines / front / leaning books snugly across to the right border
-            shelfData.upright.forEach(({ book, forceSpine }) => {
+            shelfData.upright.forEach((book) => {
                 const theme = coverThemes[globalThemeCounter % coverThemes.length];
                 globalThemeCounter++;
-                bay.appendChild(createDoodleBook(book, theme, forceSpine));
+                bay.appendChild(createDoodleBook(book, theme));
             });
 
             // Only show a slim "+ Slip in" slot on the last shelf if there is open space before the right border
@@ -684,9 +683,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Creates an individual book item on the shelf
-    function createDoodleBook(book, theme, forceSpine = false) {
+    function createDoodleBook(book, theme) {
         const item = document.createElement('div');
-        const style = forceSpine ? 'spine' : (book.spine_style || 'spine');
+        const style = book.spine_style || 'spine';
         const color = book.spine_color || theme.bg;
         const displayTitle = cleanTitle(book.title);
         const displayAuthor = cleanAuthor(book.author);
@@ -750,6 +749,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function createStackedBooksGroup(booksInStack, baseThemeIdx) {
         const wrap = document.createElement('div');
         wrap.className = 'stack-group';
+        const offsets = [-1.5, 1.5, -1, 2, 0];
 
         booksInStack.forEach((b, i) => {
             const theme = coverThemes[(baseThemeIdx + i) % coverThemes.length];
@@ -757,12 +757,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const displayTitle = cleanTitle(b.title);
             const displayAuthor = cleanAuthor(b.author);
             const textColor = isLightColor(color) ? '#1e2d24' : '#fffdf7';
+            const offsetX = offsets[i % offsets.length];
 
             const layer = document.createElement('div');
             layer.className = 'doodle-book';
             layer.innerHTML = `
                 <div class="hover-tooltip">Take out</div>
-                <div class="stack-layer select-none" style="background-color: ${color}; color: ${textColor};">
+                <div class="stack-layer select-none" style="background-color: ${color}; color: ${textColor}; transform: translateX(${offsetX}px);">
                     <div class="stack-band-vert"></div>
                     <div class="flex-1 px-2 text-center overflow-hidden">
                         <div class="font-lora font-semibold text-[11px] leading-tight truncate">${escapeHtml(displayTitle)}</div>

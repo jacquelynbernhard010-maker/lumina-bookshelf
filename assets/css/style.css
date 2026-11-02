@@ -325,15 +325,20 @@ body {
   overflow: hidden;
 }
 
-/* Style 3: Leaning Book */
+/* Style 3: Leaning Book (rests snugly against adjacent leaning or standing books) */
 .doodle-book.is-leaning {
-  transform: rotate(11deg);
+  transform: rotate(8.5deg);
   transform-origin: bottom left;
-  margin-right: 18px;
+  margin-right: 26px;
+}
+
+/* Consecutive leaning books are parallel, so tuck them right against each other */
+.doodle-book.is-leaning:has(+ .doodle-book.is-leaning) {
+  margin-right: -3px;
 }
 
 .doodle-book.is-leaning:hover {
-  transform: translateY(-22px) rotate(11deg) scale(1.05);
+  transform: translateY(-20px) rotate(8.5deg) scale(1.04);
 }
 
 /* Style 4: Stacked Book Layer (Max 5 per stack, compact height so shelf never grows) */
