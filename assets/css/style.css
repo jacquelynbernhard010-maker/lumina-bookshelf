@@ -555,36 +555,42 @@ body {
   pointer-events: none;
 }
 
-/* Hand-drawn Cozy Napping Cat Animation */
+/* Hand-drawn Cozy Napping Cat Animation (Authentic Pixel-art from Free Pack) */
 .cozy-cat-container {
   position: relative;
-  display: flex;
-  align-items: flex-end;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
   cursor: pointer;
   user-select: none;
-  filter: drop-shadow(2px 3px 0px rgba(44, 34, 30, 0.35));
-  transition: transform 0.2s ease;
+  margin-bottom: -18px; /* Rest cat body directly flush on top of the wooden molding */
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 20;
 }
 
 .cozy-cat-container:hover {
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.cozy-cat-container:active {
+  transform: translateY(0px) scale(0.97);
 }
 
 .cozy-cat-container:hover .cat-purr-bubble {
   opacity: 1;
-  transform: translateY(-4px);
+  transform: translateX(-50%) translateY(0);
 }
 
 .cat-purr-bubble {
   position: absolute;
-  top: -26px;
+  top: -24px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(4px);
   background: #fffdf7;
   border: 1.5px solid var(--ink);
-  box-shadow: 1.5px 1.5px 0 var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
   border-radius: 999px;
-  padding: 1px 8px;
+  padding: 1px 9px;
   font-size: 11px;
   font-weight: 700;
   color: #5c4738;
@@ -592,7 +598,7 @@ body {
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.2s ease, transform 0.2s ease;
-  z-index: 20;
+  z-index: 30;
 }
 
 .cat-purr-bubble::after {
@@ -605,6 +611,77 @@ body {
   border-style: solid;
   border-color: var(--ink) transparent;
   display: block;
+}
+
+/* Pixel Cat Sprite Rendering */
+.pixel-cat-sprite {
+  width: 72px;
+  height: 72px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background-size: 144px 72px; /* 2 frames of 72x72 */
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  filter: drop-shadow(2px 3px 0px rgba(44, 34, 30, 0.28));
+}
+
+/* Sleeping Cat Poses & Animations */
+.pose-curled {
+  background-image: url('../images/cat_curled.png');
+  animation: catSleepBreathe 2.4s steps(1) infinite;
+}
+
+.pose-stretched {
+  background-image: url('../images/cat_stretched.png');
+  animation: catSleepBreathe 2.4s steps(1) infinite;
+}
+
+.pose-loaf {
+  background-image: url('../images/cat_loaf.png');
+  animation: catSleepBreathe 2.4s steps(1) infinite;
+}
+
+.pose-sitting {
+  background-image: url('../images/cat_sitting.png');
+  background-size: 288px 72px; /* 4 frames */
+  animation: catTailWag 2s steps(4) infinite;
+}
+
+.pose-calico {
+  background-image: url('../images/cat_calico_curled.png');
+  animation: catSleepBreathe 2.4s steps(1) infinite;
+}
+
+.pose-midnight {
+  background-image: url('../images/cat_black_curled.png');
+  animation: catSleepBreathe 2.4s steps(1) infinite;
+}
+
+@keyframes catSleepBreathe {
+  0%, 49.9% { background-position: 0 0; }
+  50%, 100% { background-position: -72px 0; }
+}
+
+@keyframes catTailWag {
+  from { background-position: 0 0; }
+  to { background-position: -288px 0; }
+}
+
+/* Floating Zzz's Cluster */
+.zzz-cluster {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  pointer-events: none;
+  z-index: 25;
+}
+
+.cat-z {
+  position: absolute;
+  font-family: 'Lora', Georgia, serif;
+  font-weight: 700;
+  color: #78593e;
+  opacity: 0;
 }
 
 /* Cat breathing animation (belly rises and falls gently) */
@@ -693,17 +770,26 @@ body {
 }
 
 .cat-z1 {
-  animation: floatZ1 3.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  font-size: 11px;
+  left: 0;
+  top: 0;
+  animation: floatZ1 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 .cat-z2 {
-  animation: floatZ2 3.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  animation-delay: 1.1s;
+  font-size: 13px;
+  left: -6px;
+  top: -6px;
+  animation: floatZ2 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: 1.05s;
 }
 
 .cat-z3 {
-  animation: floatZ3 3.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  animation-delay: 2.2s;
+  font-size: 16px;
+  left: -12px;
+  top: -14px;
+  animation: floatZ3 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: 2.1s;
 }
 
 /* Book Stage Modal (Pop-out Animation) */

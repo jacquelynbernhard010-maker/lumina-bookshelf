@@ -27,8 +27,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         extractedDominantColor: '',
         extractedDescription: '',
         woodTheme: localStorage.getItem('cozy_wood_theme') || 'oak',
+        catPose: localStorage.getItem('cozy_cat_pose') || 'pose-curled',
         plantLevel: 1
     };
+
+    // Authentic Pixel Cat Sprite Poses (from Free Pack)
+    const CAT_POSES = [
+        { id: 'pose-curled', label: 'Mochi is fast asleep... zZz', zzz: true },
+        { id: 'pose-stretched', label: 'Mochi is stretched out napping... zZz', zzz: true },
+        { id: 'pose-loaf', label: 'Mochi is curled in a cozy loaf... zZz', zzz: true },
+        { id: 'pose-sitting', label: 'Mochi is watching you read!', zzz: false },
+        { id: 'pose-calico', label: 'Patches the Calico is asleep... zZz', zzz: true },
+        { id: 'pose-midnight', label: 'Shadow the Midnight cat is asleep... zZz', zzz: true }
+    ];
 
     // 8 horizontal books (8 * 33px + 7 * 2px = 278px) reach right up to the top border of the 292px shelf bay
     const MAX_STACK_TO_BORDER = 8;
@@ -690,89 +701,43 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const packedShelves = packBooksIntoShelves(state.books, bayInnerWidth);
 
-        // Top accessory: Mochi the cozy ginger cat napping on top of the wooden bookcase
+        // Top accessory: Mochi the cozy ginger cat napping on top of the wooden bookcase (Authentic Pixel-art)
+        const currentCat = CAT_POSES.find(p => p.id === state.catPose) || CAT_POSES[0];
         const topHeader = document.createElement('div');
         topHeader.className = 'flex items-end justify-between px-6 mb-[-1px] relative z-10';
         topHeader.innerHTML = `
-            <div class="cozy-cat-container" title="Mochi is fast asleep... zZz">
-                <div class="cat-purr-bubble">purr... zZz</div>
-                <!-- Hand-drawn SVG Cozy Sleeping Cat with breathing belly & swaying tail -->
-                <svg width="118" height="52" viewBox="0 0 118 52" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
-                    <!-- Floating Zzz's -->
-                    <g font-family="'Lora', Georgia, serif" font-weight="700" fill="#78593e" opacity="0">
-                        <text x="24" y="14" font-size="11" class="cat-z1">z</text>
-                        <text x="18" y="8" font-size="13" class="cat-z2">Z</text>
-                        <text x="12" y="2" font-size="15" class="cat-z3">Z</text>
-                    </g>
-
-                    <!-- Curled Tail (sways gently) -->
-                    <g class="cat-tail-sway">
-                        <path d="M78 37 C88 38, 98 44, 102 36 C105 28, 98 22, 92 26 C88 28, 92 34, 96 32" 
-                              stroke="#2c221e" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-                        <path d="M78 37 C88 38, 98 44, 102 36 C105 28, 98 22, 92 26" 
-                              stroke="#e07a5f" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-                    </g>
-
-                    <!-- Breathing Cat Body & Back -->
-                    <g class="cat-body-breathing">
-                        <!-- Shadow under belly -->
-                        <ellipse cx="54" cy="48" rx="36" ry="3" fill="#2c221e" opacity="0.25"/>
-
-                        <!-- Main sleeping curled body -->
-                        <path d="M26 44 C20 40, 22 26, 36 21 C46 17, 68 18, 76 26 C84 34, 82 46, 68 47 C52 48, 38 48, 26 44 Z" 
-                              fill="#f2cc8f" stroke="#2c221e" stroke-width="2.5" stroke-linejoin="round"/>
-                        
-                        <!-- Warm ginger tabby markings on back -->
-                        <path d="M42 20 C40 26, 46 29, 44 33" stroke="#e07a5f" stroke-width="2" stroke-linecap="round"/>
-                        <path d="M52 19 C50 25, 56 28, 54 34" stroke="#e07a5f" stroke-width="2" stroke-linecap="round"/>
-                        <path d="M62 21 C60 26, 65 30, 63 35" stroke="#e07a5f" stroke-width="2" stroke-linecap="round"/>
-
-                        <!-- Tucked sleepy paws -->
-                        <ellipse cx="38" cy="46" rx="7" ry="4" fill="#fdf8e6" stroke="#2c221e" stroke-width="2"/>
-                        <ellipse cx="56" cy="46" rx="8" ry="4" fill="#fdf8e6" stroke="#2c221e" stroke-width="2"/>
-                    </g>
-
-                    <!-- Sleepy Head with ears, closed eyes & rosy cheek -->
-                    <g>
-                        <!-- Ears -->
-                        <polygon points="20,24 14,11 26,17" fill="#f2cc8f" stroke="#2c221e" stroke-width="2" stroke-linejoin="round"/>
-                        <polygon points="18,22 15,14 24,18" fill="#e07a5f"/>
-                        <polygon points="32,22 36,9 42,19" fill="#f2cc8f" stroke="#2c221e" stroke-width="2" stroke-linejoin="round"/>
-                        <polygon points="34,20 37,12 40,18" fill="#e07a5f"/>
-
-                        <!-- Head shape -->
-                        <circle cx="28" cy="30" r="14" fill="#f2cc8f" stroke="#2c221e" stroke-width="2.5"/>
-
-                        <!-- Tabby forehead stripes -->
-                        <path d="M26 18 L26 22" stroke="#e07a5f" stroke-width="1.8" stroke-linecap="round"/>
-                        <path d="M29 18 L29 22" stroke="#e07a5f" stroke-width="1.8" stroke-linecap="round"/>
-
-                        <!-- Closed sleeping curved eyes ^_^ -->
-                        <path d="M20 30 Q23 33 26 30" stroke="#2c221e" stroke-width="2" stroke-linecap="round" fill="none"/>
-                        <path d="M30 30 Q33 33 36 30" stroke="#2c221e" stroke-width="2" stroke-linecap="round" fill="none"/>
-
-                        <!-- Tiny nose & mouth -->
-                        <polygon points="27,33 29,33 28,34.5" fill="#e07a5f"/>
-                        <path d="M26 36 Q28 37 30 36" stroke="#2c221e" stroke-width="1.4" stroke-linecap="round" fill="none"/>
-
-                        <!-- Little white muzzle -->
-                        <ellipse cx="28" cy="34" rx="5" ry="3" fill="#fdf8e6" opacity="0.6"/>
-
-                        <!-- Rosy cheek -->
-                        <ellipse cx="18" cy="33" rx="2.5" ry="1.5" fill="#e07a5f" opacity="0.6"/>
-
-                        <!-- Whiskers -->
-                        <line x1="16" y1="32" x2="8" y2="31" stroke="#2c221e" stroke-width="1.2" stroke-linecap="round"/>
-                        <line x1="16" y1="35" x2="9" y2="36" stroke="#2c221e" stroke-width="1.2" stroke-linecap="round"/>
-                        <line x1="38" y1="32" x2="46" y2="31" stroke="#2c221e" stroke-width="1.2" stroke-linecap="round"/>
-                        <line x1="38" y1="35" x2="45" y2="36" stroke="#2c221e" stroke-width="1.2" stroke-linecap="round"/>
-                    </g>
-                </svg>
+            <div class="cozy-cat-container" id="cozyCat" title="${currentCat.label} (click to switch cat/pose)">
+                <div class="cat-purr-bubble" id="catPurrBubble">${currentCat.label}</div>
+                <div class="zzz-cluster" id="catZzz" style="display: ${currentCat.zzz ? 'block' : 'none'};">
+                    <span class="cat-z cat-z1">z</span>
+                    <span class="cat-z cat-z2">Z</span>
+                    <span class="cat-z cat-z3">Z</span>
+                </div>
+                <div id="catSprite" class="pixel-cat-sprite ${currentCat.id}"></div>
             </div>
             <div class="text-[11px] font-bold text-[#8c735b] select-none pb-1 hidden sm:block">
                 <span>The Cozy Nook Bookcase</span>
             </div>
         `;
+
+        const cozyCat = topHeader.querySelector('#cozyCat');
+        if (cozyCat) {
+            cozyCat.addEventListener('click', () => {
+                const curIdx = CAT_POSES.findIndex(p => p.id === state.catPose);
+                const nextIdx = (curIdx + 1) % CAT_POSES.length;
+                state.catPose = CAT_POSES[nextIdx].id;
+                try { localStorage.setItem('cozy_cat_pose', state.catPose); } catch (e) {}
+
+                const nextCat = CAT_POSES[nextIdx];
+                const spriteEl = cozyCat.querySelector('#catSprite');
+                const bubbleEl = cozyCat.querySelector('#catPurrBubble');
+                const zzzEl = cozyCat.querySelector('#catZzz');
+                if (spriteEl) spriteEl.className = `pixel-cat-sprite ${nextCat.id}`;
+                if (bubbleEl) bubbleEl.textContent = nextCat.label;
+                if (zzzEl) zzzEl.style.display = nextCat.zzz ? 'block' : 'none';
+                cozyCat.title = `${nextCat.label} (click to switch cat/pose)`;
+            });
+        }
         shelvesContainer.appendChild(topHeader);
 
         // Outer Wooden Bookcase Frame with selected wood stain
