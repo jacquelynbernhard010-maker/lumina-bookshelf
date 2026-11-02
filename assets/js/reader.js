@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentFontFamily = localStorage.getItem('cozy_reader_font') || "'Lora', Georgia, serif";
 
     document.body.className = currentTheme;
+    document.documentElement.style.setProperty('--reader-font', currentFontFamily);
     fontSizeDisplay.innerText = currentFontSize + '%';
 
     // Synchronize active states on UI buttons immediately
@@ -141,8 +142,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function generateReaderCSS(themeKey, fontFamily, fontSizePercent) {
         const theme = THEME_CONFIG[themeKey] || THEME_CONFIG['theme-sepia'];
+        const isDyslexic = fontFamily.includes('OpenDyslexic');
         return `
             @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap');
+            @import url('https://cdn.jsdelivr.net/npm/@fontsource/opendyslexic@5.3.0/index.css');
+            @import url('https://cdn.jsdelivr.net/npm/@fontsource/opendyslexic@5.3.0/700.css');
 
             html {
                 background-color: ${theme.bg} !important;
@@ -157,22 +161,35 @@ document.addEventListener('DOMContentLoaded', async () => {
                 color: ${theme.text} !important;
                 font-family: ${fontFamily} !important;
                 font-size: 1rem !important;
-                line-height: 1.65 !important;
+                line-height: ${isDyslexic ? '1.85' : '1.65'} !important;
+                ${isDyslexic ? 'letter-spacing: 0.04em !important; word-spacing: 0.08em !important;' : ''}
                 -webkit-font-smoothing: antialiased !important;
                 -moz-osx-font-smoothing: grayscale !important;
             }
 
-            /* Unconditionally override publisher CSS on all inner text containers */
-            body, p, span, div, blockquote, article, section, em, strong, b, i, li, ul, ol, dl, dt, dd {
-                color: ${theme.text} !important;
+            /* Unconditionally override publisher CSS on ALL chapter headings, titles, subheadings, and text */
+            *, *:before, *:after,
+            html body, html body *,
+            body, p, span, div, small,
+            h1, h2, h3, h4, h5, h6,
+            header, footer, nav,
+            blockquote, article, section,
+            em, strong, b, i, u,
+            li, ul, ol, dl, dt, dd,
+            a, [class*="chapter"], [class*="title"], [class*="heading"], [class*="header"], [class*="dropcap"] {
                 font-family: ${fontFamily} !important;
+                ${isDyslexic ? 'letter-spacing: 0.04em !important; word-spacing: 0.08em !important;' : ''}
+            }
+
+            body, p, span, div, small, blockquote, article, section, em, strong, b, i, li, ul, ol, dl, dt, dd {
+                color: ${theme.text} !important;
                 background-color: transparent !important;
                 background: transparent !important;
             }
 
-            h1, h2, h3, h4, h5, h6 {
+            h1, h2, h3, h4, h5, h6,
+            [class*="chapter"], [class*="title"], [class*="heading"], [class*="header"] {
                 color: ${theme.heading} !important;
-                font-family: ${fontFamily} !important;
                 background-color: transparent !important;
                 background: transparent !important;
                 font-weight: 700 !important;
@@ -180,7 +197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             p {
-                line-height: 1.65 !important;
+                line-height: ${isDyslexic ? '1.85' : '1.65'} !important;
                 margin-bottom: 0.9em !important;
             }
 
@@ -224,11 +241,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             head.appendChild(fontLink);
         }
 
-        // 2. Inject or update custom theme & typography stylesheet
+        // 2. Ensure OpenDyslexic fonts are present in iframe head
+        if (!doc.getElementById('cozy-dyslexic-fonts')) {
+            const dysLink = doc.createElement('link');
+            dysLink.id = 'cozy-dyslexic-fonts';
+            dysLink.rel = 'stylesheet';
+            dysLink.href = 'https://cdn.jsdelivr.net/npm/@fontsource/opendyslexic@5.3.0/index.css';
+            head.appendChild(dysLink);
+
+            const dysBold = doc.createElement('link');
+            dysBold.id = 'cozy-dyslexic-bold';
+            dysBold.rel = 'stylesheet';
+            dysBold.href = 'https://cdn.jsdelivr.net/npm/@fontsource/opendyslexic@5.3.0/700.css';
+            head.appendChild(dysBold);
+        }
+
+        // 3. Inject or update custom theme & typography stylesheet
         let styleTag = doc.getElementById('cozy-reader-injected-style');
         if (!styleTag) {
             styleTag = doc.createElement('style');
             styleTag.id = 'cozy-reader-injected-style';
+            head.appendChild(styleTag);
+        } else {
+            // Append at end of head so it always has highest cascade priority over book styles
             head.appendChild(styleTag);
         }
         styleTag.textContent = generateReaderCSS(currentTheme, currentFontFamily, currentFontSize);
@@ -236,6 +271,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function applyCurrentTheme() {
         document.body.className = currentTheme;
+        document.documentElement.style.setProperty('--reader-font', currentFontFamily);
 
         // Immediately update all loaded iframes
         const iframes = epubViewer.querySelectorAll('iframe');
@@ -339,6 +375,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     });
                 }
+            }
+        });
+
+        // Ensure newly rendered chapters and sections immediately get styled
+        rendition.on('rendered', (section, view) => {
+            if (view && view.document) {
+                injectStylesIntoDoc(view.document);
             }
         });
 
