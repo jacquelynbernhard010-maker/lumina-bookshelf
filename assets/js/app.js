@@ -351,6 +351,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         emptyState.classList.add('hidden');
 
         renderShelves();
+        backfillMissingCovers();
+    }
+
+    // Auto-backfill missing covers for existing books on the shelf
+    async function backfillMissingCovers() {
+        for (const book of state.books) {
+            if (!book.cover_url) {
+                try {
+                    let newCover = '';
+                    if (book.file_blob && window.EpubExtractor) {
+                        newCover = await window.EpubExtractor.extractCoverOnly(book.file_blob);
+                    }
+                    if (!newCover && window.EpubExtractor) {
+                        newCover = await window.EpubExtractor.fetchCoverFromOnline(book.title, book.author);
+                    }
+                    if (newCover) {
+                        book.cover_url = newCover;
+                        if (!book.spine_color || book.spine_color === '#81b29a' || book.spine_color === '#e07a5f') {
+                            book.spine_color = await window.EpubExtractor.sampleDominantColor(newCover);
+                        }
+                        await window.storageEngine.updateBook(book.id, { 
+                            cover_url: newCover,
+                            spine_color: book.spine_color
+                        });
+                        renderShelves();
+                    }
+                } catch (e) {
+                    console.warn('Cover backfill error:', e);
+                }
+            }
+        }
     }
 
     function renderShelves() {
@@ -471,11 +502,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="hover-tooltip">Take out 📖</div>
                 <div class="book-front-cover" style="${coverBgStyle}">
                     <div class="dangle-ribbon" style="background-color: ${theme.ribbon};"></div>
-                    <span class="text-xs font-bold uppercase tracking-wide bg-black/40 px-2 py-0.5 rounded text-white self-start">${escapeHtml(book.file_type || 'epub')}</span>
-                    <div class="bg-black/55 p-2 rounded text-white z-10">
+                    <span class="text-xs font-bold uppercase tracking-wide bg-black/50 px-2 py-0.5 rounded text-white self-start backdrop-blur-sm">${escapeHtml(book.file_type || 'epub')}</span>
+                    ${book.cover_url ? '' : `
+                    <div class="bg-black/60 p-2 rounded text-white z-10 backdrop-blur-sm">
                         <h4 class="font-bold text-sm line-clamp-2 leading-tight">${escapeHtml(displayTitle)}</h4>
                         <p class="text-xs opacity-90 truncate mt-0.5">${escapeHtml(displayAuthor)}</p>
                     </div>
+                    `}
                 </div>
             `;
         } else {

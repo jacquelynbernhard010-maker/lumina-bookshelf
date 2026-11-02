@@ -283,6 +283,11 @@ class StorageEngine {
         await this.updateLocalBook(id, { spine_style });
     }
 
+    async updateBook(id, updates) {
+        id = isNaN(id) ? id : parseInt(id, 10);
+        await this.updateLocalBook(id, updates);
+    }
+
     async deleteBook(id) {
         id = isNaN(id) ? id : parseInt(id, 10);
         await this.deleteLocalBook(id);
