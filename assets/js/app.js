@@ -598,15 +598,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (style === 'front') {
             // Front-Facing Cover
-            let coverBgStyle = book.cover_url
-                ? `background-image: url("${book.cover_url}"); background-color: #2c221e;`
-                : `background-color: ${color}; color: ${theme.text};`;
-
             item.innerHTML = `
                 <div class="hover-tooltip">Take out 📖</div>
-                <div class="book-front-cover" style="${coverBgStyle}">
+                <div class="book-front-cover">
                     <div class="dangle-ribbon" style="background-color: ${theme.ribbon};"></div>
-                    <span class="text-xs font-bold uppercase tracking-wide bg-black/60 px-2 py-0.5 rounded text-white self-start backdrop-blur-sm shadow-sm">${escapeHtml(book.file_type || 'epub')}</span>
+                    <span class="text-xs font-bold uppercase tracking-wide bg-black/60 px-2 py-0.5 rounded text-white self-start backdrop-blur-sm shadow-sm z-10">${escapeHtml(book.file_type || 'epub')}</span>
                     
                     ${book.cover_url ? '' : `
                     <div class="bg-black/65 p-2 rounded-md text-white z-10 backdrop-blur-sm mt-auto shadow-sm">
@@ -616,6 +612,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     `}
                 </div>
             `;
+
+            const frontCoverEl = item.querySelector('.book-front-cover');
+            if (book.cover_url) {
+                frontCoverEl.style.backgroundImage = `url("${book.cover_url}")`;
+                frontCoverEl.style.backgroundColor = '#2c221e';
+            } else {
+                frontCoverEl.style.backgroundColor = color;
+                frontCoverEl.style.color = theme.text;
+            }
         } else {
             // Upright Spine with clean horizontal title wrapping (as shown in user's shelf view)
             const height = 190 + ((displayTitle.length * 2) % 20);
