@@ -100,15 +100,23 @@
             </button>
 
             <div class="flex flex-col md:flex-row gap-6 items-start mt-2">
-                <!-- Book Cover Card -->
-                <div id="modalCover" class="w-full md:w-48 h-64 rounded-xl border-2 border-[#2c221e] shadow-[4px_4px_0px_#2c221e] flex flex-col justify-between p-4 flex-shrink-0 relative overflow-hidden bg-cover bg-center">
-                    <div class="flex justify-between items-start z-10">
-                        <span id="modalEmoji" class="text-2xl">📖</span>
-                        <span id="modalFileType" class="text-xs px-2 py-0.5 rounded bg-black/40 text-white font-bold uppercase">EPUB</span>
+                <!-- Book Cover Column -->
+                <div class="flex flex-col items-center w-full md:w-48 flex-shrink-0">
+                    <div id="modalCover" class="w-full h-64 rounded-xl border-2 border-[#2c221e] shadow-[4px_4px_0px_#2c221e] flex flex-col justify-between p-4 relative overflow-hidden bg-cover bg-center">
+                        <div class="flex justify-between items-start z-10">
+                            <span id="modalEmoji" class="text-2xl">📖</span>
+                            <span id="modalFileType" class="text-xs px-2 py-0.5 rounded bg-black/40 text-white font-bold uppercase">EPUB</span>
+                        </div>
+                        <div id="modalCoverTitleBox" class="z-10 bg-black/40 p-2 rounded backdrop-blur-xs text-white">
+                            <h3 id="modalBookTitle" class="text-lg font-bold leading-tight">Book Title</h3>
+                            <p id="modalBookAuthor" class="text-xs opacity-90">Author Name</p>
+                        </div>
                     </div>
-                    <div class="z-10 bg-black/40 p-2 rounded backdrop-blur-xs text-white">
-                        <h3 id="modalBookTitle" class="text-lg font-bold leading-tight">Book Title</h3>
-                        <p id="modalBookAuthor" class="text-xs opacity-90">Author Name</p>
+                    <div class="mt-2.5 w-full">
+                        <label for="changeCoverFileInput" class="w-full text-center hand-btn hand-btn-sm bg-[#faedcd] cursor-pointer text-xs font-bold py-1.5 flex items-center justify-center gap-1.5 hover:bg-[#f8e6b8] shadow-sm select-none">
+                            <span>📷</span> Change Cover
+                        </label>
+                        <input type="file" id="changeCoverFileInput" accept="image/*" class="hidden">
                     </div>
                 </div>
 
@@ -190,6 +198,28 @@
                         <span id="fileNameLabel" class="font-bold text-sm truncate max-w-[220px]">book.epub</span>
                     </div>
                     <button type="button" id="btnRemoveFile" class="font-bold text-sm text-red-700">✕</button>
+                </div>
+
+                <!-- Cover Preview & Choice Option -->
+                <div id="uploadCoverPreviewSection" class="p-3 bg-[#fdfaf3] border-2 border-[#2c221e] rounded-xl mb-4 hidden">
+                    <div class="flex items-center gap-3">
+                        <div id="uploadCoverThumb" class="w-16 h-22 rounded-md border-2 border-[#2c221e] bg-cover bg-center bg-[#ede2cf] flex items-center justify-center text-xl flex-shrink-0 shadow-sm overflow-hidden">
+                            <span id="uploadCoverPlaceholder">📖</span>
+                        </div>
+                        <div class="flex-1 space-y-1.5">
+                            <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-[#2c221e] select-none">
+                                <input type="checkbox" id="useDetectedCoverCheckbox" class="w-4 h-4 rounded text-[#e07a5f] accent-[#e07a5f]" checked>
+                                <span>Use official / detected cover</span>
+                            </label>
+                            <div class="flex items-center gap-2 pt-1">
+                                <label for="customCoverInput" class="hand-btn hand-btn-sm bg-[#faedcd] text-xs font-bold py-1 px-2.5 cursor-pointer flex items-center gap-1 hover:bg-[#f8e6b8] select-none">
+                                    <span>🖼️</span> Custom Cover
+                                </label>
+                                <input type="file" id="customCoverInput" accept="image/*" class="hidden">
+                                <span id="customCoverStatus" class="text-[11px] text-[#7d695c] truncate max-w-[130px]"></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="space-y-3 mb-4">

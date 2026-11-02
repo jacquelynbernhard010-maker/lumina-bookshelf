@@ -44,6 +44,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Read Modal Elements
     const modalCover = document.getElementById('modalCover');
+    const modalCoverTitleBox = document.getElementById('modalCoverTitleBox');
+    const changeCoverFileInput = document.getElementById('changeCoverFileInput');
     const modalEmoji = document.getElementById('modalEmoji');
     const modalFileType = document.getElementById('modalFileType');
     const modalBookTitle = document.getElementById('modalBookTitle');
@@ -69,6 +71,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const fileBanner = document.getElementById('fileBanner');
     const fileNameLabel = document.getElementById('fileNameLabel');
     const btnRemoveFile = document.getElementById('btnRemoveFile');
+    const uploadCoverPreviewSection = document.getElementById('uploadCoverPreviewSection');
+    const uploadCoverThumb = document.getElementById('uploadCoverThumb');
+    const uploadCoverPlaceholder = document.getElementById('uploadCoverPlaceholder');
+    const useDetectedCoverCheckbox = document.getElementById('useDetectedCoverCheckbox');
+    const customCoverInput = document.getElementById('customCoverInput');
+    const customCoverStatus = document.getElementById('customCoverStatus');
     const uploadShelfSelect = document.getElementById('uploadShelfSelect');
     const uploadStyleSelect = document.getElementById('uploadStyleSelect');
     const bookTitleInput = document.getElementById('bookTitleInput');
@@ -191,6 +199,39 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
+        // Change Cover Button inside Read Modal
+        if (changeCoverFileInput) {
+            changeCoverFileInput.addEventListener('change', async (e) => {
+                if (!state.selectedBook || !e.target.files.length) return;
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = async (evt) => {
+                    const dataUrl = evt.target.result;
+                    state.selectedBook.cover_url = dataUrl;
+                    modalCover.style.backgroundImage = `url("${dataUrl}")`;
+                    modalCover.style.backgroundColor = '#2c221e';
+                    if (modalCoverTitleBox) modalCoverTitleBox.classList.add('hidden');
+
+                    let dominantColor = state.selectedBook.spine_color;
+                    if (window.EpubExtractor && window.EpubExtractor.sampleDominantColor) {
+                        try {
+                            dominantColor = await window.EpubExtractor.sampleDominantColor(dataUrl);
+                            state.selectedBook.spine_color = dominantColor;
+                        } catch (err) {}
+                    }
+
+                    await window.storageEngine.updateBook(state.selectedBook.id, {
+                        cover_url: dataUrl,
+                        spine_color: dominantColor
+                    });
+
+                    renderShelves();
+                    showToast('Cover updated successfully!', 'success');
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
         // Drag & Drop Upload Handlers
         dropZone.addEventListener('click', () => bookFileInput.click());
         bookFileInput.addEventListener('change', (e) => {
@@ -215,10 +256,53 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
+        // Custom Cover upload in Add Book modal
+        if (customCoverInput) {
+            customCoverInput.addEventListener('change', (e) => {
+                if (!e.target.files.length) return;
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = async (evt) => {
+                    const dataUrl = evt.target.result;
+                    state.extractedCoverUrl = dataUrl;
+                    if (uploadCoverThumb) uploadCoverThumb.style.backgroundImage = `url("${dataUrl}")`;
+                    if (uploadCoverPlaceholder) uploadCoverPlaceholder.style.display = 'none';
+                    if (useDetectedCoverCheckbox) useDetectedCoverCheckbox.checked = true;
+                    if (customCoverStatus) customCoverStatus.innerText = file.name;
+
+                    if (window.EpubExtractor && window.EpubExtractor.sampleDominantColor) {
+                        try {
+                            state.extractedDominantColor = await window.EpubExtractor.sampleDominantColor(dataUrl);
+                        } catch (err) {}
+                    }
+                    showToast('Custom cover selected!', 'success');
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        if (useDetectedCoverCheckbox) {
+            useDetectedCoverCheckbox.addEventListener('change', () => {
+                if (uploadCoverThumb) {
+                    if (useDetectedCoverCheckbox.checked && state.extractedCoverUrl) {
+                        uploadCoverThumb.style.backgroundImage = `url("${state.extractedCoverUrl}")`;
+                        if (uploadCoverPlaceholder) uploadCoverPlaceholder.style.display = 'none';
+                    } else {
+                        uploadCoverThumb.style.backgroundImage = 'none';
+                        if (uploadCoverPlaceholder) uploadCoverPlaceholder.style.display = 'block';
+                    }
+                }
+            });
+        }
+
         btnRemoveFile.addEventListener('click', () => {
             uploadForm.reset();
             fileBanner.classList.add('hidden');
             dropZone.classList.remove('hidden');
+            if (uploadCoverPreviewSection) uploadCoverPreviewSection.classList.add('hidden');
+            if (uploadCoverThumb) uploadCoverThumb.style.backgroundImage = 'none';
+            if (uploadCoverPlaceholder) uploadCoverPlaceholder.style.display = 'block';
+            if (customCoverStatus) customCoverStatus.innerText = '';
             state.extractedCoverUrl = '';
             state.extractedDominantColor = '';
         });
@@ -249,6 +333,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         state.extractedCoverUrl = extracted.cover_url || '';
         state.extractedDominantColor = extracted.dominant_color || '#e07a5f';
 
+        if (uploadCoverPreviewSection) {
+            uploadCoverPreviewSection.classList.remove('hidden');
+            if (state.extractedCoverUrl) {
+                uploadCoverThumb.style.backgroundImage = `url("${state.extractedCoverUrl}")`;
+                if (uploadCoverPlaceholder) uploadCoverPlaceholder.style.display = 'none';
+                if (useDetectedCoverCheckbox) useDetectedCoverCheckbox.checked = true;
+                if (customCoverStatus) customCoverStatus.innerText = 'Official cover detected';
+            } else {
+                uploadCoverThumb.style.backgroundImage = 'none';
+                if (uploadCoverPlaceholder) uploadCoverPlaceholder.style.display = 'block';
+                if (useDetectedCoverCheckbox) useDetectedCoverCheckbox.checked = false;
+                if (customCoverStatus) customCoverStatus.innerText = 'No cover found in file';
+            }
+        }
+
         if (extracted.cover_url) {
             showToast('Extracted book cover & details!', 'success');
         }
@@ -266,7 +365,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const author = bookAuthorInput.value.trim() || 'Unknown Author';
         const shelf_id = uploadShelfSelect.value;
         const spine_style = uploadStyleSelect.value || 'spine';
-        const cover_url = state.extractedCoverUrl;
+        const cover_url = (useDetectedCoverCheckbox && useDetectedCoverCheckbox.checked) ? state.extractedCoverUrl : '';
         const spine_color = state.extractedDominantColor || '#e07a5f';
 
         try {
@@ -284,6 +383,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             uploadForm.reset();
             fileBanner.classList.add('hidden');
             dropZone.classList.remove('hidden');
+            if (uploadCoverPreviewSection) uploadCoverPreviewSection.classList.add('hidden');
+            if (uploadCoverThumb) uploadCoverThumb.style.backgroundImage = 'none';
+            if (uploadCoverPlaceholder) uploadCoverPlaceholder.style.display = 'block';
+            if (customCoverStatus) customCoverStatus.innerText = '';
             state.extractedCoverUrl = '';
             state.extractedDominantColor = '';
 
@@ -505,10 +608,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="dangle-ribbon" style="background-color: ${theme.ribbon};"></div>
                     <span class="text-xs font-bold uppercase tracking-wide bg-black/60 px-2 py-0.5 rounded text-white self-start backdrop-blur-sm shadow-sm">${escapeHtml(book.file_type || 'epub')}</span>
                     
+                    ${book.cover_url ? '' : `
                     <div class="bg-black/65 p-2 rounded-md text-white z-10 backdrop-blur-sm mt-auto shadow-sm">
                         <h4 class="font-bold text-xs line-clamp-2 leading-tight">${escapeHtml(displayTitle)}</h4>
                         <p class="text-[10px] opacity-90 truncate mt-0.5">${escapeHtml(displayAuthor)}</p>
                     </div>
+                    `}
                 </div>
             `;
         } else {
@@ -571,9 +676,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (book.cover_url) {
             modalCover.style.backgroundImage = `url("${book.cover_url}")`;
             modalCover.style.backgroundColor = '#2c221e';
+            if (modalCoverTitleBox) modalCoverTitleBox.classList.add('hidden');
         } else {
             modalCover.style.backgroundImage = 'none';
             modalCover.style.backgroundColor = book.spine_color || theme.bg;
+            if (modalCoverTitleBox) modalCoverTitleBox.classList.remove('hidden');
         }
 
         modalEmoji.innerText = theme.emoji;
