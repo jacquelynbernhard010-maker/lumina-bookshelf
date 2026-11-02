@@ -83,16 +83,27 @@ class StorageEngine {
         if (shelves.length === 0) {
             const defaultShelves = [
                 { id: 1, name: 'Currently Reading', slug: 'currently-reading', color: '#e07a5f' },
-                { id: 2, name: 'Favorites', slug: 'favorites', color: '#81b29a' },
-                { id: 3, name: 'Bedtime Stories', slug: 'bedtime-stories', color: '#f2cc8f' },
-                { id: 4, name: 'Poetry & Lore', slug: 'poetry-lore', color: '#9d8189' }
+                { id: 2, name: 'Favorites', slug: 'favorites', color: '#81b29a' }
             ];
             for (const s of defaultShelves) {
                 await this.saveLocalShelf(s);
             }
+        } else {
+            // Clean up removed default shelves from existing local databases
+            for (const s of shelves) {
+                if (s.name === 'Bedtime Stories' || s.name === 'Poetry & Lore' || s.slug === 'bedtime-stories' || s.slug === 'poetry-lore') {
+                    await this.deleteLocalShelf(s.id);
+                }
+            }
         }
 
         const books = await this.getLocalBooks();
+        for (const b of books) {
+            if (b.shelf_id === 3 || b.shelf_id === 4) {
+                await this.updateLocalBook(b.id, { shelf_id: 1 });
+            }
+        }
+
         if (books.length === 0) {
             try {
                 const res = await fetch('assets/sample/the_time_machine.epub');
@@ -126,13 +137,17 @@ class StorageEngine {
     // --- SHELVES API ---
 
     async getShelves() {
+        let shelves = [];
         if (this.isCloudEnabled) {
             try {
                 const { data, error } = await this.supabase.from('shelves').select('*').order('id', { ascending: true });
-                if (!error && data && data.length > 0) return data;
+                if (!error && data && data.length > 0) shelves = data;
             } catch (err) {}
         }
-        return this.getLocalShelves();
+        if (shelves.length === 0) {
+            shelves = await this.getLocalShelves();
+        }
+        return shelves.filter(s => s.name !== 'Bedtime Stories' && s.name !== 'Poetry & Lore' && s.slug !== 'bedtime-stories' && s.slug !== 'poetry-lore');
     }
 
     async createShelf(name, color = '#81b29a') {
@@ -291,6 +306,15 @@ class StorageEngine {
             const store = tx.objectStore('shelves');
             store.put(shelf);
             tx.oncomplete = () => resolve(shelf);
+        });
+    }
+
+    deleteLocalShelf(id) {
+        return new Promise((resolve) => {
+            const tx = this.db.transaction('shelves', 'readwrite');
+            const store = tx.objectStore('shelves');
+            store.delete(id);
+            tx.oncomplete = () => resolve(true);
         });
     }
 
