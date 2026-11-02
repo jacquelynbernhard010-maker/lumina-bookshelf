@@ -389,20 +389,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const spine_style = uploadStyleSelect.value || 'spine';
         const cover_url = (useDetectedCoverCheckbox && useDetectedCoverCheckbox.checked) ? state.extractedCoverUrl : '';
         const spine_color = state.extractedDominantColor || '#e07a5f';
-        let description = state.extractedDescription || '';
-
-        if (!description && window.EpubExtractor) {
-            try {
-                description = await window.EpubExtractor.fetchSynopsisFromOnline(title, author);
-            } catch (e) {}
-        }
 
         try {
             await window.storageEngine.saveBook({
                 file,
                 title,
                 author,
-                description,
                 shelf_id,
                 cover_url,
                 spine_color,
@@ -488,7 +480,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         backfillMissingCovers();
     }
 
-    // Auto-backfill missing covers and synopses for existing books on the shelf
+    // Auto-backfill missing covers for existing books on the shelf
     async function backfillMissingCovers() {
         for (const book of state.books) {
             const needsCover = !book.cover_url || (book.cover_url.startsWith('data:') && book.cover_url.length < 5000);
@@ -514,25 +506,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 } catch (e) {
                     console.warn('Cover backfill error:', e);
-                }
-            }
-
-            const needsSynopsis = !book.description || book.description.includes('cozy digital volume') || book.description.length < 25;
-            if (needsSynopsis && window.EpubExtractor) {
-                try {
-                    let newSynopsis = await window.EpubExtractor.fetchSynopsisFromOnline(book.title, book.author);
-                    if (!newSynopsis && book.file_blob) {
-                        newSynopsis = await window.EpubExtractor.extractSynopsisFromZip(book.file_blob);
-                    }
-                    if (newSynopsis) {
-                        book.description = newSynopsis;
-                        await window.storageEngine.updateBook(book.id, { description: newSynopsis });
-                        if (state.selectedBook && state.selectedBook.id === book.id && modalDetailDesc) {
-                            modalDetailDesc.innerText = newSynopsis;
-                        }
-                    }
-                } catch (e) {
-                    console.warn('Synopsis backfill error:', e);
                 }
             }
         }
@@ -759,36 +732,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const isFav = book.is_favorite === true || book.shelf_id === 2;
         updateFavoriteButtonUI(isFav);
-
-        const hasValidDesc = book.description && !book.description.includes('cozy digital volume') && book.description.length >= 25;
-        if (hasValidDesc) {
-            modalDetailDesc.innerText = book.description;
-        } else {
-            modalDetailDesc.innerText = 'Fetching openly sourced book synopsis & preview...';
-            if (window.EpubExtractor) {
-                (async () => {
-                    try {
-                        let fetched = await window.EpubExtractor.fetchSynopsisFromOnline(book.title, book.author);
-                        if (!fetched && book.file_blob) {
-                            fetched = await window.EpubExtractor.extractSynopsisFromZip(book.file_blob);
-                        }
-                        if (fetched) {
-                            book.description = fetched;
-                            await window.storageEngine.updateBook(book.id, { description: fetched });
-                            if (state.selectedBook && state.selectedBook.id === book.id) {
-                                modalDetailDesc.innerText = fetched;
-                            }
-                        } else if (state.selectedBook && state.selectedBook.id === book.id) {
-                            modalDetailDesc.innerText = `${displayTitle} by ${displayAuthor} — open the book to begin reading.`;
-                        }
-                    } catch (err) {
-                        if (state.selectedBook && state.selectedBook.id === book.id) {
-                            modalDetailDesc.innerText = `${displayTitle} by ${displayAuthor} — open the book to begin reading.`;
-                        }
-                    }
-                })();
-            }
-        }
 
         const prog = Math.round(book.reading_progress || 0);
         modalProgText.innerText = `${prog}% completed`;

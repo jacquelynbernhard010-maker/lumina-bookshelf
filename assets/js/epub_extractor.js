@@ -72,23 +72,7 @@ class EpubExtractor {
             }
         }
 
-        // 4. Synopsis / Preview sourcing: Online open APIs + EPUB internal description/preview
-        if (!description || description.length < 25) {
-            try {
-                const onlineDesc = await this.fetchSynopsisFromOnline(title, author);
-                if (onlineDesc) description = onlineDesc;
-            } catch (descErr) {
-                console.warn('Online synopsis search error:', descErr);
-            }
-        }
-        if ((!description || description.length < 25) && ext === 'epub') {
-            try {
-                const zipDesc = await this.extractSynopsisFromZip(file);
-                if (zipDesc) description = zipDesc;
-            } catch (zDescErr) {}
-        }
-
-        // 5. Sample dominant color from cover image for spine
+        // 4. Sample dominant color from cover image for spine
         if (coverUrl) {
             try {
                 dominantColor = await this.sampleDominantColor(coverUrl);
