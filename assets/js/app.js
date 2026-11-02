@@ -26,7 +26,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         extractedCoverUrl: '',
         extractedDominantColor: '',
         extractedDescription: '',
-        dragSource: null,
         plantLevel: 1
     };
 
@@ -60,10 +59,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const modalShelfBadge = document.getElementById('modalShelfBadge');
     const btnToggleFavorite = document.getElementById('btnToggleFavorite');
     const favoriteBtnText = document.getElementById('favoriteBtnText');
-    const btnMoveBookPrev = document.getElementById('btnMoveBookPrev');
-    const btnMoveBookNext = document.getElementById('btnMoveBookNext');
-    const btnMoveStackPrev = document.getElementById('btnMoveStackPrev');
-    const btnMoveStackNext = document.getElementById('btnMoveStackNext');
     const modalProgText = document.getElementById('modalProgText');
     const modalProgFill = document.getElementById('modalProgFill');
     const btnOpenReader = document.getElementById('btnOpenReader');
@@ -182,32 +177,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.addEventListener('click', async () => {
                 if (!state.selectedBook) return;
                 const newStyle = btn.dataset.style;
+
+                // Enforce max 5 stacked books per shelf
+                if (newStyle === 'stacked' && state.selectedBook.spine_style !== 'stacked') {
+                    const currentShelvesCount = Math.max(1, document.querySelectorAll('.bookcase-bay').length);
+                    const currentStackedCount = state.books.filter(b => b.spine_style === 'stacked').length;
+                    if (currentStackedCount >= currentShelvesCount * MAX_STACK_SIZE) {
+                        showToast(`Stack is full (max ${MAX_STACK_SIZE} books per shelf)`, 'info');
+                        return;
+                    }
+                }
+
                 document.querySelectorAll('.btn-spine-style').forEach(b => {
                     b.className = 'btn-spine-style hand-btn hand-btn-sm bg-white';
                 });
                 btn.className = 'btn-spine-style hand-btn hand-btn-sm hand-btn-terracotta text-white';
 
                 state.selectedBook.spine_style = newStyle;
-                updateStackMoveButtonsUI(newStyle === 'stacked');
                 await window.storageEngine.updateBookSpineStyle(state.selectedBook.id, newStyle);
                 showToast(`Shelf style: ${newStyle}`, 'success');
                 renderShelves();
             });
         });
 
-        // Shelf & Stack Reordering Buttons inside Read Modal
-        if (btnMoveBookPrev) {
-            btnMoveBookPrev.addEventListener('click', () => moveSelectedBook(-1));
-        }
-        if (btnMoveBookNext) {
-            btnMoveBookNext.addEventListener('click', () => moveSelectedBook(1));
-        }
-        if (btnMoveStackPrev) {
-            btnMoveStackPrev.addEventListener('click', () => moveSelectedStack(-1));
-        }
-        if (btnMoveStackNext) {
-            btnMoveStackNext.addEventListener('click', () => moveSelectedStack(1));
-        }
+        // Re-pack shelves on window resize so spines always fill up to the right border
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if (state.books.length > 0) renderShelves();
+            }, 120);
+        });
 
         // Toggle Favorite Button inside Read Modal
         if (btnToggleFavorite) {
@@ -533,241 +533,160 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Group consecutive stacked books into stacks of up to MAX_STACK_SIZE (5)
-    function buildVisualUnits(booksList) {
-        const units = [];
-        let idx = 0;
-        while (idx < booksList.length) {
-            const b = booksList[idx];
-            if (b.spine_style === 'stacked') {
-                const stackPile = [b];
-                let nextIdx = idx + 1;
-                while (
-                    nextIdx < booksList.length &&
-                    booksList[nextIdx].spine_style === 'stacked' &&
-                    stackPile.length < MAX_STACK_SIZE
-                ) {
-                    stackPile.push(booksList[nextIdx]);
-                    nextIdx++;
+    // Estimates the horizontal pixel width an upright book occupies on the shelf
+    function getUprightBookWidth(book) {
+        const style = book.spine_style || 'spine';
+        if (style === 'front') return 140;
+        if (style === 'leaning') return 82; // 64px spine + 18px leaning margin
+        return 64; // standing spine
+    }
+
+    /**
+     * Automatically optimizes stacking and packs each shelf up to the right border:
+     * - Groups up to MAX_STACK_SIZE (5) stacked books into a single neat pile at the left of the shelf.
+     * - Fills the remaining shelf width with standing spines / front / leaning books right up to the border.
+     * - If extra stacked books exist beyond 5 when upright books run out on a shelf, stands them upright as spines so a shelf never has >1 stack or >5 books in a stack.
+     */
+    function packBooksIntoShelves(booksList, bayInnerWidth) {
+        const GAP = 5;
+        const STACK_WIDTH = 174; // 168px stack layer + 6px right margin
+        const stackedPool = booksList.filter(b => b.spine_style === 'stacked');
+        const uprightPool = booksList.filter(b => b.spine_style !== 'stacked');
+
+        const shelves = [];
+        let sPtr = 0;
+        let uPtr = 0;
+
+        while (sPtr < stackedPool.length || uPtr < uprightPool.length) {
+            const shelf = { stack: [], upright: [], usedWidth: 0 };
+
+            // 1. Place at most one stack of up to 5 books at the left wall of this shelf
+            if (sPtr < stackedPool.length) {
+                const stackSlice = stackedPool.slice(sPtr, sPtr + MAX_STACK_SIZE);
+                shelf.stack = stackSlice;
+                sPtr += stackSlice.length;
+                shelf.usedWidth += STACK_WIDTH;
+            }
+
+            // 2. Pack upright books (spines / front / leaning) all the way up to the right border of the shelf
+            while (uPtr < uprightPool.length) {
+                const candidate = uprightPool[uPtr];
+                const bookW = getUprightBookWidth(candidate);
+                const gapNeeded = (shelf.stack.length > 0 || shelf.upright.length > 0) ? GAP : 0;
+
+                if (shelf.usedWidth + gapNeeded + bookW <= bayInnerWidth || (shelf.stack.length === 0 && shelf.upright.length === 0)) {
+                    shelf.upright.push({ book: candidate, forceSpine: false });
+                    shelf.usedWidth += gapNeeded + bookW;
+                    uPtr++;
+                } else {
+                    break;
                 }
-                units.push({ type: 'stack', books: stackPile, startIndex: idx });
-                idx = nextIdx;
-            } else {
-                units.push({ type: 'single', books: [b], startIndex: idx });
-                idx++;
             }
-        }
-        return units;
-    }
 
-    async function persistCurrentBookOrder() {
-        const orderedIds = state.books.map(b => b.id);
-        state.books.forEach((b, idx) => {
-            b.sort_order = (idx + 1) * 10;
-        });
-        await window.storageEngine.reorderBooks(orderedIds);
-    }
-
-    async function moveSelectedBook(delta) {
-        if (!state.selectedBook) return;
-        const idx = state.books.findIndex(b => b.id == state.selectedBook.id);
-        if (idx === -1) return;
-        const targetIdx = idx + delta;
-        if (targetIdx < 0 || targetIdx >= state.books.length) {
-            showToast(delta < 0 ? 'Already at the start of the shelf' : 'Already at the end of the shelf', 'info');
-            return;
-        }
-        const temp = state.books[idx];
-        state.books[idx] = state.books[targetIdx];
-        state.books[targetIdx] = temp;
-        await persistCurrentBookOrder();
-        renderShelves();
-        showToast('Moved book position', 'success');
-    }
-
-    async function moveSelectedStack(delta) {
-        if (!state.selectedBook) return;
-        const units = buildVisualUnits(state.books);
-        const unitIdx = units.findIndex(u => u.books.some(b => b.id == state.selectedBook.id));
-        if (unitIdx === -1) return;
-        const targetUnitIdx = unitIdx + delta;
-        if (targetUnitIdx < 0 || targetUnitIdx >= units.length) {
-            showToast(delta < 0 ? 'Stack is already at the start' : 'Stack is already at the end', 'info');
-            return;
-        }
-        const tempUnit = units[unitIdx];
-        units[unitIdx] = units[targetUnitIdx];
-        units[targetUnitIdx] = tempUnit;
-        state.books = units.flatMap(u => u.books);
-        await persistCurrentBookOrder();
-        renderShelves();
-        showToast('Moved entire stack', 'success');
-    }
-
-    async function reorderByDragDrop(draggedIds, targetIds, placeAfter) {
-        if (!draggedIds || !draggedIds.length || !targetIds || !targetIds.length) return;
-        const draggedSet = new Set(draggedIds.map(String));
-        if (targetIds.some(id => draggedSet.has(String(id)))) return;
-
-        const draggedBooks = state.books.filter(b => draggedSet.has(String(b.id)));
-        const remainingBooks = state.books.filter(b => !draggedSet.has(String(b.id)));
-
-        const anchorId = placeAfter ? targetIds[targetIds.length - 1] : targetIds[0];
-        const anchorIdx = remainingBooks.findIndex(b => String(b.id) === String(anchorId));
-        if (anchorIdx === -1) return;
-
-        const insertIdx = placeAfter ? anchorIdx + 1 : anchorIdx;
-        remainingBooks.splice(insertIdx, 0, ...draggedBooks);
-        state.books = remainingBooks;
-
-        await persistCurrentBookOrder();
-        renderShelves();
-        showToast(draggedIds.length > 1 ? 'Moved stack to new spot' : 'Reordered book on shelf', 'success');
-    }
-
-    function clearDragIndicators() {
-        document.querySelectorAll('.drag-over-before, .drag-over-after, .is-dragging').forEach(el => {
-            el.classList.remove('drag-over-before', 'drag-over-after', 'is-dragging');
-        });
-    }
-
-    function attachDragAndDropHandlers(el, itemBookIds, isVerticalLayer = false) {
-        el.setAttribute('draggable', 'true');
-
-        el.addEventListener('dragstart', (e) => {
-            e.stopPropagation();
-            state.dragSource = { ids: itemBookIds };
-            el.classList.add('is-dragging');
-            if (e.dataTransfer) {
-                e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/plain', JSON.stringify(itemBookIds));
+            // 3. If upright books are finished but there are still leftover stacked books (>5),
+            // stand them upright as spines in the remaining space of this shelf so they don't create a second stack on the same shelf
+            while (uPtr >= uprightPool.length && sPtr < stackedPool.length) {
+                const bookW = 64; // standing spine width
+                const gapNeeded = (shelf.stack.length > 0 || shelf.upright.length > 0) ? GAP : 0;
+                if (shelf.usedWidth + gapNeeded + bookW <= bayInnerWidth) {
+                    shelf.upright.push({ book: stackedPool[sPtr], forceSpine: true });
+                    shelf.usedWidth += gapNeeded + bookW;
+                    sPtr++;
+                } else {
+                    break;
+                }
             }
-        });
 
-        el.addEventListener('dragend', () => {
-            state.dragSource = null;
-            clearDragIndicators();
-        });
+            shelves.push(shelf);
+        }
 
-        el.addEventListener('dragover', (e) => {
-            if (!state.dragSource) return;
-            e.preventDefault();
-            e.stopPropagation();
-            const draggedSet = new Set(state.dragSource.ids.map(String));
-            if (itemBookIds.some(id => draggedSet.has(String(id)))) return;
+        if (shelves.length === 0) {
+            shelves.push({ stack: [], upright: [], usedWidth: 0 });
+        }
 
-            const rect = el.getBoundingClientRect();
-            const placeAfter = isVerticalLayer
-                ? (e.clientY - rect.top) > rect.height / 2
-                : (e.clientX - rect.left) > rect.width / 2;
-
-            el.classList.toggle('drag-over-before', !placeAfter);
-            el.classList.toggle('drag-over-after', placeAfter);
-        });
-
-        el.addEventListener('dragleave', () => {
-            el.classList.remove('drag-over-before', 'drag-over-after');
-        });
-
-        el.addEventListener('drop', async (e) => {
-            if (!state.dragSource) return;
-            e.preventDefault();
-            e.stopPropagation();
-            const draggedIds = state.dragSource.ids;
-            state.dragSource = null;
-
-            const rect = el.getBoundingClientRect();
-            const placeAfter = isVerticalLayer
-                ? (e.clientY - rect.top) > rect.height / 2
-                : (e.clientX - rect.left) > rect.width / 2;
-
-            clearDragIndicators();
-            await reorderByDragDrop(draggedIds, itemBookIds, placeAfter);
-        });
+        return shelves;
     }
 
     function renderShelves() {
         shelvesContainer.innerHTML = '';
 
-        // Group stacked books (max 5 per stack) into visual units so stacks never grow taller than 5 or split across shelves
-        const visualUnits = buildVisualUnits(state.books);
-        const unitsPerShelf = 5;
-        const shelfCount = Math.max(1, Math.ceil(visualUnits.length / unitsPerShelf));
+        // Measure the real interior width of the wooden bookcase bay (container width minus 2*18px bookcase walls and 2*10px bay padding)
+        const containerWidth = shelvesContainer.clientWidth || 1024;
+        const bayInnerWidth = Math.max(320, containerWidth - 56);
 
-        for (let sIdx = 0; sIdx < shelfCount; sIdx++) {
-            const unitChunk = visualUnits.slice(sIdx * unitsPerShelf, (sIdx + 1) * unitsPerShelf);
-            const isFirstShelf = (sIdx === 0);
+        const packedShelves = packBooksIntoShelves(state.books, bayInnerWidth);
 
-            const shelfSection = document.createElement('div');
-            shelfSection.className = 'relative';
+        // Top accessory: Mochi sleeping on top of the wooden bookcase
+        const topHeader = document.createElement('div');
+        topHeader.className = 'flex items-end justify-between px-6 mb-[-3px] relative z-10';
+        topHeader.innerHTML = `
+            <div class="sleeping-cat flex items-center gap-1.5 bg-[#fdfaf3] px-3 py-1 rounded-full border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] text-sm select-none">
+                <span class="font-bold text-xs text-[#524137]">Mochi is sleeping... zZz</span>
+            </div>
+        `;
+        shelvesContainer.appendChild(topHeader);
 
-            // Top shelf accessories on first shelf
-            let accessoriesHtml = '';
-            if (isFirstShelf) {
-                accessoriesHtml = `
-                    <div class="flex items-end justify-between px-6 mb-[-2px] relative z-10">
-                        <div class="sleeping-cat flex items-center gap-1.5 bg-[#fdfaf3] px-3 py-1 rounded-full border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] text-sm select-none">
-                            <span class="font-bold text-xs text-[#524137]">Mochi is sleeping... zZz</span>
-                        </div>
-                        <span class="text-[11px] font-bold text-[#7c6855] select-none hidden sm:inline">Tip: Drag any book or stack to rearrange your shelf</span>
-                    </div>
-                `;
+        // Outer Wooden Bookcase Frame
+        const bookcase = document.createElement('div');
+        bookcase.className = 'wooden-bookcase';
+
+        // Top Wooden Crown Molding
+        const crown = document.createElement('div');
+        crown.className = 'bookcase-crown';
+        bookcase.appendChild(crown);
+
+        let globalThemeCounter = 0;
+
+        packedShelves.forEach((shelfData, sIdx) => {
+            const bay = document.createElement('div');
+            bay.className = 'bookcase-bay';
+
+            // Render the auto-optimized stack (max 5 books) on the left of the shelf
+            if (shelfData.stack.length > 0) {
+                bay.appendChild(createStackedBooksGroup(shelfData.stack, globalThemeCounter));
+                globalThemeCounter += shelfData.stack.length;
             }
 
-            // Fixed-height Shelf Book Box (h-[305px] max-h-[305px]) so stacks of up to 5 books never cause the shelf to grow taller
-            const box = document.createElement('div');
-            box.className = 'bg-[#fffcf7] px-6 pt-20 pb-2 border-x-2 border-t-2 border-[#2c221e] rounded-t-2xl shadow-inner h-[305px] max-h-[305px] flex items-end gap-3 md:gap-4 overflow-x-auto overflow-y-hidden';
-
-            unitChunk.forEach((unit) => {
-                if (unit.type === 'stack') {
-                    box.appendChild(createStackedBooksGroup(unit.books, unit.startIndex));
-                } else {
-                    const book = unit.books[0];
-                    const theme = coverThemes[unit.startIndex % coverThemes.length];
-                    box.appendChild(createDoodleBook(book, theme));
-                }
+            // Render all upright spines / front / leaning books snugly across to the right border
+            shelfData.upright.forEach(({ book, forceSpine }) => {
+                const theme = coverThemes[globalThemeCounter % coverThemes.length];
+                globalThemeCounter++;
+                bay.appendChild(createDoodleBook(book, theme, forceSpine));
             });
 
-            // Empty Slot sketch
-            const emptySlot = document.createElement('div');
-            emptySlot.className = 'border-2 border-dashed border-[#c4b5a5] rounded-lg w-16 h-36 flex flex-col items-center justify-center p-2 text-center text-xs text-[#a89685] cursor-pointer hover:border-[#2c221e] transition-colors flex-shrink-0';
-            emptySlot.innerHTML = `
-                <span class="text-lg">+</span>
-                <span>Slip in</span>
-            `;
-            emptySlot.addEventListener('click', () => uploadModal.classList.add('active'));
-            box.appendChild(emptySlot);
+            // Only show a slim "+ Slip in" slot on the last shelf if there is open space before the right border
+            const isLastShelf = (sIdx === packedShelves.length - 1);
+            if (isLastShelf && (bayInnerWidth - shelfData.usedWidth) >= 68) {
+                const emptySlot = document.createElement('div');
+                emptySlot.className = 'border-2 border-dashed border-[#bfa88f] rounded-md w-14 h-44 flex flex-col items-center justify-center p-1.5 text-center text-xs text-[#8c735b] cursor-pointer hover:border-[#2c221e] hover:text-[#2c221e] transition-colors flex-shrink-0 select-none';
+                emptySlot.innerHTML = `
+                    <span class="text-base font-bold">+</span>
+                    <span class="text-[11px] font-bold">Slip in</span>
+                `;
+                emptySlot.addEventListener('click', () => uploadModal.classList.add('active'));
+                bay.appendChild(emptySlot);
+            }
 
-            // Shelf label badge on right
-            const shelfBadge = document.createElement('div');
-            shelfBadge.className = 'ml-auto flex items-end pb-1 pr-2 select-none';
-            shelfBadge.innerHTML = `
-                <div class="px-3 py-1 bg-[#fffdfa] border-2 border-[#2c221e] rounded-lg shadow-[2px_2px_0px_#2c221e] text-xs font-bold flex items-center gap-1.5">
-                    <span>Shelf ${sIdx + 1}</span>
-                </div>
-            `;
-            box.appendChild(shelfBadge);
-
-            // Solid Wooden Shelf Plank with Knots
+            // Solid Wooden Shelf Plank with Knots & Centered Nameplate
             const plank = document.createElement('div');
             plank.className = 'sketch-shelf flex items-center justify-between px-8';
             plank.innerHTML = `
-                <div class="wood-knot" style="left: ${15 + sIdx * 10}%;"></div>
-                <div class="wood-knot" style="left: ${55 - sIdx * 5}%;"></div>
-                <div class="wood-knot" style="left: 88%;"></div>
+                <div class="wood-knot" style="left: ${14 + (sIdx * 11) % 25}%;"></div>
+                <div class="plank-plate">Shelf ${sIdx + 1}</div>
+                <div class="wood-knot" style="left: ${82 - (sIdx * 7) % 20}%;"></div>
             `;
 
-            shelfSection.innerHTML = accessoriesHtml;
-            shelfSection.appendChild(box);
-            shelfSection.appendChild(plank);
-            shelvesContainer.appendChild(shelfSection);
-        }
+            bookcase.appendChild(bay);
+            bookcase.appendChild(plank);
+        });
+
+        shelvesContainer.appendChild(bookcase);
     }
 
     // Creates an individual book item on the shelf
-    function createDoodleBook(book, theme) {
+    function createDoodleBook(book, theme, forceSpine = false) {
         const item = document.createElement('div');
-        const style = book.spine_style || 'spine';
+        const style = forceSpine ? 'spine' : (book.spine_style || 'spine');
         const color = book.spine_color || theme.bg;
         const displayTitle = cleanTitle(book.title);
         const displayAuthor = cleanAuthor(book.author);
@@ -823,24 +742,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
         }
 
-        attachDragAndDropHandlers(item, [book.id], false);
         item.addEventListener('click', () => openBookModal(book, theme));
         return item;
     }
 
-    // Creates stacked books lying down horizontally (max 5 books per stack)
+    // Creates stacked books lying down horizontally (auto-grouped up to 5 books per stack)
     function createStackedBooksGroup(booksInStack, baseThemeIdx) {
         const wrap = document.createElement('div');
         wrap.className = 'stack-group';
-        const stackIds = booksInStack.map(b => b.id);
-
-        // Drag handle at the top of the stack to move the entire stack together
-        const stackHandle = document.createElement('div');
-        stackHandle.className = 'stack-handle';
-        stackHandle.title = 'Drag to move this entire stack';
-        stackHandle.innerText = `Move Stack (${booksInStack.length}/${MAX_STACK_SIZE})`;
-        attachDragAndDropHandlers(stackHandle, stackIds, false);
-        wrap.appendChild(stackHandle);
 
         booksInStack.forEach((b, i) => {
             const theme = coverThemes[(baseThemeIdx + i) % coverThemes.length];
@@ -862,8 +771,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="stack-band-vert"></div>
                 </div>
             `;
-            // Each book inside the stack can also be dragged individually to reorder within the stack or moved out
-            attachDragAndDropHandlers(layer, [b.id], true);
             layer.addEventListener('click', () => openBookModal(b, theme));
             wrap.appendChild(layer);
         });
@@ -872,11 +779,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- Pop-Out Book Modal ---
-
-    function updateStackMoveButtonsUI(isStacked) {
-        if (btnMoveStackPrev) btnMoveStackPrev.classList.toggle('hidden', !isStacked);
-        if (btnMoveStackNext) btnMoveStackNext.classList.toggle('hidden', !isStacked);
-    }
 
     function updateFavoriteButtonUI(isFav) {
         if (!btnToggleFavorite || !favoriteBtnText) return;
@@ -923,7 +825,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Highlight active style button
         const curStyle = book.spine_style || 'spine';
-        updateStackMoveButtonsUI(curStyle === 'stacked');
         document.querySelectorAll('.btn-spine-style').forEach(b => {
             if (b.dataset.style === curStyle) {
                 b.className = 'btn-spine-style hand-btn hand-btn-sm hand-btn-terracotta text-white';
