@@ -21,7 +21,7 @@
                 ← Shelf
             </a>
             <button class="hand-nav-btn" id="btnToggleDrawer" title="Chapters & Bookmarks">
-                <span>📑 Contents</span>
+                <span>Contents</span>
                 <span id="headerBookmarkBadge" class="hidden text-xs bg-[#e07a5f] text-white px-1.5 py-0.2 rounded-full font-bold">0</span>
             </button>
             <div class="book-meta">
@@ -34,13 +34,13 @@
         <div class="nav-center">
             <div class="mode-switcher-wrap">
                 <button class="mode-btn active" id="btnModeSingle" data-mode="single" title="One Page at a time">
-                    📄 Single
+                    Single
                 </button>
                 <button class="mode-btn" id="btnModeSpread" data-mode="spread" title="Two Pages side-by-side">
-                    📖 Two Pages
+                    Two Pages
                 </button>
                 <button class="mode-btn" id="btnModeScroll" data-mode="scroll" title="Endless Continuous Scrolling">
-                    📜 Scroll
+                    Scroll
                 </button>
             </div>
         </div>
@@ -48,7 +48,7 @@
         <div class="nav-right">
             <!-- Bookmark Button -->
             <button class="hand-nav-btn" id="btnAddBookmark" title="Bookmark current page">
-                <span id="bookmarkIcon">🔖</span>
+                <span id="bookmarkIcon" class="hidden"></span>
                 <span id="bookmarkText">Bookmark</span>
             </button>
 
@@ -90,7 +90,7 @@
             </div>
 
             <button class="hand-nav-btn" id="btnDownloadBook" title="Download File">
-                ⬇️
+                Download
             </button>
         </div>
     </header>
@@ -104,8 +104,8 @@
         <aside class="toc-sidebar" id="tocSidebar">
             <div class="toc-header">
                 <div class="drawer-tabs">
-                    <button class="drawer-tab active" id="tabChapters">📑 Chapters</button>
-                    <button class="drawer-tab" id="tabBookmarks">🔖 Bookmarks (<span id="bookmarkCount">0</span>)</button>
+                    <button class="drawer-tab active" id="tabChapters">Chapters</button>
+                    <button class="drawer-tab" id="tabBookmarks">Bookmarks (<span id="bookmarkCount">0</span>)</button>
                 </div>
                 <button class="btn-icon" id="btnCloseDrawer">✕</button>
             </div>
@@ -115,7 +115,7 @@
 
             <!-- Tab Content: Bookmarks -->
             <div class="toc-content hidden" id="bookmarkList">
-                <p class="text-xs text-[#786457] p-3 italic">No bookmarks yet. Click the "🔖 Bookmark" button on any page to save your favorite spots!</p>
+                <p class="text-xs text-[#786457] p-3 italic">No bookmarks yet. Click the "Bookmark" button on any page to save your favorite spots!</p>
             </div>
         </aside>
 

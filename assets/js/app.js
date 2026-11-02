@@ -6,14 +6,14 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // Whimsical color themes for hand-drawn book spines
     const coverThemes = [
-        { bg: '#81b29a', text: '#1e2d24', emoji: '🌿', ribbon: '#e07a5f' }, // Matcha
-        { bg: '#e07a5f', text: '#ffffff', emoji: '⏳', ribbon: '#f2cc8f' }, // Terracotta
-        { bg: '#f2cc8f', text: '#3f2b12', emoji: '🍂', ribbon: '#81b29a' }, // Honey
-        { bg: '#9d8189', text: '#ffffff', emoji: '🌙', ribbon: '#e07a5f' }, // Dusty Rose
-        { bg: '#8ecae6', text: '#103b4f', emoji: '☁️', ribbon: '#e07a5f' }, // Sky Blue
-        { bg: '#e76f51', text: '#ffffff', emoji: '✦',  ribbon: '#f2cc8f' }, // Rust
-        { bg: '#eed9c4', text: '#4a2e18', emoji: '🕯️', ribbon: '#81b29a' }, // Soft Oat
-        { bg: '#e9c46a', text: '#2c221e', emoji: '⭐', ribbon: '#e07a5f' }  // Little Prince Yellow
+        { bg: '#81b29a', text: '#1e2d24', ribbon: '#e07a5f' }, // Matcha
+        { bg: '#e07a5f', text: '#fffdf7', ribbon: '#f2cc8f' }, // Terracotta
+        { bg: '#f2cc8f', text: '#3f2b12', ribbon: '#81b29a' }, // Honey
+        { bg: '#9d8189', text: '#fffdf7', ribbon: '#e07a5f' }, // Dusty Rose
+        { bg: '#8ecae6', text: '#103b4f', ribbon: '#e07a5f' }, // Sky Blue
+        { bg: '#e76f51', text: '#fffdf7', ribbon: '#f2cc8f' }, // Rust
+        { bg: '#eed9c4', text: '#4a2e18', ribbon: '#81b29a' }, // Soft Oat
+        { bg: '#e9c46a', text: '#2c221e', ribbon: '#e07a5f' }  // Little Prince Yellow
     ];
 
     // State
@@ -101,10 +101,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     function updateCloudStatusUI() {
         const config = window.storageEngine.getSupabaseConfig();
         if (config.isEnabled) {
-            storageModeLabel.innerText = '☁️ Synced with Supabase Cloud';
+            storageModeLabel.innerText = 'Synced with Supabase Cloud';
             document.getElementById('cloudLabel').innerText = 'Cloud Connected';
         } else {
-            storageModeLabel.innerText = '📁 Stored locally in your browser';
+            storageModeLabel.innerText = 'Stored locally in your browser';
             document.getElementById('cloudLabel').innerText = 'Cloud Sync';
         }
     }
@@ -136,11 +136,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Plant Easter Egg
         btnPlant.addEventListener('click', () => {
             state.plantLevel = (state.plantLevel % 4) + 1;
-            const plantEl = document.getElementById('plantDisplay');
-            if (plantEl) {
-                const icons = ['🌱', '🪴', '🌿', '✨🪴✨'];
-                plantEl.innerText = icons[state.plantLevel - 1];
-            }
             plantLabel.innerText = state.plantLevel === 4 ? "Pothos is thriving!" : "Water Pothos";
             showToast('You watered the little pothos!', 'success');
         });
@@ -501,30 +496,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             const shelfSection = document.createElement('div');
             shelfSection.className = 'relative';
 
-            // Top shelf accessories on first shelf: Mochi sleeping cat, vine plant, hot tea
+            // Top shelf accessories on first shelf
             let accessoriesHtml = '';
             if (isFirstShelf) {
                 accessoriesHtml = `
                     <div class="flex items-end justify-between px-6 mb-[-2px] relative z-10">
                         <div class="sleeping-cat flex items-center gap-1.5 bg-[#fdfaf3] px-3 py-1 rounded-full border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] text-sm select-none">
-                            <span class="text-lg">🐱</span>
                             <span class="font-bold text-xs text-[#524137]">Mochi is sleeping... zZz</span>
                         </div>
-                        <div class="flex items-end gap-3 text-2xl select-none">
-                            <div id="plantDisplay" class="transition-transform hover:scale-125 cursor-pointer" title="A happy little vine">🪴</div>
-                            <div class="transition-transform hover:rotate-6 cursor-pointer" title="Hot Chamomile Tea">🍵</div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                accessoriesHtml = `
-                    <div class="flex items-end justify-end px-6 mb-[-2px] relative z-10 select-none">
-                        <div class="text-2xl" title="Warm Candle">🕯️</div>
                     </div>
                 `;
             }
 
-            // Shelf Book Box (Exactly from handdrawn_cozy_shelf.html)
+            // Shelf Book Box
             const box = document.createElement('div');
             box.className = 'bg-[#fffcf7] p-6 pb-2 border-x-2 border-t-2 border-[#2c221e] rounded-t-2xl shadow-inner min-h-[220px] flex items-end gap-3 md:gap-4 overflow-x-auto';
 
@@ -564,7 +548,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             shelfBadge.className = 'ml-auto flex items-end pb-1 pr-2 select-none';
             shelfBadge.innerHTML = `
                 <div class="px-3 py-1 bg-[#fffdfa] border-2 border-[#2c221e] rounded-lg shadow-[2px_2px_0px_#2c221e] text-xs font-bold flex items-center gap-1.5">
-                    <span>🏷️</span>
                     <span>Shelf ${sIdx + 1}</span>
                 </div>
             `;
@@ -599,15 +582,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (style === 'front') {
             // Front-Facing Cover
             item.innerHTML = `
-                <div class="hover-tooltip">Take out 📖</div>
+                <div class="hover-tooltip">Take out</div>
                 <div class="book-front-cover">
                     <div class="dangle-ribbon" style="background-color: ${theme.ribbon};"></div>
                     <span class="text-xs font-bold uppercase tracking-wide bg-black/60 px-2 py-0.5 rounded text-white self-start backdrop-blur-sm shadow-sm z-10">${escapeHtml(book.file_type || 'epub')}</span>
                     
                     ${book.cover_url ? '' : `
-                    <div class="bg-black/65 p-2 rounded-md text-white z-10 backdrop-blur-sm mt-auto shadow-sm">
-                        <h4 class="font-bold text-xs line-clamp-2 leading-tight">${escapeHtml(displayTitle)}</h4>
-                        <p class="text-[10px] opacity-90 truncate mt-0.5">${escapeHtml(displayAuthor)}</p>
+                    <div class="bg-[#fffdf7] border-2 border-[#2c221e] p-2.5 rounded-md text-[#2c221e] z-10 my-auto shadow-sm text-center">
+                        <h4 class="font-lora font-bold text-xs line-clamp-3 leading-snug">${escapeHtml(displayTitle)}</h4>
+                        <div class="w-8 h-[1px] bg-[#2c221e]/30 mx-auto my-1.5"></div>
+                        <p class="font-lora italic text-[10px] text-[#5c4a3e] truncate">${escapeHtml(displayAuthor)}</p>
                     </div>
                     `}
                 </div>
@@ -622,20 +606,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 frontCoverEl.style.color = theme.text;
             }
         } else {
-            // Upright Spine with clean horizontal title wrapping (as shown in user's shelf view)
-            const height = 190 + ((displayTitle.length * 2) % 20);
-            const spineWidth = 54;
-            const textColor = isLightColor(color) ? '#1e2d24' : '#ffffff';
+            // Cozy Clothbound Hardcover Spine (Standing or Leaning)
+            const height = 196 + ((displayTitle.length * 3) % 18);
+            const spineWidth = 64;
+            const textColor = isLightColor(color) ? '#1e2d24' : '#fffdf7';
 
             item.innerHTML = `
-                <div class="hover-tooltip">Take out 📖</div>
-                <div class="book-body w-[${spineWidth}px] h-[${height}px] flex flex-col items-center justify-between py-2 px-1 relative select-none" style="background-color: ${color};">
+                <div class="hover-tooltip">Take out</div>
+                <div class="book-body select-none" style="width: ${spineWidth}px; height: ${height}px; background-color: ${color}; color: ${textColor};">
                     <div class="dangle-ribbon" style="background: ${theme.ribbon};"></div>
-                    <span class="text-xs mt-0.5">${theme.emoji}</span>
-                    <div class="flex-1 flex items-center justify-center text-center my-1 w-full overflow-hidden">
-                        <span class="font-bold text-xs leading-snug line-clamp-4 break-words" style="color: ${textColor};">${escapeHtml(displayTitle)}</span>
+                    <div class="spine-band"></div>
+                    <div class="spine-title-frame">
+                        <span class="spine-title-text">${escapeHtml(displayTitle)}</span>
                     </div>
-                    <span class="text-[10px] font-bold text-center w-full truncate px-0.5" style="color: ${textColor};">${escapeHtml(displayAuthor)}</span>
+                    <div class="spine-divider"></div>
+                    <div class="spine-author-frame">
+                        <span class="spine-author-text">${escapeHtml(displayAuthor)}</span>
+                    </div>
+                    <div class="spine-band"></div>
                 </div>
             `;
         }
@@ -644,24 +632,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         return item;
     }
 
-    // Creates stacked books lying down
+    // Creates stacked books lying down horizontally
     function createStackedBooksGroup(booksInStack, baseThemeIdx) {
         const wrap = document.createElement('div');
-        wrap.className = 'flex flex-col gap-1 items-center pb-0.5 ml-2 flex-shrink-0';
+        wrap.className = 'flex flex-col gap-1.5 items-center pb-0.5 ml-2 flex-shrink-0';
 
         booksInStack.forEach((b, i) => {
             const theme = coverThemes[(baseThemeIdx + i) % coverThemes.length];
             const color = b.spine_color || theme.bg;
             const displayTitle = cleanTitle(b.title);
-            const textColor = isLightColor(color) ? '#1e2d24' : '#ffffff';
+            const displayAuthor = cleanAuthor(b.author);
+            const textColor = isLightColor(color) ? '#1e2d24' : '#fffdf7';
 
             const layer = document.createElement('div');
             layer.className = 'doodle-book';
             layer.innerHTML = `
-                <div class="hover-tooltip">Take out 📖</div>
-                <div class="w-32 h-7 border-2 border-[#2c221e] rounded flex items-center justify-between px-2 text-xs font-bold shadow-sm" style="background: ${color}; color: ${textColor};">
-                    <span class="truncate max-w-[95px]">${escapeHtml(displayTitle)}</span>
-                    <span class="text-[10px] opacity-80">✦</span>
+                <div class="hover-tooltip">Take out</div>
+                <div class="stack-layer select-none" style="background-color: ${color}; color: ${textColor};">
+                    <div class="stack-band-vert"></div>
+                    <div class="flex-1 px-2 text-center overflow-hidden">
+                        <div class="font-lora font-semibold text-[11px] leading-tight truncate">${escapeHtml(displayTitle)}</div>
+                        <div class="font-lora italic text-[9px] opacity-85 truncate">${escapeHtml(displayAuthor)}</div>
+                    </div>
+                    <div class="stack-band-vert"></div>
                 </div>
             `;
             layer.addEventListener('click', () => openBookModal(b, theme));
@@ -688,7 +681,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (modalCoverTitleBox) modalCoverTitleBox.classList.remove('hidden');
         }
 
-        modalEmoji.innerText = theme.emoji;
+        if (modalEmoji) modalEmoji.innerText = '';
         modalFileType.innerText = book.file_type || 'epub';
         modalBookTitle.innerText = displayTitle;
         modalBookAuthor.innerText = displayAuthor;
@@ -735,15 +728,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function isLightColor(color) {
         if (!color) return false;
-        if (color === '#f2cc8f' || color === '#e9c46a' || color === '#eed9c4' || color === '#81b29a') return true;
-        return false;
+        const c = color.trim();
+        let r = 0, g = 0, b = 0;
+        if (c.startsWith('#')) {
+            const hex = c.slice(1);
+            if (hex.length === 3) {
+                r = parseInt(hex[0] + hex[0], 16);
+                g = parseInt(hex[1] + hex[1], 16);
+                b = parseInt(hex[2] + hex[2], 16);
+            } else if (hex.length >= 6) {
+                r = parseInt(hex.slice(0, 2), 16);
+                g = parseInt(hex.slice(2, 4), 16);
+                b = parseInt(hex.slice(4, 6), 16);
+            }
+        } else if (c.startsWith('rgb')) {
+            const match = c.match(/\d+/g);
+            if (match && match.length >= 3) {
+                r = parseInt(match[0], 10);
+                g = parseInt(match[1], 10);
+                b = parseInt(match[2], 10);
+            }
+        }
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        return luminance > 0.62;
     }
 
     function showToast(msg, type = 'success') {
         const toast = document.createElement('div');
         toast.className = 'toast';
-        const emoji = type === 'success' ? '✨' : (type === 'error' ? '⚠️' : '☕');
-        toast.innerHTML = `<span>${emoji}</span><span>${escapeHtml(msg)}</span>`;
+        toast.innerHTML = `<span>${escapeHtml(msg)}</span>`;
 
         const container = document.getElementById('toastContainer');
         container.appendChild(toast);

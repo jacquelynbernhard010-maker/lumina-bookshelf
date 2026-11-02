@@ -24,7 +24,6 @@
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>
                     <div class="flex items-center gap-2">
-                        <span class="text-3xl">📖</span>
                         <h1 class="text-3xl md:text-4xl font-bold tracking-wide">The Cozy Nook</h1>
                     </div>
                     <p class="text-lg text-[#6b584d] -mt-1">your quiet little corner of hand-picked digital books ~</p>
@@ -33,17 +32,14 @@
                 <!-- Handcrafted UI Buttons -->
                 <div class="flex items-center gap-3">
                     <button id="btnPlant" class="hand-btn px-4 py-2 text-base font-bold flex items-center gap-2" style="background-color: var(--matcha);" title="Water the plant!">
-                        <span>🌱</span>
                         <span id="plantLabel">Water Pothos</span>
                     </button>
 
                     <button id="btnOpenCloud" class="hand-btn px-4 py-2 text-base font-bold flex items-center gap-2" title="Supabase Cloud Sync">
-                        <span>☁️</span>
                         <span id="cloudLabel">Cloud Sync</span>
                     </button>
 
                     <button id="btnOpenUpload" class="hand-btn px-5 py-2 text-base font-bold hand-btn-terracotta flex items-center gap-2">
-                        <span>✨</span>
                         <span>+ Slip a Book In</span>
                     </button>
                 </div>
@@ -53,7 +49,6 @@
             <div class="flex flex-wrap items-center justify-between gap-4 mt-6 pt-4 border-t-2 border-dashed border-[#e6dcce]">
                 <div class="search-box-wrap">
                     <input type="text" id="searchInput" placeholder="Search title or author..." autocomplete="off">
-                    <span class="search-icon-decor">🔍</span>
                 </div>
 
                 <div class="flex items-center gap-2 overflow-x-auto pb-1" id="shelfNavList">
@@ -71,7 +66,6 @@
 
         <!-- Empty State -->
         <div id="emptyState" class="text-center py-16 px-4 bg-[#fffdf9] wobbly-border shadow-[4px_4px_0px_#2c221e] mt-6 hidden">
-            <span class="text-5xl block mb-2">🧺</span>
             <h3 class="text-2xl font-bold mb-1">This wooden shelf is empty!</h3>
             <p class="text-[#786457] text-lg mb-4">Slip your favorite .epub or .pdf book into this cozy corner</p>
             <button class="hand-btn hand-btn-terracotta" onclick="document.getElementById('btnOpenUpload').click()">
@@ -81,9 +75,9 @@
 
         <!-- Hand-drawn Footer -->
         <footer class="mt-14 text-center text-[#786457] text-base flex flex-col items-center gap-1">
-            <p>✦ Drawn with ink, tea, and warm thoughts for your digital reading ✦</p>
+            <p>Drawn with ink, tea, and warm thoughts for your digital reading</p>
             <div class="flex gap-4 text-sm mt-1">
-                <span id="storageModeLabel">📁 Stored locally in your browser</span>
+                <span id="storageModeLabel">Stored locally in your browser</span>
                 <span>•</span>
                 <span class="cursor-pointer underline hover:text-[#2c221e]" onclick="document.getElementById('btnOpenCloud').click()">Link Supabase Cloud</span>
             </div>
@@ -103,18 +97,19 @@
                 <!-- Book Cover Column -->
                 <div class="flex flex-col items-center w-full md:w-48 flex-shrink-0">
                     <div id="modalCover" class="w-full h-64 rounded-xl border-2 border-[#2c221e] shadow-[4px_4px_0px_#2c221e] flex flex-col justify-between p-4 relative overflow-hidden bg-cover bg-center">
-                        <div class="flex justify-between items-start z-10">
-                            <span id="modalEmoji" class="text-2xl">📖</span>
+                        <div class="flex justify-end items-start z-10">
+                            <span id="modalEmoji" class="hidden"></span>
                             <span id="modalFileType" class="text-xs px-2 py-0.5 rounded bg-black/40 text-white font-bold uppercase">EPUB</span>
                         </div>
-                        <div id="modalCoverTitleBox" class="z-10 bg-black/40 p-2 rounded backdrop-blur-xs text-white">
-                            <h3 id="modalBookTitle" class="text-lg font-bold leading-tight">Book Title</h3>
-                            <p id="modalBookAuthor" class="text-xs opacity-90">Author Name</p>
+                        <div id="modalCoverTitleBox" class="z-10 bg-[#fffdf7] border-2 border-[#2c221e] p-2.5 rounded-md text-[#2c221e] shadow-sm text-center my-auto">
+                            <h3 id="modalBookTitle" class="font-lora text-sm font-bold leading-snug">Book Title</h3>
+                            <div class="w-8 h-[1px] bg-[#2c221e]/30 mx-auto my-1.5"></div>
+                            <p id="modalBookAuthor" class="font-lora italic text-xs text-[#5c4a3e]">Author Name</p>
                         </div>
                     </div>
                     <div class="mt-2.5 w-full">
                         <label for="changeCoverFileInput" class="w-full text-center hand-btn hand-btn-sm bg-[#faedcd] cursor-pointer text-xs font-bold py-1.5 flex items-center justify-center gap-1.5 hover:bg-[#f8e6b8] shadow-sm select-none">
-                            <span>📷</span> Change Cover
+                            Change Cover
                         </label>
                         <input type="file" id="changeCoverFileInput" accept="image/*" class="hidden">
                     </div>
@@ -139,10 +134,10 @@
                     <div class="my-4 pt-3 border-t-2 border-dashed border-[#e0d6c5]">
                         <label class="block text-xs font-bold text-[#5a483d] mb-1.5">Shelf Arrangement Style:</label>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="spine">📚 Spine</button>
-                            <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="front">📖 Front</button>
-                            <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="leaning">📐 Lean</button>
-                            <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="stacked">🥞 Stack</button>
+                            <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="spine">Spine</button>
+                            <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="front">Front</button>
+                            <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="leaning">Lean</button>
+                            <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="stacked">Stack</button>
                         </div>
                     </div>
 
@@ -158,11 +153,11 @@
 
                         <div class="flex items-center justify-between gap-3 mt-5">
                             <button id="btnDeleteBook" class="text-xs font-bold text-[#a84242] hover:underline">
-                                🗑️ Remove from shelf
+                                Remove from shelf
                             </button>
                             <div class="flex items-center gap-2">
                                 <button id="btnPutBack" class="hand-btn hand-btn-sm bg-[#faedcd]">
-                                    ↩ Put Back
+                                    Put Back
                                 </button>
                                 <button id="btnOpenReader" class="hand-btn hand-btn-sm hand-btn-terracotta text-white">
                                     Open &amp; Read ➔
@@ -180,21 +175,19 @@
         <div class="bounce-in bg-[#fffefb] wobbly-border max-w-md w-full p-6 shadow-[8px_8px_0px_#2c221e] relative">
             <button id="btnCloseUploadModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold">✕</button>
             
-            <h3 class="text-2xl font-bold mb-1">Slip a New Book In 📚</h3>
+            <h3 class="text-2xl font-bold mb-1">Slip a New Book In</h3>
             <p class="text-sm text-[#7d695c] mb-3">Drop an .epub or .pdf file (covers &amp; titles auto-extracted!)</p>
 
             <form id="uploadForm">
                 <input type="file" id="bookFileInput" accept=".epub,.pdf,.mobi" required hidden>
                 
                 <div id="dropZone" class="border-2 border-dashed border-[#2c221e] rounded-xl p-6 text-center bg-[#fdfaf3] mb-4 cursor-pointer hover:bg-[#f8f2e2] transition-colors">
-                    <span class="text-3xl block mb-1">📥</span>
                     <p class="font-bold text-base">Drop your book file here</p>
                     <p class="text-xs text-[#8c786c]">or click to browse your computer</p>
                 </div>
 
                 <div id="fileBanner" class="p-3 bg-[#faedcd] border-2 border-[#2c221e] rounded-lg mb-4 flex items-center justify-between hidden">
                     <div class="flex items-center gap-2">
-                        <span>📄</span>
                         <span id="fileNameLabel" class="font-bold text-sm truncate max-w-[220px]">book.epub</span>
                     </div>
                     <button type="button" id="btnRemoveFile" class="font-bold text-sm text-red-700">✕</button>
@@ -203,8 +196,8 @@
                 <!-- Cover Preview & Choice Option -->
                 <div id="uploadCoverPreviewSection" class="p-3 bg-[#fdfaf3] border-2 border-[#2c221e] rounded-xl mb-4 hidden">
                     <div class="flex items-center gap-3">
-                        <div id="uploadCoverThumb" class="w-16 h-22 rounded-md border-2 border-[#2c221e] bg-cover bg-center bg-[#ede2cf] flex items-center justify-center text-xl flex-shrink-0 shadow-sm overflow-hidden">
-                            <span id="uploadCoverPlaceholder">📖</span>
+                        <div id="uploadCoverThumb" class="w-16 h-22 rounded-md border-2 border-[#2c221e] bg-cover bg-center bg-[#ede2cf] flex items-center justify-center text-xs font-bold text-[#7d695c] flex-shrink-0 shadow-sm overflow-hidden">
+                            <span id="uploadCoverPlaceholder">Cover</span>
                         </div>
                         <div class="flex-1 space-y-1.5">
                             <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-[#2c221e] select-none">
@@ -213,7 +206,7 @@
                             </label>
                             <div class="flex items-center gap-2 pt-1">
                                 <label for="customCoverInput" class="hand-btn hand-btn-sm bg-[#faedcd] text-xs font-bold py-1 px-2.5 cursor-pointer flex items-center gap-1 hover:bg-[#f8e6b8] select-none">
-                                    <span>🖼️</span> Custom Cover
+                                    Custom Cover
                                 </label>
                                 <input type="file" id="customCoverInput" accept="image/*" class="hidden">
                                 <span id="customCoverStatus" class="text-[11px] text-[#7d695c] truncate max-w-[130px]"></span>
@@ -240,10 +233,10 @@
                     <div>
                         <label class="block text-xs font-bold text-[#5a483d] mb-1">Initial Display Style</label>
                         <select id="uploadStyleSelect" class="w-full p-2 bg-white border-2 border-[#2c221e] rounded-lg text-sm font-bold">
-                            <option value="spine" selected>📚 Standing Spine</option>
-                            <option value="front">📖 Front-Facing Cover</option>
-                            <option value="leaning">📐 Leaning Book</option>
-                            <option value="stacked">🥞 Stacked Flat</option>
+                            <option value="spine" selected>Standing Spine</option>
+                            <option value="front">Front-Facing Cover</option>
+                            <option value="leaning">Leaning Book</option>
+                            <option value="stacked">Stacked Flat</option>
                         </select>
                     </div>
                 </div>
@@ -261,7 +254,7 @@
         <div class="bounce-in bg-[#fffefb] wobbly-border max-w-md w-full p-6 shadow-[8px_8px_0px_#2c221e] relative">
             <button id="btnCloseCloudModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold">✕</button>
 
-            <h3 class="text-2xl font-bold mb-1">Supabase Cloud Sync ☁️</h3>
+            <h3 class="text-2xl font-bold mb-1">Supabase Cloud Sync</h3>
             <p class="text-sm text-[#7d695c] mb-4">Sync books, covers &amp; progress across your devices</p>
 
             <form id="cloudForm" class="space-y-4">

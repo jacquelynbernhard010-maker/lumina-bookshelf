@@ -520,7 +520,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 snippet: `${pageText} • Saved spot`
             });
 
-            showToast(`🔖 Page bookmarked (${percent}% read)!`, 'success');
+            showToast(`Page bookmarked (${percent}% read)!`, 'success');
             
             // Auto switch drawer to Bookmarks tab so it's ready when user opens Contents
             showBookmarksTab();
@@ -552,9 +552,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (bookmarks.length === 0) {
             bookmarkList.innerHTML = `
                 <div class="p-4 text-center">
-                    <span class="text-3xl block mb-2">🔖</span>
                     <p class="font-bold text-sm text-[#2c221e] mb-1">No bookmarks yet</p>
-                    <p class="text-xs text-[#786457]">Click "🔖 Bookmark" at the top to save your favorite spots!</p>
+                    <p class="text-xs text-[#786457]">Click "Bookmark" at the top to save your favorite spots!</p>
                 </div>
             `;
             return;
@@ -567,7 +566,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             card.innerHTML = `
                 <div class="flex items-start justify-between">
                     <div class="font-bold text-sm text-[#2c221e] flex items-center gap-1.5">
-                        <span>🔖</span>
                         <span>${escapeHtml(bm.title || `Bookmark #${idx + 1}`)}</span>
                     </div>
                     <button class="btn-delete-bookmark text-xs font-bold text-red-600 hover:text-red-800 p-1" title="Remove bookmark">✕</button>
@@ -611,12 +609,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (isBm) {
             btnAddBookmark.classList.add('is-bookmarked');
-            bookmarkIcon.innerText = '🔖';
+            bookmarkIcon.innerText = '';
             bookmarkText.innerText = 'Bookmarked';
             if (pageBookmarkRibbon) pageBookmarkRibbon.classList.add('active');
         } else {
             btnAddBookmark.classList.remove('is-bookmarked');
-            bookmarkIcon.innerText = '🔖';
+            bookmarkIcon.innerText = '';
             bookmarkText.innerText = 'Bookmark';
             if (pageBookmarkRibbon) pageBookmarkRibbon.classList.remove('active');
         }
@@ -735,7 +733,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function showToast(msg, type = 'success') {
         const toast = document.createElement('div');
         toast.className = 'toast';
-        toast.innerHTML = `<span>${type === 'success' ? '✨' : '📖'}</span><span>${escapeHtml(msg)}</span>`;
+        toast.innerHTML = `<span>${escapeHtml(msg)}</span>`;
         document.getElementById('toastContainer').appendChild(toast);
         setTimeout(() => toast.remove(), 2500);
     }
