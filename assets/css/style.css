@@ -464,3 +464,38 @@ body {
   align-items: center;
   gap: 8px;
 }
+
+/* Cozy Soft Scrollbar (replaces clunky default scrollbars) */
+.cozy-scroll,
+#shelvesContainer div {
+  scrollbar-width: thin;
+  scrollbar-color: #d6c5b3 transparent;
+}
+
+.cozy-scroll::-webkit-scrollbar,
+#shelvesContainer div::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.cozy-scroll::-webkit-scrollbar-track,
+#shelvesContainer div::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 999px;
+}
+
+.cozy-scroll::-webkit-scrollbar-thumb,
+#shelvesContainer div::-webkit-scrollbar-thumb {
+  background: #d6c5b3;
+  border-radius: 999px;
+}
+
+.cozy-scroll::-webkit-scrollbar-thumb:hover,
+#shelvesContainer div::-webkit-scrollbar-thumb:hover {
+  background: #b59d84;
+}
+
+.cozy-scroll::-webkit-scrollbar-button,
+#shelvesContainer div::-webkit-scrollbar-button {
+  display: none;
+}

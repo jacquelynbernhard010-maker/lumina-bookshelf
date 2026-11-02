@@ -261,41 +261,67 @@ class EpubExtractor {
         return '';
     }
 
-    // Free Online Service Fallback: Openly Sourced Synopsis & Book Preview (Google Books + Open Library)
+    // Free Online Service Fallback: Google Books API + Open Library Synopsis & Book Preview
     static async fetchSynopsisFromOnline(title, author) {
         try {
             const cleanT = (title || '')
                 .replace(/\.[^/.]+$/, '')
-                .replace(/[_-]+/g, ' ')
+                .replace(/[:_-]+/g, ' ')
                 .replace(/\s+/g, ' ')
                 .trim();
             const cleanA = (author && author !== 'Unknown Author')
-                ? author.replace(/[_-]+/g, ' ').trim()
+                ? author.replace(/[:_-]+/g, ' ').replace(/\s+/g, ' ').trim()
                 : '';
 
             const queryVariants = [];
             if (cleanT) {
-                if (cleanA) queryVariants.push(`intitle:${cleanT} inauthor:${cleanA}`);
+                if (cleanA) queryVariants.push(`intitle:"${cleanT}" inauthor:"${cleanA}"`);
                 if (cleanA) queryVariants.push(`${cleanT} ${cleanA}`);
+                queryVariants.push(`intitle:"${cleanT}"`);
                 queryVariants.push(cleanT);
-                if (cleanT.includes(':')) queryVariants.push(cleanT.split(':')[0].trim());
             }
 
-            // 1. Try Google Books Public API (rich official descriptions & text snippets)
+            // 1. Google Books Public API (https://www.googleapis.com/books/v1/volumes)
             for (const q of queryVariants) {
                 if (!q || q.length < 3) continue;
                 try {
-                    const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=5`;
+                    const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8`;
                     const gbRes = await fetch(gbUrl);
                     if (gbRes.ok) {
                         const gbData = await gbRes.json();
-                        if (gbData && Array.isArray(gbData.items)) {
+                        if (gbData && Array.isArray(gbData.items) && gbData.items.length > 0) {
+                            // First pass: check volumeInfo.description directly
                             for (const item of gbData.items) {
-                                const rawDesc = (item.volumeInfo && item.volumeInfo.description) ||
-                                    (item.searchInfo && item.searchInfo.textSnippet) || '';
-                                const cleaned = this.cleanSynopsisText(rawDesc);
-                                if (cleaned && cleaned.length >= 30) {
-                                    return cleaned;
+                                const vInfo = item.volumeInfo || {};
+                                if (vInfo.description) {
+                                    const cleaned = this.cleanSynopsisText(vInfo.description);
+                                    if (cleaned && cleaned.length >= 40) {
+                                        return cleaned;
+                                    }
+                                }
+                            }
+                            // Second pass: fetch full volume detail from Google Books Volume endpoint
+                            for (const item of gbData.items.slice(0, 2)) {
+                                if (item.id) {
+                                    try {
+                                        const detailRes = await fetch(`https://www.googleapis.com/books/v1/volumes/${item.id}`);
+                                        if (detailRes.ok) {
+                                            const detailData = await detailRes.json();
+                                            const fullDesc = detailData && detailData.volumeInfo && detailData.volumeInfo.description;
+                                            if (fullDesc) {
+                                                const cleaned = this.cleanSynopsisText(fullDesc);
+                                                if (cleaned && cleaned.length >= 30) return cleaned;
+                                            }
+                                        }
+                                    } catch (dErr) {}
+                                }
+                            }
+                            // Third pass: check searchInfo.textSnippet
+                            for (const item of gbData.items) {
+                                const snippet = item.searchInfo && item.searchInfo.textSnippet;
+                                if (snippet) {
+                                    const cleaned = this.cleanSynopsisText(snippet);
+                                    if (cleaned && cleaned.length >= 30) return cleaned;
                                 }
                             }
                         }
@@ -303,7 +329,7 @@ class EpubExtractor {
                 } catch (gbErr) {}
             }
 
-            // 2. Try Open Library Search + Works API
+            // 2. Fallback: Open Library Search + Works API
             const olQueries = [];
             if (cleanT) {
                 if (cleanA) olQueries.push(`${cleanT} ${cleanA}`);
