@@ -72,7 +72,23 @@ class EpubExtractor {
             }
         }
 
-        // 4. Sample dominant color from cover image for spine
+        // 4. Synopsis / Preview sourcing: Online open APIs + EPUB internal description/preview
+        if (!description || description.length < 25) {
+            try {
+                const onlineDesc = await this.fetchSynopsisFromOnline(title, author);
+                if (onlineDesc) description = onlineDesc;
+            } catch (descErr) {
+                console.warn('Online synopsis search error:', descErr);
+            }
+        }
+        if ((!description || description.length < 25) && ext === 'epub') {
+            try {
+                const zipDesc = await this.extractSynopsisFromZip(file);
+                if (zipDesc) description = zipDesc;
+            } catch (zDescErr) {}
+        }
+
+        // 5. Sample dominant color from cover image for spine
         if (coverUrl) {
             try {
                 dominantColor = await this.sampleDominantColor(coverUrl);
@@ -243,6 +259,160 @@ class EpubExtractor {
             console.warn('fetchCoverFromOnline error:', err);
         }
         return '';
+    }
+
+    // Free Online Service Fallback: Openly Sourced Synopsis & Book Preview (Google Books + Open Library)
+    static async fetchSynopsisFromOnline(title, author) {
+        try {
+            const cleanT = (title || '')
+                .replace(/\.[^/.]+$/, '')
+                .replace(/[_-]+/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+            const cleanA = (author && author !== 'Unknown Author')
+                ? author.replace(/[_-]+/g, ' ').trim()
+                : '';
+
+            const queryVariants = [];
+            if (cleanT) {
+                if (cleanA) queryVariants.push(`intitle:${cleanT} inauthor:${cleanA}`);
+                if (cleanA) queryVariants.push(`${cleanT} ${cleanA}`);
+                queryVariants.push(cleanT);
+                if (cleanT.includes(':')) queryVariants.push(cleanT.split(':')[0].trim());
+            }
+
+            // 1. Try Google Books Public API (rich official descriptions & text snippets)
+            for (const q of queryVariants) {
+                if (!q || q.length < 3) continue;
+                try {
+                    const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=5`;
+                    const gbRes = await fetch(gbUrl);
+                    if (gbRes.ok) {
+                        const gbData = await gbRes.json();
+                        if (gbData && Array.isArray(gbData.items)) {
+                            for (const item of gbData.items) {
+                                const rawDesc = (item.volumeInfo && item.volumeInfo.description) ||
+                                    (item.searchInfo && item.searchInfo.textSnippet) || '';
+                                const cleaned = this.cleanSynopsisText(rawDesc);
+                                if (cleaned && cleaned.length >= 30) {
+                                    return cleaned;
+                                }
+                            }
+                        }
+                    }
+                } catch (gbErr) {}
+            }
+
+            // 2. Try Open Library Search + Works API
+            const olQueries = [];
+            if (cleanT) {
+                if (cleanA) olQueries.push(`${cleanT} ${cleanA}`);
+                olQueries.push(cleanT);
+            }
+            for (const q of olQueries) {
+                if (!q || q.length < 3) continue;
+                try {
+                    const olUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&fields=key,title,author_name,first_sentence&limit=5`;
+                    const olRes = await fetch(olUrl);
+                    if (!olRes.ok) continue;
+                    const olData = await olRes.json();
+                    if (olData && Array.isArray(olData.docs) && olData.docs.length > 0) {
+                        for (const doc of olData.docs) {
+                            if (doc.key) {
+                                try {
+                                    const workRes = await fetch(`https://openlibrary.org${doc.key}.json`);
+                                    if (workRes.ok) {
+                                        const workData = await workRes.json();
+                                        let desc = workData.description;
+                                        if (desc && typeof desc === 'object' && desc.value) desc = desc.value;
+                                        if (typeof desc === 'string') {
+                                            const cleaned = this.cleanSynopsisText(desc);
+                                            if (cleaned && cleaned.length >= 30) return cleaned;
+                                        }
+                                    }
+                                } catch (wErr) {}
+                            }
+                            if (doc.first_sentence) {
+                                const fs = Array.isArray(doc.first_sentence) ? doc.first_sentence[0] : doc.first_sentence;
+                                const cleaned = this.cleanSynopsisText(fs);
+                                if (cleaned && cleaned.length >= 25) return cleaned;
+                            }
+                        }
+                    }
+                } catch (olErr) {}
+            }
+        } catch (err) {
+            console.warn('fetchSynopsisFromOnline error:', err);
+        }
+        return '';
+    }
+
+    // Extract description or opening chapter preview directly from EPUB ZIP archive
+    static async extractSynopsisFromZip(file) {
+        if (typeof JSZip === 'undefined' || !file) return '';
+        try {
+            const zip = await JSZip.loadAsync(file);
+            let opfPath = '';
+            const containerFile = zip.file('META-INF/container.xml');
+            if (containerFile) {
+                const containerXml = await containerFile.async('text');
+                const parser = new DOMParser();
+                const containerDoc = parser.parseFromString(containerXml, 'application/xml');
+                const rootfile = containerDoc.querySelector('rootfile');
+                if (rootfile) opfPath = rootfile.getAttribute('full-path') || '';
+            }
+
+            if (opfPath && zip.file(opfPath)) {
+                const opfXml = await zip.file(opfPath).async('text');
+                const parser = new DOMParser();
+                const opfDoc = parser.parseFromString(opfXml, 'application/xml');
+                const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
+
+                // 1. Check <dc:description> or <description> in OPF metadata
+                const descEl = opfDoc.getElementsByTagName('dc:description')[0] || opfDoc.querySelector('description');
+                if (descEl && descEl.textContent) {
+                    const cleaned = this.cleanSynopsisText(descEl.textContent);
+                    if (cleaned && cleaned.length >= 30) return cleaned;
+                }
+
+                // 2. Otherwise extract opening text preview from early spine chapters
+                const itemrefs = Array.from(opfDoc.querySelectorAll('spine itemref')).slice(0, 6);
+                for (const ref of itemrefs) {
+                    const idref = ref.getAttribute('idref');
+                    if (!idref) continue;
+                    const item = opfDoc.querySelector(`manifest item[id="${idref}"]`) || opfDoc.getElementById(idref);
+                    if (!item) continue;
+                    const href = item.getAttribute('href');
+                    if (!href) continue;
+                    const fullPath = this.resolveRelativePath(opfDir, href);
+                    const chFile = zip.file(fullPath) || zip.file(href);
+                    if (!chFile) continue;
+
+                    const html = await chFile.async('text');
+                    const htmlDoc = parser.parseFromString(html, 'text/html');
+                    const paragraphs = Array.from(htmlDoc.querySelectorAll('p'))
+                        .map(p => (p.textContent || '').replace(/\s+/g, ' ').trim())
+                        .filter(t => t.length > 60 && !/copyright|all rights reserved|isbn|published by|table of contents/i.test(t));
+
+                    if (paragraphs.length > 0) {
+                        const excerpt = paragraphs.slice(0, 2).join(' ');
+                        return excerpt.length > 420 ? excerpt.slice(0, 417).trim() + '...' : excerpt;
+                    }
+                }
+            }
+        } catch (e) {}
+        return '';
+    }
+
+    static cleanSynopsisText(raw) {
+        if (!raw) return '';
+        const div = document.createElement('div');
+        div.innerHTML = String(raw)
+            .replace(/<br\s*\/?>/gi, ' ')
+            .replace(/<\/p>/gi, ' ');
+        return (div.textContent || div.innerText || '')
+            .replace(/\s+/g, ' ')
+            .trim();
     }
 
     // Helper: Extracts only cover from a file blob (for background backfills)

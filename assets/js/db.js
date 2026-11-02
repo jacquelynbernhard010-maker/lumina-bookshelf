@@ -101,6 +101,8 @@ class StorageEngine {
         for (const b of books) {
             if (b.shelf_id === 3 || b.shelf_id === 4) {
                 await this.updateLocalBook(b.id, { shelf_id: 1 });
+            } else if (b.shelf_id === 2 && !b.is_favorite) {
+                await this.updateLocalBook(b.id, { shelf_id: 1, is_favorite: true });
             }
         }
 
@@ -175,7 +177,12 @@ class StorageEngine {
         let books = await this.getLocalBooks();
         if (shelfId !== 'all') {
             const sid = parseInt(shelfId, 10);
-            books = books.filter(b => b.shelf_id === sid);
+            if (sid === 2) {
+                // Favorites filter: books marked as favorite
+                books = books.filter(b => b.is_favorite === true || b.shelf_id === 2);
+            } else {
+                books = books.filter(b => b.shelf_id === sid || !b.shelf_id);
+            }
         }
 
         if (searchQuery) {
@@ -195,7 +202,7 @@ class StorageEngine {
         return this.getLocalBook(id);
     }
 
-    async saveBook({ file, title, author, description, shelf_id, cover_url, spine_color, spine_style }) {
+    async saveBook({ file, title, author, description, shelf_id, cover_url, spine_color, spine_style, is_favorite }) {
         const fileExt = file.name.split('.').pop().toLowerCase();
 
         const localRecord = {
@@ -207,11 +214,12 @@ class StorageEngine {
             file_size: file.size,
             file_type: fileExt,
             cover_url: cover_url || '',
-            shelf_id: parseInt(shelf_id, 10) || 1,
+            shelf_id: 1,
+            is_favorite: Boolean(is_favorite),
             reading_progress: 0,
             last_cfi: '',
             bookmarks: [],
-            spine_style: spine_style || 'upright',
+            spine_style: spine_style || 'spine',
             spine_color: spine_color || '#81b29a',
             created_at: new Date().toISOString()
         };

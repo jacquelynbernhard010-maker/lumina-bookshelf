@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         selectedBook: null,
         extractedCoverUrl: '',
         extractedDominantColor: '',
+        extractedDescription: '',
         plantLevel: 1
     };
 
@@ -54,6 +55,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const modalDetailAuthor = document.getElementById('modalDetailAuthor');
     const modalDetailDesc = document.getElementById('modalDetailDesc');
     const modalShelfBadge = document.getElementById('modalShelfBadge');
+    const btnToggleFavorite = document.getElementById('btnToggleFavorite');
+    const favoriteBtnText = document.getElementById('favoriteBtnText');
     const modalProgText = document.getElementById('modalProgText');
     const modalProgFill = document.getElementById('modalProgFill');
     const btnOpenReader = document.getElementById('btnOpenReader');
@@ -184,6 +187,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
 
+        // Toggle Favorite Button inside Read Modal
+        if (btnToggleFavorite) {
+            btnToggleFavorite.addEventListener('click', async () => {
+                if (!state.selectedBook) return;
+                const isFavNow = !(state.selectedBook.is_favorite === true || state.selectedBook.shelf_id === 2);
+                state.selectedBook.is_favorite = isFavNow;
+                if (!isFavNow && state.selectedBook.shelf_id === 2) {
+                    state.selectedBook.shelf_id = 1;
+                }
+
+                updateFavoriteButtonUI(isFavNow);
+
+                await window.storageEngine.updateBook(state.selectedBook.id, {
+                    is_favorite: isFavNow,
+                    shelf_id: state.selectedBook.shelf_id
+                });
+
+                showToast(isFavNow ? 'Marked as Favorite' : 'Removed from Favorites', 'success');
+                await fetchBooks();
+            });
+        }
+
         btnDeleteBook.addEventListener('click', async () => {
             if (!state.selectedBook) return;
             if (confirm(`Remove "${state.selectedBook.title}" from your shelf?`)) {
@@ -300,6 +325,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (customCoverStatus) customCoverStatus.innerText = '';
             state.extractedCoverUrl = '';
             state.extractedDominantColor = '';
+            state.extractedDescription = '';
         });
 
         uploadForm.addEventListener('submit', handleUploadSubmit);
@@ -327,6 +353,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         bookAuthorInput.value = extracted.author || 'Unknown Author';
         state.extractedCoverUrl = extracted.cover_url || '';
         state.extractedDominantColor = extracted.dominant_color || '#e07a5f';
+        state.extractedDescription = extracted.description || '';
 
         if (uploadCoverPreviewSection) {
             uploadCoverPreviewSection.classList.remove('hidden');
@@ -358,16 +385,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const title = cleanTitle(bookTitleInput.value.trim() || file.name);
         const author = bookAuthorInput.value.trim() || 'Unknown Author';
-        const shelf_id = uploadShelfSelect.value;
+        const shelf_id = 1; // Always placed on Currently Reading; users can toggle Favorite in the book pop-up
         const spine_style = uploadStyleSelect.value || 'spine';
         const cover_url = (useDetectedCoverCheckbox && useDetectedCoverCheckbox.checked) ? state.extractedCoverUrl : '';
         const spine_color = state.extractedDominantColor || '#e07a5f';
+        let description = state.extractedDescription || '';
+
+        if (!description && window.EpubExtractor) {
+            try {
+                description = await window.EpubExtractor.fetchSynopsisFromOnline(title, author);
+            } catch (e) {}
+        }
 
         try {
             await window.storageEngine.saveBook({
                 file,
                 title,
                 author,
+                description,
                 shelf_id,
                 cover_url,
                 spine_color,
@@ -384,6 +419,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (customCoverStatus) customCoverStatus.innerText = '';
             state.extractedCoverUrl = '';
             state.extractedDominantColor = '';
+            state.extractedDescription = '';
 
             showToast(`"${title}" slipped onto the shelf!`, 'success');
             await reloadData();
@@ -452,7 +488,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         backfillMissingCovers();
     }
 
-    // Auto-backfill missing covers for existing books on the shelf
+    // Auto-backfill missing covers and synopses for existing books on the shelf
     async function backfillMissingCovers() {
         for (const book of state.books) {
             const needsCover = !book.cover_url || (book.cover_url.startsWith('data:') && book.cover_url.length < 5000);
@@ -478,6 +514,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 } catch (e) {
                     console.warn('Cover backfill error:', e);
+                }
+            }
+
+            const needsSynopsis = !book.description || book.description.includes('cozy digital volume') || book.description.length < 25;
+            if (needsSynopsis && window.EpubExtractor) {
+                try {
+                    let newSynopsis = await window.EpubExtractor.fetchSynopsisFromOnline(book.title, book.author);
+                    if (!newSynopsis && book.file_blob) {
+                        newSynopsis = await window.EpubExtractor.extractSynopsisFromZip(book.file_blob);
+                    }
+                    if (newSynopsis) {
+                        book.description = newSynopsis;
+                        await window.storageEngine.updateBook(book.id, { description: newSynopsis });
+                        if (state.selectedBook && state.selectedBook.id === book.id && modalDetailDesc) {
+                            modalDetailDesc.innerText = newSynopsis;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Synopsis backfill error:', e);
                 }
             }
         }
@@ -508,9 +563,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `;
             }
 
-            // Shelf Book Box
+            // Shelf Book Box (Tall enough with pt-20 and min-h-[305px] so hover lift and tooltip never get cut off)
             const box = document.createElement('div');
-            box.className = 'bg-[#fffcf7] p-6 pb-2 border-x-2 border-t-2 border-[#2c221e] rounded-t-2xl shadow-inner min-h-[220px] flex items-end gap-3 md:gap-4 overflow-x-auto';
+            box.className = 'bg-[#fffcf7] px-6 pt-20 pb-2 border-x-2 border-t-2 border-[#2c221e] rounded-t-2xl shadow-inner min-h-[305px] flex items-end gap-3 md:gap-4 overflow-x-auto';
 
             let bIdx = 0;
             while (bIdx < chunk.length) {
@@ -666,7 +721,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Pop-Out Book Modal ---
 
-    function openBookModal(book, theme) {
+    function updateFavoriteButtonUI(isFav) {
+        if (!btnToggleFavorite || !favoriteBtnText) return;
+        if (isFav) {
+            btnToggleFavorite.className = 'hand-btn hand-btn-sm bg-[#f2cc8f] text-[#2c221e] text-xs font-bold py-1 px-3 flex items-center gap-1.5';
+            favoriteBtnText.innerText = 'Favorited';
+            if (modalShelfBadge) modalShelfBadge.innerText = 'In Favorites';
+        } else {
+            btnToggleFavorite.className = 'hand-btn hand-btn-sm bg-white text-[#2c221e] text-xs font-bold py-1 px-3 flex items-center gap-1.5';
+            favoriteBtnText.innerText = 'Mark as Favorite';
+            if (modalShelfBadge) modalShelfBadge.innerText = 'Shelf: Currently Reading';
+        }
+    }
+
+    async function openBookModal(book, theme) {
         state.selectedBook = book;
         const displayTitle = cleanTitle(book.title);
         const displayAuthor = cleanAuthor(book.author);
@@ -688,10 +756,39 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         modalDetailTitle.innerText = displayTitle;
         modalDetailAuthor.innerText = "by " + displayAuthor;
-        modalDetailDesc.innerText = book.description || 'A cozy digital volume resting on your wooden shelf.';
 
-        const shelf = state.shelves.find(s => s.id == book.shelf_id);
-        modalShelfBadge.innerText = shelf ? `Shelf: ${shelf.name}` : 'Saved to your shelf';
+        const isFav = book.is_favorite === true || book.shelf_id === 2;
+        updateFavoriteButtonUI(isFav);
+
+        const hasValidDesc = book.description && !book.description.includes('cozy digital volume') && book.description.length >= 25;
+        if (hasValidDesc) {
+            modalDetailDesc.innerText = book.description;
+        } else {
+            modalDetailDesc.innerText = 'Fetching openly sourced book synopsis & preview...';
+            if (window.EpubExtractor) {
+                (async () => {
+                    try {
+                        let fetched = await window.EpubExtractor.fetchSynopsisFromOnline(book.title, book.author);
+                        if (!fetched && book.file_blob) {
+                            fetched = await window.EpubExtractor.extractSynopsisFromZip(book.file_blob);
+                        }
+                        if (fetched) {
+                            book.description = fetched;
+                            await window.storageEngine.updateBook(book.id, { description: fetched });
+                            if (state.selectedBook && state.selectedBook.id === book.id) {
+                                modalDetailDesc.innerText = fetched;
+                            }
+                        } else if (state.selectedBook && state.selectedBook.id === book.id) {
+                            modalDetailDesc.innerText = `${displayTitle} by ${displayAuthor} — open the book to begin reading.`;
+                        }
+                    } catch (err) {
+                        if (state.selectedBook && state.selectedBook.id === book.id) {
+                            modalDetailDesc.innerText = `${displayTitle} by ${displayAuthor} — open the book to begin reading.`;
+                        }
+                    }
+                })();
+            }
+        }
 
         const prog = Math.round(book.reading_progress || 0);
         modalProgText.innerText = `${prog}% completed`;
