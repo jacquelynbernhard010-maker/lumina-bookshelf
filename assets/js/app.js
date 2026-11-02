@@ -26,8 +26,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         extractedCoverUrl: '',
         extractedDominantColor: '',
         extractedDescription: '',
+        dragSource: null,
         plantLevel: 1
     };
+
+    const MAX_STACK_SIZE = 5;
 
     // DOM Elements
     const shelvesContainer = document.getElementById('shelvesContainer');
@@ -57,6 +60,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const modalShelfBadge = document.getElementById('modalShelfBadge');
     const btnToggleFavorite = document.getElementById('btnToggleFavorite');
     const favoriteBtnText = document.getElementById('favoriteBtnText');
+    const btnMoveBookPrev = document.getElementById('btnMoveBookPrev');
+    const btnMoveBookNext = document.getElementById('btnMoveBookNext');
+    const btnMoveStackPrev = document.getElementById('btnMoveStackPrev');
+    const btnMoveStackNext = document.getElementById('btnMoveStackNext');
     const modalProgText = document.getElementById('modalProgText');
     const modalProgFill = document.getElementById('modalProgFill');
     const btnOpenReader = document.getElementById('btnOpenReader');
@@ -181,11 +188,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                 btn.className = 'btn-spine-style hand-btn hand-btn-sm hand-btn-terracotta text-white';
 
                 state.selectedBook.spine_style = newStyle;
+                updateStackMoveButtonsUI(newStyle === 'stacked');
                 await window.storageEngine.updateBookSpineStyle(state.selectedBook.id, newStyle);
                 showToast(`Shelf style: ${newStyle}`, 'success');
                 renderShelves();
             });
         });
+
+        // Shelf & Stack Reordering Buttons inside Read Modal
+        if (btnMoveBookPrev) {
+            btnMoveBookPrev.addEventListener('click', () => moveSelectedBook(-1));
+        }
+        if (btnMoveBookNext) {
+            btnMoveBookNext.addEventListener('click', () => moveSelectedBook(1));
+        }
+        if (btnMoveStackPrev) {
+            btnMoveStackPrev.addEventListener('click', () => moveSelectedStack(-1));
+        }
+        if (btnMoveStackNext) {
+            btnMoveStackNext.addEventListener('click', () => moveSelectedStack(1));
+        }
 
         // Toggle Favorite Button inside Read Modal
         if (btnToggleFavorite) {
@@ -511,14 +533,169 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Group consecutive stacked books into stacks of up to MAX_STACK_SIZE (5)
+    function buildVisualUnits(booksList) {
+        const units = [];
+        let idx = 0;
+        while (idx < booksList.length) {
+            const b = booksList[idx];
+            if (b.spine_style === 'stacked') {
+                const stackPile = [b];
+                let nextIdx = idx + 1;
+                while (
+                    nextIdx < booksList.length &&
+                    booksList[nextIdx].spine_style === 'stacked' &&
+                    stackPile.length < MAX_STACK_SIZE
+                ) {
+                    stackPile.push(booksList[nextIdx]);
+                    nextIdx++;
+                }
+                units.push({ type: 'stack', books: stackPile, startIndex: idx });
+                idx = nextIdx;
+            } else {
+                units.push({ type: 'single', books: [b], startIndex: idx });
+                idx++;
+            }
+        }
+        return units;
+    }
+
+    async function persistCurrentBookOrder() {
+        const orderedIds = state.books.map(b => b.id);
+        state.books.forEach((b, idx) => {
+            b.sort_order = (idx + 1) * 10;
+        });
+        await window.storageEngine.reorderBooks(orderedIds);
+    }
+
+    async function moveSelectedBook(delta) {
+        if (!state.selectedBook) return;
+        const idx = state.books.findIndex(b => b.id == state.selectedBook.id);
+        if (idx === -1) return;
+        const targetIdx = idx + delta;
+        if (targetIdx < 0 || targetIdx >= state.books.length) {
+            showToast(delta < 0 ? 'Already at the start of the shelf' : 'Already at the end of the shelf', 'info');
+            return;
+        }
+        const temp = state.books[idx];
+        state.books[idx] = state.books[targetIdx];
+        state.books[targetIdx] = temp;
+        await persistCurrentBookOrder();
+        renderShelves();
+        showToast('Moved book position', 'success');
+    }
+
+    async function moveSelectedStack(delta) {
+        if (!state.selectedBook) return;
+        const units = buildVisualUnits(state.books);
+        const unitIdx = units.findIndex(u => u.books.some(b => b.id == state.selectedBook.id));
+        if (unitIdx === -1) return;
+        const targetUnitIdx = unitIdx + delta;
+        if (targetUnitIdx < 0 || targetUnitIdx >= units.length) {
+            showToast(delta < 0 ? 'Stack is already at the start' : 'Stack is already at the end', 'info');
+            return;
+        }
+        const tempUnit = units[unitIdx];
+        units[unitIdx] = units[targetUnitIdx];
+        units[targetUnitIdx] = tempUnit;
+        state.books = units.flatMap(u => u.books);
+        await persistCurrentBookOrder();
+        renderShelves();
+        showToast('Moved entire stack', 'success');
+    }
+
+    async function reorderByDragDrop(draggedIds, targetIds, placeAfter) {
+        if (!draggedIds || !draggedIds.length || !targetIds || !targetIds.length) return;
+        const draggedSet = new Set(draggedIds.map(String));
+        if (targetIds.some(id => draggedSet.has(String(id)))) return;
+
+        const draggedBooks = state.books.filter(b => draggedSet.has(String(b.id)));
+        const remainingBooks = state.books.filter(b => !draggedSet.has(String(b.id)));
+
+        const anchorId = placeAfter ? targetIds[targetIds.length - 1] : targetIds[0];
+        const anchorIdx = remainingBooks.findIndex(b => String(b.id) === String(anchorId));
+        if (anchorIdx === -1) return;
+
+        const insertIdx = placeAfter ? anchorIdx + 1 : anchorIdx;
+        remainingBooks.splice(insertIdx, 0, ...draggedBooks);
+        state.books = remainingBooks;
+
+        await persistCurrentBookOrder();
+        renderShelves();
+        showToast(draggedIds.length > 1 ? 'Moved stack to new spot' : 'Reordered book on shelf', 'success');
+    }
+
+    function clearDragIndicators() {
+        document.querySelectorAll('.drag-over-before, .drag-over-after, .is-dragging').forEach(el => {
+            el.classList.remove('drag-over-before', 'drag-over-after', 'is-dragging');
+        });
+    }
+
+    function attachDragAndDropHandlers(el, itemBookIds, isVerticalLayer = false) {
+        el.setAttribute('draggable', 'true');
+
+        el.addEventListener('dragstart', (e) => {
+            e.stopPropagation();
+            state.dragSource = { ids: itemBookIds };
+            el.classList.add('is-dragging');
+            if (e.dataTransfer) {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', JSON.stringify(itemBookIds));
+            }
+        });
+
+        el.addEventListener('dragend', () => {
+            state.dragSource = null;
+            clearDragIndicators();
+        });
+
+        el.addEventListener('dragover', (e) => {
+            if (!state.dragSource) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const draggedSet = new Set(state.dragSource.ids.map(String));
+            if (itemBookIds.some(id => draggedSet.has(String(id)))) return;
+
+            const rect = el.getBoundingClientRect();
+            const placeAfter = isVerticalLayer
+                ? (e.clientY - rect.top) > rect.height / 2
+                : (e.clientX - rect.left) > rect.width / 2;
+
+            el.classList.toggle('drag-over-before', !placeAfter);
+            el.classList.toggle('drag-over-after', placeAfter);
+        });
+
+        el.addEventListener('dragleave', () => {
+            el.classList.remove('drag-over-before', 'drag-over-after');
+        });
+
+        el.addEventListener('drop', async (e) => {
+            if (!state.dragSource) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const draggedIds = state.dragSource.ids;
+            state.dragSource = null;
+
+            const rect = el.getBoundingClientRect();
+            const placeAfter = isVerticalLayer
+                ? (e.clientY - rect.top) > rect.height / 2
+                : (e.clientX - rect.left) > rect.width / 2;
+
+            clearDragIndicators();
+            await reorderByDragDrop(draggedIds, itemBookIds, placeAfter);
+        });
+    }
+
     function renderShelves() {
         shelvesContainer.innerHTML = '';
 
-        const itemsPerShelf = 5;
-        const shelfCount = Math.max(1, Math.ceil(state.books.length / itemsPerShelf));
+        // Group stacked books (max 5 per stack) into visual units so stacks never grow taller than 5 or split across shelves
+        const visualUnits = buildVisualUnits(state.books);
+        const unitsPerShelf = 5;
+        const shelfCount = Math.max(1, Math.ceil(visualUnits.length / unitsPerShelf));
 
         for (let sIdx = 0; sIdx < shelfCount; sIdx++) {
-            const chunk = state.books.slice(sIdx * itemsPerShelf, (sIdx + 1) * itemsPerShelf);
+            const unitChunk = visualUnits.slice(sIdx * unitsPerShelf, (sIdx + 1) * unitsPerShelf);
             const isFirstShelf = (sIdx === 0);
 
             const shelfSection = document.createElement('div');
@@ -532,34 +709,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="sleeping-cat flex items-center gap-1.5 bg-[#fdfaf3] px-3 py-1 rounded-full border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] text-sm select-none">
                             <span class="font-bold text-xs text-[#524137]">Mochi is sleeping... zZz</span>
                         </div>
+                        <span class="text-[11px] font-bold text-[#7c6855] select-none hidden sm:inline">Tip: Drag any book or stack to rearrange your shelf</span>
                     </div>
                 `;
             }
 
-            // Shelf Book Box (Tall enough with pt-20 and min-h-[305px] so hover lift and tooltip never get cut off)
+            // Fixed-height Shelf Book Box (h-[305px] max-h-[305px]) so stacks of up to 5 books never cause the shelf to grow taller
             const box = document.createElement('div');
-            box.className = 'bg-[#fffcf7] px-6 pt-20 pb-2 border-x-2 border-t-2 border-[#2c221e] rounded-t-2xl shadow-inner min-h-[305px] flex items-end gap-3 md:gap-4 overflow-x-auto';
+            box.className = 'bg-[#fffcf7] px-6 pt-20 pb-2 border-x-2 border-t-2 border-[#2c221e] rounded-t-2xl shadow-inner h-[305px] max-h-[305px] flex items-end gap-3 md:gap-4 overflow-x-auto overflow-y-hidden';
 
-            let bIdx = 0;
-            while (bIdx < chunk.length) {
-                const book = chunk[bIdx];
-                const theme = coverThemes[(sIdx * itemsPerShelf + bIdx) % coverThemes.length];
-
-                if (book.spine_style === 'stacked') {
-                    // Group stacked books
-                    const stackPile = [book];
-                    let nextIdx = bIdx + 1;
-                    while (nextIdx < chunk.length && chunk[nextIdx].spine_style === 'stacked') {
-                        stackPile.push(chunk[nextIdx]);
-                        nextIdx++;
-                    }
-                    box.appendChild(createStackedBooksGroup(stackPile, sIdx * itemsPerShelf + bIdx));
-                    bIdx = nextIdx;
+            unitChunk.forEach((unit) => {
+                if (unit.type === 'stack') {
+                    box.appendChild(createStackedBooksGroup(unit.books, unit.startIndex));
                 } else {
+                    const book = unit.books[0];
+                    const theme = coverThemes[unit.startIndex % coverThemes.length];
                     box.appendChild(createDoodleBook(book, theme));
-                    bIdx++;
                 }
-            }
+            });
 
             // Empty Slot sketch
             const emptySlot = document.createElement('div');
@@ -656,14 +823,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
         }
 
+        attachDragAndDropHandlers(item, [book.id], false);
         item.addEventListener('click', () => openBookModal(book, theme));
         return item;
     }
 
-    // Creates stacked books lying down horizontally
+    // Creates stacked books lying down horizontally (max 5 books per stack)
     function createStackedBooksGroup(booksInStack, baseThemeIdx) {
         const wrap = document.createElement('div');
-        wrap.className = 'flex flex-col gap-1.5 items-center pb-0.5 ml-2 flex-shrink-0';
+        wrap.className = 'stack-group';
+        const stackIds = booksInStack.map(b => b.id);
+
+        // Drag handle at the top of the stack to move the entire stack together
+        const stackHandle = document.createElement('div');
+        stackHandle.className = 'stack-handle';
+        stackHandle.title = 'Drag to move this entire stack';
+        stackHandle.innerText = `Move Stack (${booksInStack.length}/${MAX_STACK_SIZE})`;
+        attachDragAndDropHandlers(stackHandle, stackIds, false);
+        wrap.appendChild(stackHandle);
 
         booksInStack.forEach((b, i) => {
             const theme = coverThemes[(baseThemeIdx + i) % coverThemes.length];
@@ -685,6 +862,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="stack-band-vert"></div>
                 </div>
             `;
+            // Each book inside the stack can also be dragged individually to reorder within the stack or moved out
+            attachDragAndDropHandlers(layer, [b.id], true);
             layer.addEventListener('click', () => openBookModal(b, theme));
             wrap.appendChild(layer);
         });
@@ -693,6 +872,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- Pop-Out Book Modal ---
+
+    function updateStackMoveButtonsUI(isStacked) {
+        if (btnMoveStackPrev) btnMoveStackPrev.classList.toggle('hidden', !isStacked);
+        if (btnMoveStackNext) btnMoveStackNext.classList.toggle('hidden', !isStacked);
+    }
 
     function updateFavoriteButtonUI(isFav) {
         if (!btnToggleFavorite || !favoriteBtnText) return;
@@ -739,6 +923,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Highlight active style button
         const curStyle = book.spine_style || 'spine';
+        updateStackMoveButtonsUI(curStyle === 'stacked');
         document.querySelectorAll('.btn-spine-style').forEach(b => {
             if (b.dataset.style === curStyle) {
                 b.className = 'btn-spine-style hand-btn hand-btn-sm hand-btn-terracotta text-white';

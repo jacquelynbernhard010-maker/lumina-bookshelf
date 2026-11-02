@@ -270,19 +270,30 @@ body {
   transform: translateY(-22px) rotate(11deg) scale(1.05);
 }
 
-/* Style 4: Stacked Book Layer */
+/* Style 4: Stacked Book Layer (Max 5 per stack, compact height so shelf never grows) */
+.stack-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+  padding-bottom: 1px;
+  margin: 0 4px;
+  flex-shrink: 0;
+  position: relative;
+}
+
 .stack-layer {
   border: 2.5px solid var(--ink);
   border-radius: 5px 6px 6px 5px;
   box-shadow:
-    inset 0 4px 6px rgba(255, 255, 255, 0.28),
-    inset 0 -4px 6px rgba(0, 0, 0, 0.18),
+    inset 0 3px 5px rgba(255, 255, 255, 0.28),
+    inset 0 -3px 5px rgba(0, 0, 0, 0.18),
     2px 2px 0px var(--ink);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 8px;
-  height: 36px;
+  padding: 2px 7px;
+  height: 32px;
   width: 168px;
   position: relative;
   overflow: hidden;
@@ -295,6 +306,50 @@ body {
   border-right: 1.5px solid currentColor;
   opacity: 0.45;
   flex-shrink: 0;
+}
+
+/* Stack drag handle pill for moving an entire stack around the shelf */
+.stack-handle {
+  font-size: 10px;
+  font-weight: 700;
+  color: #5c4a3e;
+  background: #faedcd;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  padding: 1px 8px;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  user-select: none;
+  box-shadow: 1px 1px 0px var(--ink);
+  margin-bottom: 2px;
+}
+
+.stack-group:hover .stack-handle {
+  opacity: 1;
+}
+
+.stack-handle:active {
+  cursor: grabbing;
+  transform: scale(0.96);
+}
+
+/* Drag and Drop visual feedback on shelf */
+.is-dragging {
+  opacity: 0.45;
+  transform: scale(0.96);
+}
+
+.drag-over-before {
+  outline: 2.5px dashed var(--terracotta);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+.drag-over-after {
+  outline: 2.5px dashed var(--matcha);
+  outline-offset: 3px;
+  border-radius: 8px;
 }
 
 /* Ribbon bookmark dangling down */

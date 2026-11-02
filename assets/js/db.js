@@ -175,6 +175,8 @@ class StorageEngine {
 
     async getBooks(shelfId = 'all', searchQuery = '') {
         let books = await this.getLocalBooks();
+        books.sort((a, b) => (a.sort_order ?? a.id) - (b.sort_order ?? b.id));
+
         if (shelfId !== 'all') {
             const sid = parseInt(shelfId, 10);
             if (sid === 2) {
@@ -195,6 +197,14 @@ class StorageEngine {
         }
 
         return books;
+    }
+
+    async reorderBooks(orderedIds) {
+        if (!Array.isArray(orderedIds)) return;
+        for (let i = 0; i < orderedIds.length; i++) {
+            const id = isNaN(orderedIds[i]) ? orderedIds[i] : parseInt(orderedIds[i], 10);
+            await this.updateLocalBook(id, { sort_order: i + 1 });
+        }
     }
 
     async getBook(id) {
@@ -221,6 +231,7 @@ class StorageEngine {
             bookmarks: [],
             spine_style: spine_style || 'spine',
             spine_color: spine_color || '#81b29a',
+            sort_order: Date.now(),
             created_at: new Date().toISOString()
         };
 
