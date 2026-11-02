@@ -690,12 +690,87 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const packedShelves = packBooksIntoShelves(state.books, bayInnerWidth);
 
-        // Top accessory: Mochi sleeping on top of the wooden bookcase
+        // Top accessory: Mochi the cozy ginger cat napping on top of the wooden bookcase
         const topHeader = document.createElement('div');
-        topHeader.className = 'flex items-end justify-between px-6 mb-[-3px] relative z-10';
+        topHeader.className = 'flex items-end justify-between px-6 mb-[-1px] relative z-10';
         topHeader.innerHTML = `
-            <div class="sleeping-cat flex items-center gap-1.5 bg-[#fdfaf3] px-3 py-1 rounded-full border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] text-sm select-none">
-                <span class="font-bold text-xs text-[#524137]">Mochi is sleeping... zZz</span>
+            <div class="cozy-cat-container" title="Mochi is fast asleep... zZz">
+                <div class="cat-purr-bubble">purr... zZz</div>
+                <!-- Hand-drawn SVG Cozy Sleeping Cat with breathing belly & swaying tail -->
+                <svg width="118" height="52" viewBox="0 0 118 52" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                    <!-- Floating Zzz's -->
+                    <g font-family="'Lora', Georgia, serif" font-weight="700" fill="#78593e" opacity="0">
+                        <text x="24" y="14" font-size="11" class="cat-z1">z</text>
+                        <text x="18" y="8" font-size="13" class="cat-z2">Z</text>
+                        <text x="12" y="2" font-size="15" class="cat-z3">Z</text>
+                    </g>
+
+                    <!-- Curled Tail (sways gently) -->
+                    <g class="cat-tail-sway">
+                        <path d="M78 37 C88 38, 98 44, 102 36 C105 28, 98 22, 92 26 C88 28, 92 34, 96 32" 
+                              stroke="#2c221e" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                        <path d="M78 37 C88 38, 98 44, 102 36 C105 28, 98 22, 92 26" 
+                              stroke="#e07a5f" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                    </g>
+
+                    <!-- Breathing Cat Body & Back -->
+                    <g class="cat-body-breathing">
+                        <!-- Shadow under belly -->
+                        <ellipse cx="54" cy="48" rx="36" ry="3" fill="#2c221e" opacity="0.25"/>
+
+                        <!-- Main sleeping curled body -->
+                        <path d="M26 44 C20 40, 22 26, 36 21 C46 17, 68 18, 76 26 C84 34, 82 46, 68 47 C52 48, 38 48, 26 44 Z" 
+                              fill="#f2cc8f" stroke="#2c221e" stroke-width="2.5" stroke-linejoin="round"/>
+                        
+                        <!-- Warm ginger tabby markings on back -->
+                        <path d="M42 20 C40 26, 46 29, 44 33" stroke="#e07a5f" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M52 19 C50 25, 56 28, 54 34" stroke="#e07a5f" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M62 21 C60 26, 65 30, 63 35" stroke="#e07a5f" stroke-width="2" stroke-linecap="round"/>
+
+                        <!-- Tucked sleepy paws -->
+                        <ellipse cx="38" cy="46" rx="7" ry="4" fill="#fdf8e6" stroke="#2c221e" stroke-width="2"/>
+                        <ellipse cx="56" cy="46" rx="8" ry="4" fill="#fdf8e6" stroke="#2c221e" stroke-width="2"/>
+                    </g>
+
+                    <!-- Sleepy Head with ears, closed eyes & rosy cheek -->
+                    <g>
+                        <!-- Ears -->
+                        <polygon points="20,24 14,11 26,17" fill="#f2cc8f" stroke="#2c221e" stroke-width="2" stroke-linejoin="round"/>
+                        <polygon points="18,22 15,14 24,18" fill="#e07a5f"/>
+                        <polygon points="32,22 36,9 42,19" fill="#f2cc8f" stroke="#2c221e" stroke-width="2" stroke-linejoin="round"/>
+                        <polygon points="34,20 37,12 40,18" fill="#e07a5f"/>
+
+                        <!-- Head shape -->
+                        <circle cx="28" cy="30" r="14" fill="#f2cc8f" stroke="#2c221e" stroke-width="2.5"/>
+
+                        <!-- Tabby forehead stripes -->
+                        <path d="M26 18 L26 22" stroke="#e07a5f" stroke-width="1.8" stroke-linecap="round"/>
+                        <path d="M29 18 L29 22" stroke="#e07a5f" stroke-width="1.8" stroke-linecap="round"/>
+
+                        <!-- Closed sleeping curved eyes ^_^ -->
+                        <path d="M20 30 Q23 33 26 30" stroke="#2c221e" stroke-width="2" stroke-linecap="round" fill="none"/>
+                        <path d="M30 30 Q33 33 36 30" stroke="#2c221e" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+                        <!-- Tiny nose & mouth -->
+                        <polygon points="27,33 29,33 28,34.5" fill="#e07a5f"/>
+                        <path d="M26 36 Q28 37 30 36" stroke="#2c221e" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+
+                        <!-- Little white muzzle -->
+                        <ellipse cx="28" cy="34" rx="5" ry="3" fill="#fdf8e6" opacity="0.6"/>
+
+                        <!-- Rosy cheek -->
+                        <ellipse cx="18" cy="33" rx="2.5" ry="1.5" fill="#e07a5f" opacity="0.6"/>
+
+                        <!-- Whiskers -->
+                        <line x1="16" y1="32" x2="8" y2="31" stroke="#2c221e" stroke-width="1.2" stroke-linecap="round"/>
+                        <line x1="16" y1="35" x2="9" y2="36" stroke="#2c221e" stroke-width="1.2" stroke-linecap="round"/>
+                        <line x1="38" y1="32" x2="46" y2="31" stroke="#2c221e" stroke-width="1.2" stroke-linecap="round"/>
+                        <line x1="38" y1="35" x2="45" y2="36" stroke="#2c221e" stroke-width="1.2" stroke-linecap="round"/>
+                    </g>
+                </svg>
+            </div>
+            <div class="text-[11px] font-bold text-[#8c735b] select-none pb-1 hidden sm:block">
+                <span>The Cozy Nook Bookcase</span>
             </div>
         `;
         shelvesContainer.appendChild(topHeader);
