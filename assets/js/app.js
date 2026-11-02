@@ -26,10 +26,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         extractedCoverUrl: '',
         extractedDominantColor: '',
         extractedDescription: '',
+        woodTheme: localStorage.getItem('cozy_wood_theme') || 'oak',
         plantLevel: 1
     };
 
-    const MAX_STACK_SIZE = 5;
+    // 8 horizontal books (8 * 33px + 7 * 2px = 278px) reach right up to the top border of the 292px shelf bay
+    const MAX_STACK_TO_BORDER = 8;
 
     // DOM Elements
     const shelvesContainer = document.getElementById('shelvesContainer');
@@ -37,6 +39,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const totalBooksCount = document.getElementById('totalBooksCount');
     const emptyState = document.getElementById('emptyState');
     const searchInput = document.getElementById('searchInput');
+    const btnWoodTheme = document.getElementById('btnWoodTheme');
+    const woodThemeLabel = document.getElementById('woodThemeLabel');
     const btnPlant = document.getElementById('btnPlant');
     const plantLabel = document.getElementById('plantLabel');
 
@@ -137,6 +141,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             state.activeShelf = pill.dataset.shelfId;
             fetchBooks();
         });
+
+        // Wood Finish Switcher
+        updateWoodThemeButtonUI();
+        if (btnWoodTheme) {
+            btnWoodTheme.addEventListener('click', () => {
+                const themes = ['oak', 'walnut', 'sage'];
+                const nextIdx = (themes.indexOf(state.woodTheme) + 1) % themes.length;
+                state.woodTheme = themes[nextIdx];
+                localStorage.setItem('cozy_wood_theme', state.woodTheme);
+                updateWoodThemeButtonUI();
+                const bookcaseEl = document.querySelector('.wooden-bookcase');
+                if (bookcaseEl) {
+                    bookcaseEl.className = `wooden-bookcase wood-${state.woodTheme}`;
+                }
+            });
+        }
 
         // Plant Easter Egg
         btnPlant.addEventListener('click', () => {
@@ -523,50 +543,107 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    function updateWoodThemeButtonUI() {
+        if (!woodThemeLabel) return;
+        const labels = {
+            oak: 'Wood: Honey Oak',
+            walnut: 'Wood: Deep Walnut',
+            sage: 'Wood: Sage Pine'
+        };
+        woodThemeLabel.innerText = labels[state.woodTheme] || 'Wood: Honey Oak';
+    }
+
+    // Deterministic organic spine dimensions based on book title & author
+    function getBookSpineMetrics(book) {
+        const seedStr = `${book.title || ''}-${book.author || ''}-${book.id || 0}`;
+        let hash = 0;
+        for (let i = 0; i < seedStr.length; i++) {
+            hash = ((hash << 5) - hash) + seedStr.charCodeAt(i);
+            hash |= 0;
+        }
+        const absHash = Math.abs(hash);
+        const width = 56 + (absHash % 15); // 56px to 70px natural spine width
+        const height = 222 + ((absHash >> 3) % 34); // 222px to 255px natural spine height reaching near top border
+        return { width, height };
+    }
+
     // Estimates the horizontal pixel width an upright book occupies on the shelf
     // Consecutive leaning books tuck parallel against each other (-3px), while the last leaning book needs +26px for its tilted top-right corner
     function getUprightBookWidth(book, nextBookOnShelf) {
         const style = book.spine_style || 'spine';
         if (style === 'front') return 140;
+        const { width } = getBookSpineMetrics(book);
         if (style === 'leaning') {
             const nextIsLeaning = nextBookOnShelf && (nextBookOnShelf.spine_style === 'leaning');
-            return nextIsLeaning ? 61 : 90;
+            return nextIsLeaning ? (width - 3) : (width + 26);
         }
-        return 64; // standing spine
+        return width;
     }
 
     /**
-     * Automatically optimizes stacking and packs each shelf right up to the right border:
-     * - Groups stacked books into neat piles of up to MAX_STACK_SIZE (5) books each.
-     * - Allows multiple stacks on the same shelf right up to the right border of the bookshelf.
-     * - Fills remaining shelf space with upright books (spines / leaning / front) right up to the border.
+     * Automatically optimizes stacking and packs each shelf right up to the top and right borders:
+     * - Stacks pile all the way up to the top border of the shelf (up to MAX_STACK_TO_BORDER = 8 horizontal books high).
+     * - When a stack has only 1 or 2 horizontal books at the bottom, up to 3 spine-facing books can stand vertically on top of that bottom book (just like a real library bookcase).
+     * - Multiple stacks and upright spines pack snugly right up to the right border of each shelf.
      */
     function packBooksIntoShelves(booksList, bayInnerWidth) {
-        const GAP = 5;
-        const STACK_WIDTH = 174; // 168px stack layer + 6px right margin
+        const GAP = 4;
+        const STACK_WIDTH = 172; // 168px stack layer + 4px margin
         const stackedBooks = booksList.filter(b => b.spine_style === 'stacked');
-        const uprightPool = booksList.filter(b => b.spine_style !== 'stacked');
+        const explicitTopSpines = booksList.filter(b => b.spine_style === 'top-spine');
+        const otherUprightBooks = booksList.filter(b => b.spine_style !== 'stacked' && b.spine_style !== 'top-spine');
 
-        // Break stacked books into stacks of up to 5 books each
+        // Build stack columns:
+        // If there are explicit 'top-spine' books and we have >2 stacked books, reserve 1-2 bottom stacked books per group of up to 3 top-spines first
         const stackGroups = [];
-        for (let i = 0; i < stackedBooks.length; i += MAX_STACK_SIZE) {
-            stackGroups.push(stackedBooks.slice(i, i + MAX_STACK_SIZE));
+        let sIdx = 0;
+        let topSpineQueue = [...explicitTopSpines];
+
+        while (sIdx < stackedBooks.length) {
+            // If user explicitly marked books as 'top-spine', make sure this stack has 1-2 bottom books so those spines can stand on top of it
+            if (topSpineQueue.length > 0) {
+                const baseCount = Math.min(2, stackedBooks.length - sIdx);
+                const bottomBooks = stackedBooks.slice(sIdx, sIdx + baseCount);
+                sIdx += baseCount;
+                const topSpines = topSpineQueue.splice(0, 3);
+                stackGroups.push({ bottomBooks, topSpines });
+            } else {
+                const slice = stackedBooks.slice(sIdx, sIdx + MAX_STACK_TO_BORDER);
+                sIdx += slice.length;
+                stackGroups.push({ bottomBooks: slice, topSpines: [] });
+            }
         }
 
+        // If any stack group naturally has only 1 or 2 bottom books and no topSpines yet,
+        // automatically place up to 3 standing spine-facing books on top of those 1-2 bottom stacked books!
+        const uprightPool = [...topSpineQueue, ...otherUprightBooks];
+        stackGroups.forEach(group => {
+            if ((group.bottomBooks.length === 1 || group.bottomBooks.length === 2) && group.topSpines.length < 3) {
+                while (group.topSpines.length < 3) {
+                    const spineCandidateIdx = uprightPool.findIndex(b => (b.spine_style || 'spine') === 'spine' || b.spine_style === 'top-spine');
+                    if (spineCandidateIdx !== -1) {
+                        group.topSpines.push(uprightPool.splice(spineCandidateIdx, 1)[0]);
+                    } else {
+                        break;
+                    }
+                }
+            }
+        });
+
         const shelves = [];
-        let sPtr = 0;
+        let gPtr = 0;
         let uPtr = 0;
 
-        while (sPtr < stackGroups.length || uPtr < uprightPool.length) {
+        while (gPtr < stackGroups.length || uPtr < uprightPool.length) {
             const shelf = { stacks: [], upright: [], usedWidth: 0 };
 
-            // 1. Place as many 5-book stacks on this shelf as fit up to the right border
-            while (sPtr < stackGroups.length) {
+            // 1. Place as many stack columns on this shelf as fit up to the right border
+            while (gPtr < stackGroups.length) {
                 const gapNeeded = (shelf.stacks.length > 0 || shelf.upright.length > 0) ? GAP : 0;
                 if (shelf.usedWidth + gapNeeded + STACK_WIDTH <= bayInnerWidth || (shelf.stacks.length === 0 && shelf.upright.length === 0)) {
-                    shelf.stacks.push(stackGroups[sPtr]);
+                    shelf.stacks.push(stackGroups[gPtr]);
                     shelf.usedWidth += gapNeeded + STACK_WIDTH;
-                    sPtr++;
+                    gPtr++;
                 } else {
                     break;
                 }
@@ -576,16 +653,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             while (uPtr < uprightPool.length) {
                 const candidate = uprightPool[uPtr];
                 const nextCandidate = uprightPool[uPtr + 1] || null;
-                // Even if the next book in uprightPool is leaning, if it won't fit on this shelf, candidate will be the last book on this shelf
-                const WorstCaseW = getUprightBookWidth(candidate, null);
+                const worstCaseW = getUprightBookWidth(candidate, null);
                 const pairW = getUprightBookWidth(candidate, nextCandidate);
                 const gapNeeded = (shelf.stacks.length > 0 || shelf.upright.length > 0) ? GAP : 0;
 
-                // Ensure if candidate is leaning, its tilted top corner (+26px) fits inside the right border if nextCandidate doesn't also fit
                 const nextFitsToo = nextCandidate && (
                     shelf.usedWidth + gapNeeded + pairW + GAP + getUprightBookWidth(nextCandidate, null) <= bayInnerWidth
                 );
-                const effectiveW = nextFitsToo ? pairW : WorstCaseW;
+                const effectiveW = nextFitsToo ? pairW : worstCaseW;
 
                 if (shelf.usedWidth + gapNeeded + effectiveW <= bayInnerWidth || (shelf.stacks.length === 0 && shelf.upright.length === 0)) {
                     shelf.upright.push(candidate);
@@ -625,9 +700,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
         shelvesContainer.appendChild(topHeader);
 
-        // Outer Wooden Bookcase Frame
+        // Outer Wooden Bookcase Frame with selected wood stain
         const bookcase = document.createElement('div');
-        bookcase.className = 'wooden-bookcase';
+        bookcase.className = `wooden-bookcase wood-${state.woodTheme}`;
 
         // Top Wooden Crown Molding
         const crown = document.createElement('div');
@@ -640,10 +715,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             const bay = document.createElement('div');
             bay.className = 'bookcase-bay';
 
-            // Render all stacks (up to 5 books per stack, multiple stacks allowed across the shelf)
-            shelfData.stacks.forEach((stackPile) => {
-                bay.appendChild(createStackedBooksGroup(stackPile, globalThemeCounter));
-                globalThemeCounter += stackPile.length;
+            // Render all stack columns (up to 8 books reaching the top border, or 1-2 bottom books with standing spines on top)
+            shelfData.stacks.forEach((stackGroup) => {
+                bay.appendChild(createStackedBooksGroup(stackGroup, globalThemeCounter));
+                globalThemeCounter += stackGroup.bottomBooks.length + stackGroup.topSpines.length;
             });
 
             // Render all upright spines / front / leaning books snugly across to the right border
@@ -653,9 +728,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 bay.appendChild(createDoodleBook(book, theme));
             });
 
+            const remainingSpace = bayInnerWidth - shelfData.usedWidth;
+
+            // Cozy Brass Arch Bookend holding up the row of books when there is open room left on the shelf
+            if ((shelfData.stacks.length > 0 || shelfData.upright.length > 0) && remainingSpace >= 52) {
+                const bookend = document.createElement('div');
+                bookend.className = 'shelf-bookend';
+                bookend.title = 'Brass Library Bookend';
+                bookend.innerHTML = `
+                    <div class="brass-arch"></div>
+                    <div class="brass-base"></div>
+                `;
+                bay.appendChild(bookend);
+            }
+
             // Only show a slim "+ Slip in" slot on the last shelf if there is open space before the right border
             const isLastShelf = (sIdx === packedShelves.length - 1);
-            if (isLastShelf && (bayInnerWidth - shelfData.usedWidth) >= 68) {
+            if (isLastShelf && remainingSpace >= 120) {
                 const emptySlot = document.createElement('div');
                 emptySlot.className = 'border-2 border-dashed border-[#bfa88f] rounded-md w-14 h-44 flex flex-col items-center justify-center p-1.5 text-center text-xs text-[#8c735b] cursor-pointer hover:border-[#2c221e] hover:text-[#2c221e] transition-colors flex-shrink-0 select-none';
                 emptySlot.innerHTML = `
@@ -682,13 +771,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         shelvesContainer.appendChild(bookcase);
     }
 
-    // Creates an individual book item on the shelf
-    function createDoodleBook(book, theme) {
+    function getRibbonClass(book) {
+        const prog = Math.round(book.reading_progress || 0);
+        if (prog >= 100) return 'dangle-ribbon is-completed';
+        if (prog > 0) return 'dangle-ribbon in-progress';
+        return 'dangle-ribbon';
+    }
+
+    // Creates an individual book item on the shelf (or standing on top of a 1-2 book bottom stack)
+    function createDoodleBook(book, theme, customDimensions = null) {
         const item = document.createElement('div');
-        const style = book.spine_style || 'spine';
+        const rawStyle = book.spine_style || 'spine';
+        const style = customDimensions ? 'spine' : (rawStyle === 'top-spine' ? 'spine' : rawStyle);
         const color = book.spine_color || theme.bg;
         const displayTitle = cleanTitle(book.title);
         const displayAuthor = cleanAuthor(book.author);
+        const ribbonClass = getRibbonClass(book);
 
         item.className = `doodle-book ${style === 'leaning' ? 'is-leaning' : ''}`;
 
@@ -697,7 +795,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             item.innerHTML = `
                 <div class="hover-tooltip">Take out</div>
                 <div class="book-front-cover">
-                    <div class="dangle-ribbon" style="background-color: ${theme.ribbon};"></div>
+                    <div class="${ribbonClass}" style="background-color: ${theme.ribbon};"></div>
                     <span class="text-xs font-bold uppercase tracking-wide bg-black/60 px-2 py-0.5 rounded text-white self-start backdrop-blur-sm shadow-sm z-10">${escapeHtml(book.file_type || 'epub')}</span>
                     
                     ${book.cover_url ? '' : `
@@ -719,15 +817,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 frontCoverEl.style.color = theme.text;
             }
         } else {
-            // Cozy Clothbound Hardcover Spine (Standing or Leaning)
-            const height = 196 + ((displayTitle.length * 3) % 18);
-            const spineWidth = 64;
+            // Cozy Clothbound Hardcover Spine (Standing, Leaning, or Standing on top of a 1-2 book stack)
+            const metrics = getBookSpineMetrics(book);
+            const spineWidth = customDimensions ? customDimensions.width : metrics.width;
+            const height = customDimensions ? customDimensions.height : metrics.height;
             const textColor = isLightColor(color) ? '#1e2d24' : '#fffdf7';
 
             item.innerHTML = `
                 <div class="hover-tooltip">Take out</div>
                 <div class="book-body select-none" style="width: ${spineWidth}px; height: ${height}px; background-color: ${color}; color: ${textColor};">
-                    <div class="dangle-ribbon" style="background: ${theme.ribbon};"></div>
+                    <div class="${ribbonClass}" style="background: ${theme.ribbon};"></div>
                     <div class="spine-band"></div>
                     <div class="spine-title-frame">
                         <span class="spine-title-text">${escapeHtml(displayTitle)}</span>
@@ -745,13 +844,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         return item;
     }
 
-    // Creates stacked books lying down horizontally (auto-grouped up to 5 books per stack)
-    function createStackedBooksGroup(booksInStack, baseThemeIdx) {
+    // Creates a stack column:
+    // - Up to 8 horizontal books stacked all the way to the top border of the shelf
+    // - Or 1-2 horizontal books at the bottom with spine-facing books standing directly on top of them!
+    function createStackedBooksGroup(stackGroup, baseThemeIdx) {
+        const { bottomBooks, topSpines } = stackGroup;
         const wrap = document.createElement('div');
         wrap.className = 'stack-group';
-        const offsets = [-1.5, 1.5, -1, 2, 0];
+        const offsets = [-1.5, 1.5, -1, 2, -0.5, 1, -1.5, 0.5];
 
-        booksInStack.forEach((b, i) => {
+        // If there are standing spine-facing books resting on top of the 1-2 bottom stacked books, render them above the horizontal base
+        if (topSpines && topSpines.length > 0) {
+            const topRow = document.createElement('div');
+            topRow.className = 'stack-top-spines';
+            // Total usable vertical height is ~278px; each bottom horizontal book takes 35px (33px + 2px gap)
+            const maxTopSpineHeight = 276 - (bottomBooks.length * 35);
+
+            topSpines.forEach((tb, idx) => {
+                const theme = coverThemes[(baseThemeIdx + bottomBooks.length + idx) % coverThemes.length];
+                const naturalMetrics = getBookSpineMetrics(tb);
+                const topSpineWidth = Math.min(53, Math.max(48, naturalMetrics.width - 8));
+                const topSpineHeight = Math.min(maxTopSpineHeight, maxTopSpineHeight - ((idx * 7) % 14));
+                topRow.appendChild(createDoodleBook(tb, theme, { width: topSpineWidth, height: topSpineHeight }));
+            });
+
+            wrap.appendChild(topRow);
+        }
+
+        // Render the horizontal stacked books at the bottom (or all the way to the top border)
+        bottomBooks.forEach((b, i) => {
             const theme = coverThemes[(baseThemeIdx + i) % coverThemes.length];
             const color = b.spine_color || theme.bg;
             const displayTitle = cleanTitle(b.title);

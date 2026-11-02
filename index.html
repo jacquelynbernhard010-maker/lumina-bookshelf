@@ -30,7 +30,11 @@
                 </div>
 
                 <!-- Handcrafted UI Buttons -->
-                <div class="flex items-center gap-3">
+                <div class="flex flex-wrap items-center gap-3">
+                    <button id="btnWoodTheme" class="hand-btn px-3.5 py-2 text-sm font-bold flex items-center gap-1.5 bg-[#f4e8d6]" title="Change Bookcase Wood Finish">
+                        <span id="woodThemeLabel">Wood: Honey Oak</span>
+                    </button>
+
                     <button id="btnPlant" class="hand-btn px-4 py-2 text-base font-bold flex items-center gap-2" style="background-color: var(--matcha);" title="Water the plant!">
                         <span id="plantLabel">Water Pothos</span>
                     </button>
@@ -132,14 +136,15 @@
                         <p id="modalDetailAuthor" class="text-base font-bold text-[#e07a5f] mb-1">by Author</p>
                     </div>
 
-                    <!-- 4 SHELF ARRANGEMENT STYLES -->
+                    <!-- SHELF ARRANGEMENT STYLES -->
                     <div class="my-4 pt-3 border-t-2 border-dashed border-[#e0d6c5]">
-                        <label class="block text-xs font-bold text-[#5a483d] mb-2">Shelf Arrangement Style (Max 5 books per stack):</label>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <label class="block text-xs font-bold text-[#5a483d] mb-2">Shelf Arrangement Style (Stacks pile to the top border; 1–2 stacked books hold spines on top):</label>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
                             <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="spine">Spine</button>
                             <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="front">Front</button>
                             <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="leaning">Lean</button>
                             <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="stacked">Stack</button>
+                            <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="top-spine">On Stack</button>
                         </div>
                     </div>
 
@@ -239,6 +244,7 @@
                             <option value="front">Front-Facing Cover</option>
                             <option value="leaning">Leaning Book</option>
                             <option value="stacked">Stacked Flat</option>
+                            <option value="top-spine">Spine on Top of Stack</option>
                         </select>
                     </div>
                 </div>
