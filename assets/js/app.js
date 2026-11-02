@@ -357,7 +357,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Auto-backfill missing covers for existing books on the shelf
     async function backfillMissingCovers() {
         for (const book of state.books) {
-            if (!book.cover_url) {
+            const needsCover = !book.cover_url || (book.cover_url.startsWith('data:') && book.cover_url.length < 5000);
+            if (needsCover) {
                 try {
                     let newCover = '';
                     if (book.file_blob && window.EpubExtractor) {
@@ -502,13 +503,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="hover-tooltip">Take out 📖</div>
                 <div class="book-front-cover" style="${coverBgStyle}">
                     <div class="dangle-ribbon" style="background-color: ${theme.ribbon};"></div>
-                    <span class="text-xs font-bold uppercase tracking-wide bg-black/50 px-2 py-0.5 rounded text-white self-start backdrop-blur-sm">${escapeHtml(book.file_type || 'epub')}</span>
-                    ${book.cover_url ? '' : `
-                    <div class="bg-black/60 p-2 rounded text-white z-10 backdrop-blur-sm">
-                        <h4 class="font-bold text-sm line-clamp-2 leading-tight">${escapeHtml(displayTitle)}</h4>
-                        <p class="text-xs opacity-90 truncate mt-0.5">${escapeHtml(displayAuthor)}</p>
+                    <span class="text-xs font-bold uppercase tracking-wide bg-black/60 px-2 py-0.5 rounded text-white self-start backdrop-blur-sm shadow-sm">${escapeHtml(book.file_type || 'epub')}</span>
+                    
+                    <div class="bg-black/65 p-2 rounded-md text-white z-10 backdrop-blur-sm mt-auto shadow-sm">
+                        <h4 class="font-bold text-xs line-clamp-2 leading-tight">${escapeHtml(displayTitle)}</h4>
+                        <p class="text-[10px] opacity-90 truncate mt-0.5">${escapeHtml(displayAuthor)}</p>
                     </div>
-                    `}
                 </div>
             `;
         } else {

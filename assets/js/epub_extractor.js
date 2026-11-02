@@ -1,10 +1,10 @@
 /**
- * The Cozy Nook - EPUB & Cover Extractor
+ * The Cozy Nook - EPUB & Official Book Cover Extractor
  * Multi-layer cover sourcing:
- * 1. Deep ZIP analysis (OPF cover-image, manifest id='cover', cover.* files, spine <img>, largest image)
+ * 1. Deep ZIP analysis (OPF cover-image, manifest id='cover', cover.* files, largest archive image)
  * 2. ePub.js book.coverUrl() fallback
  * 3. Free Online Service fallback (Open Library Covers API)
- * 4. Automatic dominant color sampling for the book spine
+ * 4. Automatic dominant color sampling for book spine
  */
 
 class EpubExtractor {
@@ -24,7 +24,7 @@ class EpubExtractor {
         const ext = file.name.split('.').pop().toLowerCase();
         if (ext === 'epub') {
             try {
-                // 1. First, attempt direct ZIP extraction for cover image and metadata
+                // 1. First, attempt deep direct ZIP extraction from EPUB file
                 if (typeof JSZip !== 'undefined') {
                     try {
                         const zipCover = await this.extractCoverFromZip(file);
@@ -62,10 +62,11 @@ class EpubExtractor {
             }
         }
 
-        // 3. Online fallback: If cover is STILL missing, query free Open Library Covers API
-        if (!coverUrl && title) {
+        // 3. Online fallback: If cover is missing or was a tiny placeholder, query free Open Library Covers API
+        if (!coverUrl || (coverUrl.startsWith('data:') && coverUrl.length < 5000)) {
             try {
-                coverUrl = await this.fetchCoverFromOnline(title, author);
+                const onlineCover = await this.fetchCoverFromOnline(title, author);
+                if (onlineCover) coverUrl = onlineCover;
             } catch (onlineErr) {
                 console.warn('Online cover search error:', onlineErr);
             }
@@ -90,9 +91,9 @@ class EpubExtractor {
         };
     }
 
-    // Deep ZIP Extraction for Cover Images
+    // Deep ZIP Extraction for Official Book Cover Images
     static async extractCoverFromZip(file) {
-        if (typeof JSZip === 'undefined') return '';
+        if (typeof JSZip === 'undefined' || !file) return '';
         try {
             const zip = await JSZip.loadAsync(file);
             const fileKeys = Object.keys(zip.files);
@@ -159,52 +160,34 @@ class EpubExtractor {
                 }
             }
 
-            // Step C: Scan zip for any image whose name or path contains 'cover'
+            // Step C: Scan zip for image files with 'cover' in filename (> 15 KB)
             const imageKeys = fileKeys.filter(k => /\.(jpg|jpeg|png|webp)$/i.test(k) && !k.startsWith('__MACOSX'));
-            const coverKeys = imageKeys.filter(k => /cover/i.test(k));
+            const coverKeys = imageKeys.filter(k => {
+                const baseName = k.split('/').pop().toLowerCase();
+                return baseName.includes('cover') || baseName.includes('titlepage') || baseName.includes('jacket');
+            });
 
-            if (coverKeys.length > 0) {
-                // Prefer filename containing 'cover' over directory name containing 'cover'
-                coverKeys.sort((a, b) => {
-                    const aName = a.split('/').pop().toLowerCase();
-                    const bName = b.split('/').pop().toLowerCase();
-                    const aHas = aName.includes('cover') ? 1 : 0;
-                    const bHas = bName.includes('cover') ? 1 : 0;
-                    return bHas - aHas;
-                });
-                return await this.zipEntryToDataUrl(zip.file(coverKeys[0]));
-            }
-
-            // Step D: Scan first HTML/XHTML file for <img> or <image>
-            const htmlKeys = fileKeys.filter(k => /\.(xhtml|html|htm)$/i.test(k) && !k.startsWith('__MACOSX'));
-            for (let i = 0; i < Math.min(htmlKeys.length, 3); i++) {
-                const htmlFile = zip.file(htmlKeys[i]);
-                if (htmlFile) {
-                    const text = await htmlFile.async('text');
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(text, 'text/html');
-                    const img = doc.querySelector('img') || doc.querySelector('image');
-                    if (img) {
-                        const src = img.getAttribute('src') || img.getAttribute('xlink:href');
-                        if (src) {
-                            const htmlDir = htmlKeys[i].includes('/') ? htmlKeys[i].substring(0, htmlKeys[i].lastIndexOf('/') + 1) : '';
-                            const resolved = this.resolveRelativePath(htmlDir, src);
-                            const found = zip.file(resolved) || fileKeys.find(k => k.endsWith(src.split('/').pop()));
-                            if (found) return await this.zipEntryToDataUrl(zip.file(found));
-                        }
+            for (const key of coverKeys) {
+                const entry = zip.file(key);
+                if (entry) {
+                    const size = (entry._data && entry._data.uncompressedSize) || 0;
+                    if (size > 15000 || size === 0) {
+                        const dataUrl = await this.zipEntryToDataUrl(entry);
+                        if (dataUrl) return dataUrl;
                     }
                 }
             }
 
-            // Step E: Find the largest image in the archive (book covers are typically highest resolution)
+            // Step D: Find the LARGEST image in the archive (full-page book covers are almost always the largest image)
             if (imageKeys.length > 0) {
                 let largestFile = null;
                 let maxSize = 0;
                 for (const k of imageKeys) {
                     const entry = zip.file(k);
-                    if (entry && entry._data && entry._data.uncompressedSize) {
-                        if (entry._data.uncompressedSize > maxSize) {
-                            maxSize = entry._data.uncompressedSize;
+                    if (entry) {
+                        const size = (entry._data && entry._data.uncompressedSize) || 0;
+                        if (size > maxSize) {
+                            maxSize = size;
                             largestFile = entry;
                         }
                     }
@@ -223,15 +206,22 @@ class EpubExtractor {
     // Free Online Service Fallback: Open Library Covers API
     static async fetchCoverFromOnline(title, author) {
         try {
-            const cleanT = title.replace(/\.[^/.]+$/, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
-            const cleanA = (author && author !== 'Unknown Author') ? author.replace(/[_-]+/g, ' ').trim() : '';
+            const cleanT = title
+                .replace(/\.[^/.]+$/, '')
+                .replace(/[_-]+/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+            const cleanA = (author && author !== 'Unknown Author') 
+                ? author.replace(/[_-]+/g, ' ').trim() 
+                : '';
 
-            // Clean up queries (e.g. "Cyberpunk 2077 No Coincidence" -> "Cyberpunk 2077")
-            const queryVariants = [
-                cleanA ? `${cleanT} ${cleanA}` : cleanT,
-                cleanT,
-                cleanT.split(':')[0].trim()
-            ];
+            // Clean up queries (e.g. "Cyberpunk 2077 No Coincidence", "Cyberpunk 2077")
+            const queryVariants = [];
+            if (cleanT) {
+                if (cleanA) queryVariants.push(`${cleanT} ${cleanA}`);
+                queryVariants.push(cleanT);
+                if (cleanT.includes(':')) queryVariants.push(cleanT.split(':')[0].trim());
+            }
 
             for (const query of queryVariants) {
                 if (!query || query.length < 3) continue;
@@ -243,11 +233,9 @@ class EpubExtractor {
                 if (data && data.docs && data.docs.length > 0) {
                     const match = data.docs.find(d => d.cover_i) || (data.docs[0].isbn ? data.docs[0] : null);
                     if (match && match.cover_i) {
-                        const coverImgUrl = `https://covers.openlibrary.org/b/id/${match.cover_i}-L.jpg`;
-                        return await this.imageUrlToDataUrl(coverImgUrl);
+                        return `https://covers.openlibrary.org/b/id/${match.cover_i}-L.jpg`;
                     } else if (match && match.isbn && match.isbn.length > 0) {
-                        const coverImgUrl = `https://covers.openlibrary.org/b/isbn/${match.isbn[0]}-L.jpg`;
-                        return await this.imageUrlToDataUrl(coverImgUrl);
+                        return `https://covers.openlibrary.org/b/isbn/${match.isbn[0]}-L.jpg`;
                     }
                 }
             }
@@ -262,39 +250,19 @@ class EpubExtractor {
         if (!file) return '';
         try {
             const zipCover = await this.extractCoverFromZip(file);
-            if (zipCover) return zipCover;
+            if (zipCover && zipCover.length > 5000) return zipCover;
 
             if (typeof ePub !== 'undefined') {
                 const arrayBuffer = await file.arrayBuffer();
                 const book = ePub(arrayBuffer);
                 const epCover = await book.coverUrl();
-                if (epCover) return await this.blobUrlToDataUrl(epCover);
+                if (epCover) {
+                    const dataUrl = await this.blobUrlToDataUrl(epCover);
+                    if (dataUrl && dataUrl.length > 5000) return dataUrl;
+                }
             }
         } catch (e) {}
         return '';
-    }
-
-    // Converts a remote image URL to Base64 Data URL
-    static imageUrlToDataUrl(url) {
-        return new Promise((resolve) => {
-            if (!url) return resolve('');
-            const img = new Image();
-            img.crossOrigin = "Anonymous";
-            img.onload = () => {
-                try {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.naturalWidth || img.width;
-                    canvas.height = img.naturalHeight || img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-                    resolve(canvas.toDataURL('image/jpeg', 0.9));
-                } catch (e) {
-                    resolve(url);
-                }
-            };
-            img.onerror = () => resolve(url);
-            img.src = url;
-        });
     }
 
     // Converts zip entry to Data URL
