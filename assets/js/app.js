@@ -1073,24 +1073,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div id="catSprite" class="pixel-cat-sprite ${currentCat.id}"></div>
             </div>
             <div class="flex items-center gap-2 pb-1.5">
-                ${ENABLE_COZY_PLANTS ? `
-                <button type="button" id="btnQuickAutoPlants" class="hand-btn hand-btn-sm text-[11px] font-bold px-2.5 py-0.5 bg-[#e2f0cb] text-[#2c221e]" title="Auto-arrange plants neatly across your shelves and book stacks">
-                    Auto-Style Plants
-                </button>` : ''}
                 <div class="text-[11px] font-bold text-[#8c735b] select-none hidden sm:block">
                     <span>The Cozy Nook Bookcase</span>
                 </div>
             </div>
         `;
-
-        if (ENABLE_COZY_PLANTS) {
-            const btnQuickAuto = topHeader.querySelector('#btnQuickAutoPlants');
-            if (btnQuickAuto) {
-                btnQuickAuto.addEventListener('click', () => {
-                    cycleCuratedPlantPreset();
-                });
-            }
-        }
 
         const cozyCat = topHeader.querySelector('#cozyCat');
         if (cozyCat) {
@@ -1481,7 +1468,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const catalogGrid = document.getElementById('plantCatalogGrid');
         const btnCloseTray = document.getElementById('btnClosePlantTray');
         const btnClearPlants = document.getElementById('btnClearPlants');
-        const btnAutoStyle = document.getElementById('btnAutoStylePlants');
 
         updatePlantButtonUI();
 
@@ -1504,29 +1490,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 refreshMarkers();
             });
         }
-        if (btnAutoStyle) {
-            btnAutoStyle.addEventListener('click', () => {
-                cycleCuratedPlantPreset();
-            });
-        }
         if (btnClearPlants) {
             btnClearPlants.addEventListener('click', () => {
                 state.placedPlants = [];
                 savePlacedPlants();
-                document.querySelectorAll('.plant-preset-pill').forEach(b => b.classList.remove('active'));
                 refreshMarkers();
                 showToast('Cleared all plants from the shelf', 'success');
             });
         }
-
-        // Curated Preset Buttons
-        document.querySelectorAll('.plant-preset-pill').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const preset = btn.dataset.preset;
-                currentPresetIdx = PLANT_PRESET_ORDER.indexOf(preset);
-                applyCuratedPlantPreset(preset);
-            });
-        });
 
         // Target Spot Filter Pills (Best Open Spot / Shelftop / Top of Stack / Shelf Nook)
         document.querySelectorAll('.plant-spot-pill').forEach(btn => {
