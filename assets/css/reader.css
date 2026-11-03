@@ -621,6 +621,84 @@ body::-webkit-scrollbar {
 }
 
 /* ========================================================
+   FULL SCREEN & DISTRACTION-FREE ZEN MODE
+   ======================================================== */
+
+.hand-nav-btn.is-active-fullscreen {
+  background: var(--honey);
+  border-color: var(--border-chrome);
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.floating-zen-btn {
+  position: absolute;
+  top: 12px;
+  right: 18px;
+  z-index: 45;
+  background-color: rgba(254, 250, 240, 0.94);
+  border: 2px solid var(--border-chrome);
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  box-shadow: 2px 2px 0px var(--border-chrome);
+  color: var(--text-reader);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.floating-zen-btn:hover {
+  opacity: 1;
+  background-color: var(--honey);
+  transform: translateY(-1px);
+  box-shadow: 3px 3px 0px var(--border-chrome);
+}
+
+/* Distraction-free Zen Mode */
+body.zen-mode .reader-header {
+  transform: translateY(-100%);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+body.zen-mode .reader-footer {
+  transform: translateY(100%);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.zen-mode .floating-zen-btn {
+  opacity: 0.8;
+  background-color: var(--honey);
+}
+
+/* Reveal header when hovering near the top edge */
+body.zen-mode .reader-header:hover,
+body.zen-mode.hover-top .reader-header {
+  transform: translateY(0);
+}
+
+body.zen-mode .reader-footer:hover,
+body.zen-mode.hover-bottom .reader-footer {
+  transform: translateY(0);
+}
+
+/* ========================================================
    MOBILE & TABLET RESPONSIVE READER OPTIMIZATION
    ======================================================== */
 
@@ -702,5 +780,21 @@ body::-webkit-scrollbar {
 
   #btnDownloadBook {
     display: none;
+  }
+
+  #fullscreenText {
+    display: none;
+  }
+
+  #btnFullscreen {
+    padding: 4px 6px;
+    font-size: 1rem;
+  }
+
+  .floating-zen-btn {
+    top: 8px;
+    right: 10px;
+    padding: 3px 8px;
+    font-size: 0.82rem;
   }
 }

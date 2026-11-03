@@ -55,6 +55,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const themeChoices = document.querySelectorAll('.theme-choice');
     const fontButtons = document.querySelectorAll('.font-btn');
 
+    // Fullscreen & Zen View Elements
+    const btnFullscreen = document.getElementById('btnFullscreen');
+    const fullscreenIcon = document.getElementById('fullscreenIcon');
+    const fullscreenText = document.getElementById('fullscreenText');
+    const btnMenuFullscreen = document.getElementById('btnMenuFullscreen');
+    const btnFloatingZen = document.getElementById('btnFloatingZen');
+    const zenIcon = document.getElementById('zenIcon');
+    const zenText = document.getElementById('zenText');
+    const btnMenuZen = document.getElementById('btnMenuZen');
+
     // State
     let currentReadingMode = localStorage.getItem('cozy_reading_mode') || 'single'; // 'single', 'spread', or 'scroll'
     if (window.innerWidth < 640 && currentReadingMode === 'spread') {
@@ -400,6 +410,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     }, { passive: true });
                 }
+
+                // Keyboard shortcuts inside EPUB iframe
+                doc.addEventListener('keydown', (e) => {
+                    if (e.key === 'f' || e.key === 'F') {
+                        e.preventDefault();
+                        toggleFullscreen();
+                    } else if (e.key === 'z' || e.key === 'Z') {
+                        e.preventDefault();
+                        toggleZenMode();
+                    } else if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+                        if (rendition && currentReadingMode !== 'scroll') rendition.next();
+                    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                        if (rendition && currentReadingMode !== 'scroll') rendition.prev();
+                    }
+                });
+
+                // Auto reveal header if hovering near top edge inside EPUB
+                doc.addEventListener('mousemove', (e) => {
+                    if (!isZenMode) return;
+                    if (e.clientY < 30) {
+                        document.body.classList.add('hover-top');
+                    } else if (e.clientY > 80) {
+                        document.body.classList.remove('hover-top');
+                    }
+                });
             }
         });
 
@@ -500,7 +535,110 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (rendition) rendition.next();
     });
 
+    // --- Full Screen & Zen Reading Engine ---
+
+    function isFullscreenActive() {
+        return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+    }
+
+    async function toggleFullscreen() {
+        try {
+            if (!isFullscreenActive()) {
+                const docEl = document.documentElement;
+                if (docEl.requestFullscreen) {
+                    await docEl.requestFullscreen();
+                } else if (docEl.webkitRequestFullscreen) {
+                    await docEl.webkitRequestFullscreen();
+                } else if (docEl.msRequestFullscreen) {
+                    await docEl.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    await document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    await document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    await document.msExitFullscreen();
+                }
+            }
+        } catch (err) {
+            console.warn('Fullscreen request failed, falling back to Zen mode:', err);
+            toggleZenMode();
+        }
+    }
+
+    function updateFullscreenUI() {
+        const active = isFullscreenActive();
+        document.body.classList.toggle('is-fullscreen', active);
+        if (btnFullscreen) {
+            btnFullscreen.classList.toggle('is-active-fullscreen', active);
+            if (fullscreenIcon) fullscreenIcon.innerText = active ? '🗗' : '⛶';
+            if (fullscreenText) fullscreenText.innerText = active ? 'Exit Full' : 'Full Screen';
+            btnFullscreen.title = active ? 'Exit Full Screen (F or Esc)' : 'Toggle Full Screen (F)';
+        }
+        if (btnMenuFullscreen) {
+            btnMenuFullscreen.innerText = active ? '🗗 Exit Full Screen (F)' : '⛶ Toggle Full Screen (F)';
+        }
+        showToast(active ? 'Entered Full Screen' : 'Exited Full Screen', 'info');
+        setTimeout(() => {
+            if (rendition) rendition.resize();
+        }, 150);
+    }
+
+    ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
+        document.addEventListener(evt, updateFullscreenUI);
+    });
+
+    let isZenMode = false;
+    function toggleZenMode() {
+        isZenMode = !isZenMode;
+        document.body.classList.toggle('zen-mode', isZenMode);
+        if (zenIcon) zenIcon.innerText = isZenMode ? '📖' : '🌿';
+        if (zenText) zenText.innerText = isZenMode ? 'Show Menu' : 'Zen View';
+        if (btnMenuZen) btnMenuZen.innerText = isZenMode ? '📖 Show Menu Bars (Z)' : '🌿 Distraction-Free (Z)';
+        showToast(isZenMode ? 'Distraction-free mode enabled' : 'Menu bars restored', 'info');
+        setTimeout(() => {
+            if (rendition) rendition.resize();
+        }, 280);
+    }
+
+    if (btnFullscreen) btnFullscreen.addEventListener('click', toggleFullscreen);
+    if (btnMenuFullscreen) {
+        btnMenuFullscreen.addEventListener('click', () => {
+            appearanceMenu.classList.remove('show');
+            toggleFullscreen();
+        });
+    }
+    if (btnFloatingZen) btnFloatingZen.addEventListener('click', toggleZenMode);
+    if (btnMenuZen) {
+        btnMenuZen.addEventListener('click', () => {
+            appearanceMenu.classList.remove('show');
+            toggleZenMode();
+        });
+    }
+
+    // Auto reveal header if mouse nears top in Zen mode
+    document.addEventListener('mousemove', (e) => {
+        if (!isZenMode) return;
+        if (e.clientY < 28) {
+            document.body.classList.add('hover-top');
+        } else if (e.clientY > 75) {
+            document.body.classList.remove('hover-top');
+        }
+    });
+
     document.addEventListener('keydown', (e) => {
+        if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+        if (e.key === 'f' || e.key === 'F') {
+            e.preventDefault();
+            toggleFullscreen();
+            return;
+        }
+        if (e.key === 'z' || e.key === 'Z') {
+            e.preventDefault();
+            toggleZenMode();
+            return;
+        }
         if (!rendition || currentReadingMode === 'scroll') return;
         if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') rendition.next();
         else if (e.key === 'ArrowLeft' || e.key === 'PageUp') rendition.prev();
