@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         { bg: '#e9c46a', text: '#2c221e', ribbon: '#e07a5f' }  // Little Prince Yellow
     ];
 
+    // Feature flag: Set to true in the future to re-enable the Cozy Houseplants Greenhouse & Shelf Decorator
+    const ENABLE_COZY_PLANTS = false;
+
     // 30 Pixel-Art Cozy Houseplants Catalog
     const COZY_PLANTS = [
         { file: '01_monstera.png', name: 'Monstera' },
@@ -218,8 +221,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        // Cozy Houseplants Greenhouse Drawer & Catalog
-        initPlantGreenhouseTray();
+        // Cozy Houseplants Greenhouse Drawer & Catalog (stored for future reimplementation)
+        if (ENABLE_COZY_PLANTS) {
+            initPlantGreenhouseTray();
+        }
 
         // Modals
         btnOpenUpload.addEventListener('click', () => uploadModal.classList.add('active'));
@@ -761,20 +766,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div id="catSprite" class="pixel-cat-sprite ${currentCat.id}"></div>
             </div>
             <div class="flex items-center gap-2 pb-1.5">
+                ${ENABLE_COZY_PLANTS ? `
                 <button type="button" id="btnQuickAutoPlants" class="hand-btn hand-btn-sm text-[11px] font-bold px-2.5 py-0.5 bg-[#e2f0cb] text-[#2c221e]" title="Auto-arrange plants neatly across your shelves and book stacks">
                     Auto-Style Plants
-                </button>
+                </button>` : ''}
                 <div class="text-[11px] font-bold text-[#8c735b] select-none hidden sm:block">
                     <span>The Cozy Nook Bookcase</span>
                 </div>
             </div>
         `;
 
-        const btnQuickAuto = topHeader.querySelector('#btnQuickAutoPlants');
-        if (btnQuickAuto) {
-            btnQuickAuto.addEventListener('click', () => {
-                cycleCuratedPlantPreset();
-            });
+        if (ENABLE_COZY_PLANTS) {
+            const btnQuickAuto = topHeader.querySelector('#btnQuickAutoPlants');
+            if (btnQuickAuto) {
+                btnQuickAuto.addEventListener('click', () => {
+                    cycleCuratedPlantPreset();
+                });
+            }
         }
 
         const cozyCat = topHeader.querySelector('#cozyCat');
@@ -866,7 +874,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         shelvesContainer.appendChild(bookcase);
-        renderPlacedPlants(bookcase);
+        if (ENABLE_COZY_PLANTS) {
+            renderPlacedPlants(bookcase);
+        }
     }
 
     // --- Cozy Houseplants Greenhouse & Drag-and-Drop Shelf Decorator ---
