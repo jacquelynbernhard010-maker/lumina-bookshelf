@@ -16,6 +16,55 @@ document.addEventListener('DOMContentLoaded', async () => {
         { bg: '#e9c46a', text: '#2c221e', ribbon: '#e07a5f' }  // Little Prince Yellow
     ];
 
+    // 30 Pixel-Art Cozy Houseplants Catalog
+    const COZY_PLANTS = [
+        { file: '01_monstera.png', name: 'Monstera' },
+        { file: '02_banana_plant.png', name: 'Banana Plant' },
+        { file: '03_red_aglaonema.png', name: 'Red Aglaonema' },
+        { file: '04_purple_oxalis.png', name: 'Purple Oxalis' },
+        { file: '05_spider_plant.png', name: 'Spider Plant' },
+        { file: '06_fern_basket.png', name: 'Fern Basket' },
+        { file: '07_dracaena_patterned_pot.png', name: 'Dracaena' },
+        { file: '08_lucky_bamboo.png', name: 'Lucky Bamboo' },
+        { file: '09_boxwood_topiary.png', name: 'Boxwood Topiary' },
+        { file: '10_bonsai.png', name: 'Bonsai' },
+        { file: '11_aloe_vera.png', name: 'Aloe Vera' },
+        { file: '12_peace_lily.png', name: 'Peace Lily' },
+        { file: '13_african_violet.png', name: 'African Violet' },
+        { file: '14_geranium.png', name: 'Geranium' },
+        { file: '15_ranunculus.png', name: 'Ranunculus' },
+        { file: '16_rose_bush.png', name: 'Rose Bush' },
+        { file: '17_hanging_pothos.png', name: 'Hanging Pothos' },
+        { file: '18_macrame_hanger.png', name: 'Macrame Hanger' },
+        { file: '19_face_pot.png', name: 'Face Pot' },
+        { file: '20_teacup_plant.png', name: 'Teacup Plant' },
+        { file: '21_window_box.png', name: 'Window Box' },
+        { file: '22_monstera_dark_pot.png', name: 'Dark Monstera' },
+        { file: '23_rubber_plant.png', name: 'Rubber Plant' },
+        { file: '24_money_tree.png', name: 'Money Tree' },
+        { file: '25_parlor_palm.png', name: 'Parlor Palm' },
+        { file: '26_broad_leaf.png', name: 'Broad Leaf' },
+        { file: '27_pothos_trellis.png', name: 'Pothos Trellis' },
+        { file: '28_string_of_pearls.png', name: 'String of Pearls' },
+        { file: '29_hanging_fern.png', name: 'Hanging Fern' },
+        { file: '30_variegated_patterned_pot.png', name: 'Variegated Pot' }
+    ];
+
+    function loadInitialPlants() {
+        try {
+            const raw = localStorage.getItem('cozy_shelf_plants');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) return parsed;
+            }
+        } catch (e) {}
+        // Default starter plants so the user can immediately see & drag them on the shelf
+        return [
+            { id: 'plant-starter-1', file: '10_bonsai.png', name: 'Bonsai', xPercent: 64, yPx: -70, size: 80, flipped: false },
+            { id: 'plant-starter-2', file: '01_monstera.png', name: 'Monstera', xPercent: 86, yPx: 234, size: 80, flipped: false }
+        ];
+    }
+
     // State
     const state = {
         activeShelf: 'all',
@@ -28,7 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         extractedDescription: '',
         woodTheme: localStorage.getItem('cozy_wood_theme') || 'oak',
         catPose: localStorage.getItem('cozy_cat_pose') || 'pose-curled',
-        plantLevel: 1
+        placedPlants: loadInitialPlants()
     };
 
     // Authentic Pixel Cat Sprite Poses (from Free Pack)
@@ -169,12 +218,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        // Plant Easter Egg
-        btnPlant.addEventListener('click', () => {
-            state.plantLevel = (state.plantLevel % 4) + 1;
-            plantLabel.innerText = state.plantLevel === 4 ? "Pothos is thriving!" : "Water Pothos";
-            showToast('You watered the little pothos!', 'success');
-        });
+        // Cozy Houseplants Greenhouse Drawer & Catalog
+        initPlantGreenhouseTray();
 
         // Modals
         btnOpenUpload.addEventListener('click', () => uploadModal.classList.add('active'));
@@ -809,6 +854,291 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         shelvesContainer.appendChild(bookcase);
+        renderPlacedPlants(bookcase);
+    }
+
+    // --- Cozy Houseplants Greenhouse & Drag-and-Drop Shelf Decorator ---
+
+    function savePlacedPlants() {
+        try {
+            localStorage.setItem('cozy_shelf_plants', JSON.stringify(state.placedPlants));
+        } catch (e) {}
+        updatePlantButtonUI();
+    }
+
+    function updatePlantButtonUI() {
+        if (!plantLabel) return;
+        const count = state.placedPlants.length;
+        plantLabel.innerText = count > 0 ? `Cozy Plants (${count})` : 'Cozy Plants';
+    }
+
+    // Snaps plant bottom (yPx + size) to nearby bookcase surfaces (shelftop crown, shelf planks, or book stacks)
+    function snapPlantPosition(bookcaseEl, xPercent, rawYPx, size) {
+        if (!bookcaseEl) return rawYPx;
+        const bookcaseRect = bookcaseEl.getBoundingClientRect();
+        const plantCenterX = bookcaseRect.left + (xPercent / 100) * bookcaseRect.width + (size / 2);
+        const plantBottomY = rawYPx + size;
+        const SNAP_THRESHOLD = 18;
+
+        // 1. Shelftop crown surface (y = 10px inside bookcase)
+        if (Math.abs(plantBottomY - 10) <= SNAP_THRESHOLD) {
+            return 10 - size;
+        }
+
+        // 2. Any wooden shelf plank (.sketch-shelf)
+        const planks = bookcaseEl.querySelectorAll('.sketch-shelf');
+        for (const plank of planks) {
+            const pRect = plank.getBoundingClientRect();
+            const plankSurfaceY = (pRect.top - bookcaseRect.top) + 4;
+            if (Math.abs(plantBottomY - plankSurfaceY) <= SNAP_THRESHOLD) {
+                return Math.round(plankSurfaceY - size);
+            }
+        }
+
+        // 3. Top of any horizontal book stack (.stack-group)
+        const stackGroups = bookcaseEl.querySelectorAll('.stack-group');
+        for (const sg of stackGroups) {
+            const sgRect = sg.getBoundingClientRect();
+            if (plantCenterX >= sgRect.left - 12 && plantCenterX <= sgRect.right + 12) {
+                const stackTopY = (sgRect.top - bookcaseRect.top) + 4;
+                if (Math.abs(plantBottomY - stackTopY) <= SNAP_THRESHOLD) {
+                    return Math.round(stackTopY - size);
+                }
+            }
+        }
+
+        return Math.round(rawYPx);
+    }
+
+    function initPlantGreenhouseTray() {
+        const trayDrawer = document.getElementById('plantTrayDrawer');
+        const catalogGrid = document.getElementById('plantCatalogGrid');
+        const btnCloseTray = document.getElementById('btnClosePlantTray');
+        const btnClearPlants = document.getElementById('btnClearPlants');
+
+        updatePlantButtonUI();
+
+        if (btnPlant && trayDrawer) {
+            btnPlant.addEventListener('click', () => {
+                trayDrawer.classList.toggle('hidden');
+            });
+        }
+        if (btnCloseTray && trayDrawer) {
+            btnCloseTray.addEventListener('click', () => {
+                trayDrawer.classList.add('hidden');
+            });
+        }
+        if (btnClearPlants) {
+            btnClearPlants.addEventListener('click', () => {
+                state.placedPlants = [];
+                savePlacedPlants();
+                const bc = document.querySelector('.wooden-bookcase');
+                if (bc) renderPlacedPlants(bc);
+                showToast('Cleared all plants from the shelf', 'success');
+            });
+        }
+
+        if (!catalogGrid) return;
+        catalogGrid.innerHTML = '';
+
+        COZY_PLANTS.forEach((plant) => {
+            const card = document.createElement('div');
+            card.className = 'plant-tray-item';
+            card.title = `Drag ${plant.name} onto the shelf or click to place`;
+            card.innerHTML = `
+                <img src="assets/images/plants/${plant.file}" alt="${escapeHtml(plant.name)}">
+                <span class="plant-tray-name">${escapeHtml(plant.name)}</span>
+            `;
+
+            // Pointer-based drag from tray onto bookcase (or click to auto-place)
+            card.addEventListener('pointerdown', (e) => {
+                if (e.button !== 0 && e.pointerType === 'mouse') return;
+                e.preventDefault();
+
+                const startX = e.clientX;
+                const startY = e.clientY;
+                let isDragging = false;
+                let ghost = null;
+                const defaultSize = 80;
+
+                const onPointerMove = (moveEv) => {
+                    const dx = moveEv.clientX - startX;
+                    const dy = moveEv.clientY - startY;
+                    if (!isDragging && Math.hypot(dx, dy) > 6) {
+                        isDragging = true;
+                        ghost = document.createElement('img');
+                        ghost.src = `assets/images/plants/${plant.file}`;
+                        ghost.className = 'plant-drag-ghost';
+                        ghost.style.width = `${defaultSize}px`;
+                        ghost.style.height = `${defaultSize}px`;
+                        document.body.appendChild(ghost);
+                    }
+                    if (isDragging && ghost) {
+                        ghost.style.left = `${moveEv.clientX}px`;
+                        ghost.style.top = `${moveEv.clientY}px`;
+                    }
+                };
+
+                const onPointerUp = (upEv) => {
+                    window.removeEventListener('pointermove', onPointerMove);
+                    window.removeEventListener('pointerup', onPointerUp);
+                    if (ghost) ghost.remove();
+
+                    const bookcaseEl = document.querySelector('.wooden-bookcase');
+                    if (!bookcaseEl) return;
+                    const bcRect = bookcaseEl.getBoundingClientRect();
+
+                    if (isDragging) {
+                        // Check if released over or just above the bookcase (including shelftop crown area)
+                        const inHorizontal = upEv.clientX >= bcRect.left - 30 && upEv.clientX <= bcRect.right + 30;
+                        const inVertical = upEv.clientY >= bcRect.top - 110 && upEv.clientY <= bcRect.bottom + 30;
+                        if (inHorizontal && inVertical) {
+                            const rawX = upEv.clientX - bcRect.left - (defaultSize / 2);
+                            const xPercent = Math.max(0, Math.min(92, (rawX / bcRect.width) * 100));
+                            const rawYPx = upEv.clientY - bcRect.top - (defaultSize * 0.85);
+                            const snappedY = snapPlantPosition(bookcaseEl, xPercent, rawYPx, defaultSize);
+
+                            state.placedPlants.push({
+                                id: 'plant-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                                file: plant.file,
+                                name: plant.name,
+                                xPercent: Number(xPercent.toFixed(2)),
+                                yPx: snappedY,
+                                size: defaultSize,
+                                flipped: false
+                            });
+                            savePlacedPlants();
+                            renderPlacedPlants(bookcaseEl);
+                            showToast(`Placed ${plant.name} on the shelf!`, 'success');
+                        }
+                    } else {
+                        // Simple click: place on first shelf plank or shelftop with slight stagger
+                        const firstPlank = bookcaseEl.querySelector('.sketch-shelf');
+                        let targetY = -70;
+                        if (firstPlank) {
+                            const pRect = firstPlank.getBoundingClientRect();
+                            targetY = Math.round((pRect.top - bcRect.top) + 4 - defaultSize);
+                        }
+                        const staggerX = 52 + ((state.placedPlants.length * 9) % 36);
+                        state.placedPlants.push({
+                            id: 'plant-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                            file: plant.file,
+                            name: plant.name,
+                            xPercent: staggerX,
+                            yPx: targetY,
+                            size: defaultSize,
+                            flipped: false
+                        });
+                        savePlacedPlants();
+                        renderPlacedPlants(bookcaseEl);
+                        showToast(`Added ${plant.name}! Drag it anywhere on the shelf.`, 'success');
+                    }
+                };
+
+                window.addEventListener('pointermove', onPointerMove);
+                window.addEventListener('pointerup', onPointerUp);
+            });
+
+            catalogGrid.appendChild(card);
+        });
+    }
+
+    function renderPlacedPlants(bookcaseEl) {
+        if (!bookcaseEl) return;
+        bookcaseEl.querySelectorAll('.placed-plant').forEach(el => el.remove());
+
+        state.placedPlants.forEach((p) => {
+            const size = p.size || 80;
+            const wrap = document.createElement('div');
+            wrap.className = 'placed-plant';
+            wrap.style.left = `${p.xPercent}%`;
+            wrap.style.top = `${p.yPx}px`;
+            wrap.title = `${p.name} (Drag to move)`;
+
+            const sizeLabel = size <= 64 ? 'S' : (size >= 96 ? 'L' : 'M');
+
+            wrap.innerHTML = `
+                <div class="plant-action-bar">
+                    <button type="button" class="plant-ctrl-btn btn-flip" title="Flip horizontal">↔</button>
+                    <button type="button" class="plant-ctrl-btn btn-size" title="Change size (S / M / L)">${sizeLabel}</button>
+                    <button type="button" class="plant-ctrl-btn btn-del" title="Remove plant">✕</button>
+                </div>
+                <img src="assets/images/plants/${p.file}" alt="${escapeHtml(p.name)}" 
+                     class="placed-plant-sprite ${p.flipped ? 'is-flipped' : ''}" 
+                     style="width: ${size}px; height: ${size}px;">
+            `;
+
+            // Flip button
+            const btnFlip = wrap.querySelector('.btn-flip');
+            btnFlip.addEventListener('click', (e) => {
+                e.stopPropagation();
+                p.flipped = !p.flipped;
+                savePlacedPlants();
+                renderPlacedPlants(bookcaseEl);
+            });
+
+            // Size cycle button (64 -> 80 -> 96)
+            const btnSize = wrap.querySelector('.btn-size');
+            btnSize.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const oldSize = p.size || 80;
+                const nextSize = oldSize === 64 ? 80 : (oldSize === 80 ? 96 : 64);
+                // Keep bottom edge anchored at the same surface
+                p.yPx = (p.yPx + oldSize) - nextSize;
+                p.size = nextSize;
+                savePlacedPlants();
+                renderPlacedPlants(bookcaseEl);
+            });
+
+            // Delete button
+            const btnDel = wrap.querySelector('.btn-del');
+            btnDel.addEventListener('click', (e) => {
+                e.stopPropagation();
+                state.placedPlants = state.placedPlants.filter(item => item.id !== p.id);
+                savePlacedPlants();
+                renderPlacedPlants(bookcaseEl);
+            });
+
+            // Dragging placed plant around the bookcase
+            wrap.addEventListener('pointerdown', (e) => {
+                if (e.target.closest('.plant-ctrl-btn')) return;
+                if (e.button !== 0 && e.pointerType === 'mouse') return;
+                e.preventDefault();
+                e.stopPropagation();
+
+                wrap.classList.add('is-dragging');
+                const bcRect = bookcaseEl.getBoundingClientRect();
+                const wrapRect = wrap.getBoundingClientRect();
+                const offsetX = e.clientX - wrapRect.left;
+                const offsetY = e.clientY - wrapRect.top;
+                const curSize = p.size || 80;
+
+                const onPointerMove = (moveEv) => {
+                    const freshBcRect = bookcaseEl.getBoundingClientRect();
+                    const rawX = moveEv.clientX - freshBcRect.left - offsetX;
+                    const xPercent = Math.max(-2, Math.min(94, (rawX / freshBcRect.width) * 100));
+                    const rawYPx = moveEv.clientY - freshBcRect.top - offsetY;
+                    const snappedY = snapPlantPosition(bookcaseEl, xPercent, rawYPx, curSize);
+
+                    p.xPercent = Number(xPercent.toFixed(2));
+                    p.yPx = snappedY;
+                    wrap.style.left = `${p.xPercent}%`;
+                    wrap.style.top = `${p.yPx}px`;
+                };
+
+                const onPointerUp = () => {
+                    window.removeEventListener('pointermove', onPointerMove);
+                    window.removeEventListener('pointerup', onPointerUp);
+                    wrap.classList.remove('is-dragging');
+                    savePlacedPlants();
+                };
+
+                window.addEventListener('pointermove', onPointerMove);
+                window.addEventListener('pointerup', onPointerUp);
+            });
+
+            bookcaseEl.appendChild(wrap);
+        });
     }
 
     function getRibbonClass(book) {

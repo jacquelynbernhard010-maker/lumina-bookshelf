@@ -35,8 +35,9 @@
                         <span id="woodThemeLabel">Wood: Honey Oak</span>
                     </button>
 
-                    <button id="btnPlant" class="hand-btn px-4 py-2 text-base font-bold flex items-center gap-2" style="background-color: var(--matcha);" title="Water the plant!">
-                        <span id="plantLabel">Water Pothos</span>
+                    <button id="btnPlant" class="hand-btn px-4 py-2 text-base font-bold flex items-center gap-2" style="background-color: var(--matcha);" title="Open Cozy Houseplants Tray">
+                        <img src="assets/images/plants/01_monstera.png" alt="" class="w-5 h-5 pixel-art-img -my-1">
+                        <span id="plantLabel">Cozy Plants</span>
                     </button>
 
                     <button id="btnOpenCloud" class="hand-btn px-4 py-2 text-base font-bold flex items-center gap-2" title="Supabase Cloud Sync">
@@ -62,6 +63,34 @@
                 </div>
             </div>
         </header>
+
+        <!-- Cozy Greenhouse Plant Drawer (Drag or click plants onto the shelf!) -->
+        <section id="plantTrayDrawer" class="plant-tray-drawer hidden mb-8 bg-[#fffdf9] wobbly-border p-4 shadow-[4px_4px_0px_#2c221e] relative">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2 border-b-2 border-dashed border-[#e6dcce]">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-lg text-[#2c221e]">Cozy Greenhouse (30 Plants)</span>
+                    <span class="text-xs font-bold bg-[#e2f0cb] text-[#2c221e] px-2.5 py-0.5 rounded-full border border-[#2c221e]">
+                        Drag onto shelf or click to add
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btnClearPlants" class="hand-btn hand-btn-sm bg-[#fffdf7] text-xs font-bold px-3 py-1" title="Remove all plants from the shelf">
+                        Clear Shelf Plants
+                    </button>
+                    <button id="btnClosePlantTray" class="w-7 h-7 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold text-xs hover:scale-105 transition-transform" title="Close Greenhouse">
+                        ✕
+                    </button>
+                </div>
+            </div>
+
+            <div id="plantCatalogGrid" class="plant-catalog-grid">
+                <!-- Populated by JS with all 30 pixel-art houseplants -->
+            </div>
+
+            <p class="text-xs text-[#786457] mt-2.5 font-semibold">
+                Tip: Drag any plant directly onto a wooden shelf plank, onto a stack of books, or up onto the shelftop next to Mochi! Hover a placed plant to resize (<kbd class="px-1 bg-[#f4e8d6] rounded border border-[#2c221e]/30">S/M/L</kbd>), flip (<kbd class="px-1 bg-[#f4e8d6] rounded border border-[#2c221e]/30">↔</kbd>), or remove (<kbd class="px-1 bg-[#f4e8d6] rounded border border-[#2c221e]/30">✕</kbd>).
+            </p>
+        </section>
 
         <!-- Main Bookcase Container -->
         <main id="shelvesContainer" class="pt-4">
