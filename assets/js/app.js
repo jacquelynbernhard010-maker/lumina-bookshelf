@@ -210,8 +210,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         return bookPalette[Math.abs(index) % bookPalette.length];
     }
 
-    // Feature flag: Set to true in the future to re-enable the Cozy Houseplants Greenhouse & Shelf Decorator
-    const ENABLE_COZY_PLANTS = false;
+    // Feature flag: Cozy Houseplants Greenhouse & Shelf Decorator
+    const ENABLE_COZY_PLANTS = true;
 
     // 30 Pixel-Art Cozy Houseplants Catalog
     const COZY_PLANTS = [
@@ -1492,6 +1492,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (btnPlant && trayDrawer) {
             btnPlant.addEventListener('click', () => {
+                setMobileSidebarOpen(false);
                 trayDrawer.classList.toggle('hidden');
                 refreshMarkers();
             });
