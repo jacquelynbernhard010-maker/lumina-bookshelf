@@ -15,13 +15,13 @@
     <!-- Main Cozy Container -->
     <div class="max-w-4xl mx-auto">
 
-        <!-- Compact Mobile Top Bar (Shown on phones/small tablets < 768px; opens the Retractable Side Panel) -->
-        <div class="mobile-top-bar md:hidden bg-[#fffdf9] border-2 border-[#2c221e] rounded-2xl px-3.5 py-2.5 mb-4 shadow-[3px_3px_0px_#2c221e] flex items-center justify-between gap-2">
-            <button type="button" id="btnOpenMobileSidebar" class="hand-btn hand-btn-sm px-3 py-1 text-sm font-bold bg-[#faedcd] flex items-center gap-1.5" title="Open Shelf Menu & Search">
-                <span>☰ Menu</span>
-            </button>
-            <h1 class="text-xl font-bold tracking-wide truncate">The Cozy Nook</h1>
-            <button type="button" id="btnQuickMobileUpload" class="hand-btn hand-btn-sm px-3 py-1 text-sm font-bold hand-btn-terracotta" title="Slip a Book In">
+        <!-- Compact Mobile Top Bar (Shown on phones/small tablets < 768px) -->
+        <div class="mobile-top-bar md:hidden bg-[#fffdf9] border-2 border-[#2c221e] rounded-2xl px-4 py-2 mb-4 shadow-[3px_3px_0px_#2c221e] flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+                <span class="text-xl select-none">📚</span>
+                <h1 class="text-xl font-bold tracking-wide truncate">The Cozy Nook</h1>
+            </div>
+            <button type="button" id="btnQuickMobileUpload" class="hand-btn hand-btn-sm px-3.5 py-1 text-sm font-bold hand-btn-terracotta" title="Slip a Book In">
                 <span>+ Book</span>
             </button>
         </div>
@@ -33,7 +33,7 @@
         <header id="mainNavPanel" class="cozy-nav-panel bg-[#fffdf9] wobbly-border p-6 mb-8 shadow-[4px_4px_0px_#2c221e] relative">
             <!-- Tactile Left-Edge Pull Tab on Mobile to Expand/Retract Side Panel anytime -->
             <button type="button" id="btnMobilePullTab" class="mobile-pull-tab md:hidden" title="Toggle Side Panel">
-                <span id="mobilePullTabIcon">▶</span>
+                <span id="mobilePullTabIcon">☰</span>
             </button>
 
             <!-- Washi tape at top (desktop) -->

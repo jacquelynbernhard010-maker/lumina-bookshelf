@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!navPanel) return;
         navPanel.classList.toggle('is-open', isOpen);
         if (backdrop) backdrop.classList.toggle('is-open', isOpen);
-        if (pullIcon) pullIcon.textContent = isOpen ? '◀' : '▶';
+        if (pullIcon) pullIcon.textContent = isOpen ? '✕' : '☰';
     }
 
     function setupEventListeners() {

@@ -854,11 +854,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (isOpen) {
             tocSidebar.classList.add('open');
             if (readerDrawerBackdrop) readerDrawerBackdrop.classList.add('active');
-            if (readerPullTabIcon) readerPullTabIcon.innerText = '❮';
+            if (readerPullTabIcon) readerPullTabIcon.innerText = '✕';
         } else {
             tocSidebar.classList.remove('open');
             if (readerDrawerBackdrop) readerDrawerBackdrop.classList.remove('active');
-            if (readerPullTabIcon) readerPullTabIcon.innerText = '❯';
+            if (readerPullTabIcon) readerPullTabIcon.innerText = '☰';
         }
     }
 
