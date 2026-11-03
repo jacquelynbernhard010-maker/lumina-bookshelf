@@ -619,3 +619,88 @@ body::-webkit-scrollbar {
   align-items: center;
   gap: 8px;
 }
+
+/* ========================================================
+   MOBILE & TABLET RESPONSIVE READER OPTIMIZATION
+   ======================================================== */
+
+@media (max-width: 1023px) {
+  .book-meta {
+    max-width: 165px;
+  }
+
+  .hand-nav-btn {
+    padding: 4px 10px;
+    font-size: 0.9rem;
+  }
+
+  .mode-btn {
+    padding: 4px 9px;
+    font-size: 0.88rem;
+  }
+}
+
+@media (max-width: 767px) {
+  body {
+    height: 100dvh;
+  }
+
+  .reader-header {
+    height: auto;
+    min-height: 54px;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 10px;
+  }
+
+  .book-meta {
+    display: none;
+  }
+
+  .nav-left, .nav-right {
+    gap: 5px;
+  }
+
+  .hand-nav-btn {
+    padding: 4px 8px;
+    font-size: 0.84rem;
+  }
+
+  .mode-btn {
+    padding: 3px 8px;
+    font-size: 0.82rem;
+  }
+
+  .toc-sidebar {
+    width: min(88vw, 340px);
+  }
+
+  .appearance-menu {
+    right: -10px;
+    width: min(86vw, 250px);
+  }
+
+  .turn-page-btn {
+    width: 34px;
+    height: 54px;
+    font-size: 1.4rem;
+    opacity: 0.72;
+  }
+
+  .prev-btn { left: 6px; }
+  .next-btn { right: 6px; }
+
+  .page-corner-ribbon {
+    right: 16px;
+  }
+}
+
+@media (max-width: 639px) {
+  #btnModeSpread {
+    display: none;
+  }
+
+  #btnDownloadBook {
+    display: none;
+  }
+}

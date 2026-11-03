@@ -380,7 +380,60 @@ document.addEventListener('DOMContentLoaded', async () => {
         await fetchBooks();
     }
 
+    function setMobileSidebarOpen(isOpen) {
+        const navPanel = document.getElementById('mainNavPanel');
+        const backdrop = document.getElementById('mobileSidebarBackdrop');
+        const pullIcon = document.getElementById('mobilePullTabIcon');
+        if (!navPanel) return;
+        navPanel.classList.toggle('is-open', isOpen);
+        if (backdrop) backdrop.classList.toggle('is-open', isOpen);
+        if (pullIcon) pullIcon.textContent = isOpen ? '◀' : '▶';
+    }
+
     function setupEventListeners() {
+        // Mobile Retractable Side Panel Controls
+        const btnOpenMobileSidebar = document.getElementById('btnOpenMobileSidebar');
+        const btnCloseMobileSidebar = document.getElementById('btnCloseMobileSidebar');
+        const btnMobilePullTab = document.getElementById('btnMobilePullTab');
+        const mobileSidebarBackdrop = document.getElementById('mobileSidebarBackdrop');
+        const btnQuickMobileUpload = document.getElementById('btnQuickMobileUpload');
+        const navPanel = document.getElementById('mainNavPanel');
+
+        if (btnOpenMobileSidebar) {
+            btnOpenMobileSidebar.addEventListener('click', () => setMobileSidebarOpen(true));
+        }
+        if (btnCloseMobileSidebar) {
+            btnCloseMobileSidebar.addEventListener('click', () => setMobileSidebarOpen(false));
+        }
+        if (btnMobilePullTab && navPanel) {
+            btnMobilePullTab.addEventListener('click', () => {
+                setMobileSidebarOpen(!navPanel.classList.contains('is-open'));
+            });
+        }
+        if (mobileSidebarBackdrop) {
+            mobileSidebarBackdrop.addEventListener('click', () => setMobileSidebarOpen(false));
+        }
+        if (btnQuickMobileUpload) {
+            btnQuickMobileUpload.addEventListener('click', () => {
+                setMobileSidebarOpen(false);
+                uploadModal.classList.add('active');
+            });
+        }
+
+        // Automatic Shelf Reflow on Device Rotation / Viewport Resize
+        let resizeTimer = null;
+        let lastContainerWidth = shelvesContainer ? shelvesContainer.clientWidth : window.innerWidth;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                const curW = shelvesContainer ? shelvesContainer.clientWidth : window.innerWidth;
+                if (Math.abs(curW - lastContainerWidth) >= 8 && state.books.length > 0) {
+                    lastContainerWidth = curW;
+                    renderShelves();
+                }
+            }, 150);
+        });
+
         // Search
         let debounceTimer;
         searchInput.addEventListener('input', (e) => {
@@ -396,6 +449,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             shelfNavList.querySelectorAll('.shelf-pill').forEach(p => p.classList.remove('active'));
             pill.classList.add('active');
             state.activeShelf = pill.dataset.shelfId;
+            setMobileSidebarOpen(false);
             fetchBooks();
         });
 
@@ -421,11 +475,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // Modals
-        btnOpenUpload.addEventListener('click', () => uploadModal.classList.add('active'));
+        btnOpenUpload.addEventListener('click', () => {
+            setMobileSidebarOpen(false);
+            uploadModal.classList.add('active');
+        });
         btnCloseUploadModal.addEventListener('click', () => uploadModal.classList.remove('active'));
         btnCancelUpload.addEventListener('click', () => uploadModal.classList.remove('active'));
 
         btnOpenCloud.addEventListener('click', () => {
+            setMobileSidebarOpen(false);
             const cfg = window.storageEngine.getSupabaseConfig();
             document.getElementById('supabaseUrlInput').value = cfg.url || '';
             document.getElementById('supabaseKeyInput').value = cfg.key || '';
@@ -463,15 +521,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showToast(`Shelf style: ${newStyle}`, 'success');
                 renderShelves();
             });
-        });
-
-        // Re-pack shelves on window resize so spines always fill up to the right border
-        let resizeTimer;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(() => {
-                if (state.books.length > 0) renderShelves();
-            }, 120);
         });
 
         // Toggle Favorite Button inside Read Modal
@@ -808,8 +857,68 @@ document.addEventListener('DOMContentLoaded', async () => {
         woodThemeLabel.innerText = labels[state.woodTheme] || 'Wood: Honey Oak';
     }
 
-    // Deterministic organic spine dimensions based on book title & author
+    // Returns proportional layout metrics for Phone (<640px), Tablet (640-1023px), and Desktop (>=1024px)
+    function getViewportShelfMetrics() {
+        const vw = window.innerWidth || 1024;
+        if (vw < 640) {
+            return {
+                mode: 'mobile',
+                gap: 3,
+                stackWidth: 136, // 132px stack layer + 4px margin
+                maxStackToBorder: 7,
+                frontWidth: 112,
+                leaningExtra: 18,
+                wallPadding: 34, // 2*11px bookcase walls + 2*6px bay padding
+                minWidthBase: 44,
+                widthRange: 11,  // 44px to 54px spine width on phones
+                minHeightBase: 178,
+                heightRange: 26, // 178px to 203px spine height on phones (bay is 236px)
+                maxTopSpineBaseH: 222,
+                stackLayerPitch: 29,
+                topSpineMinW: 38,
+                topSpineMaxW: 42
+            };
+        } else if (vw < 1024) {
+            return {
+                mode: 'tablet',
+                gap: 4,
+                stackWidth: 156, // 152px stack layer + 4px margin
+                maxStackToBorder: 8,
+                frontWidth: 128,
+                leaningExtra: 22,
+                wallPadding: 52,
+                minWidthBase: 50,
+                widthRange: 13,  // 50px to 62px spine width on tablets
+                minHeightBase: 204,
+                heightRange: 29, // 204px to 232px spine height on tablets (bay is 268px)
+                maxTopSpineBaseH: 252,
+                stackLayerPitch: 32,
+                topSpineMinW: 44,
+                topSpineMaxW: 48
+            };
+        }
+        return {
+            mode: 'desktop',
+            gap: 4,
+            stackWidth: 172, // 168px stack layer + 4px margin
+            maxStackToBorder: MAX_STACK_TO_BORDER,
+            frontWidth: 140,
+            leaningExtra: 26,
+            wallPadding: 56,
+            minWidthBase: 56,
+            widthRange: 15,  // 56px to 70px natural spine width
+            minHeightBase: 222,
+            heightRange: 34, // 222px to 255px natural spine height
+            maxTopSpineBaseH: 276,
+            stackLayerPitch: 35,
+            topSpineMinW: 48,
+            topSpineMaxW: 53
+        };
+    }
+
+    // Deterministic organic spine dimensions based on book title & author, scaled for phone/tablet/desktop
     function getBookSpineMetrics(book) {
+        const vm = getViewportShelfMetrics();
         const seedStr = `${book.title || ''}-${book.author || ''}-${book.id || 0}`;
         let hash = 0;
         for (let i = 0; i < seedStr.length; i++) {
@@ -817,33 +926,36 @@ document.addEventListener('DOMContentLoaded', async () => {
             hash |= 0;
         }
         const absHash = Math.abs(hash);
-        const width = 56 + (absHash % 15); // 56px to 70px natural spine width
-        const height = 222 + ((absHash >> 3) % 34); // 222px to 255px natural spine height reaching near top border
+        const width = vm.minWidthBase + (absHash % vm.widthRange);
+        const height = vm.minHeightBase + ((absHash >> 3) % vm.heightRange);
         return { width, height };
     }
 
     // Estimates the horizontal pixel width an upright book occupies on the shelf
-    // Consecutive leaning books tuck parallel against each other (-3px), while the last leaning book needs +26px for its tilted top-right corner
+    // Consecutive leaning books tuck parallel against each other (-3px), while the last leaning book needs extra room for its tilted top-right corner
     function getUprightBookWidth(book, nextBookOnShelf) {
+        const vm = getViewportShelfMetrics();
         const style = book.spine_style || 'spine';
-        if (style === 'front') return 140;
+        if (style === 'front') return vm.frontWidth;
         const { width } = getBookSpineMetrics(book);
         if (style === 'leaning') {
             const nextIsLeaning = nextBookOnShelf && (nextBookOnShelf.spine_style === 'leaning');
-            return nextIsLeaning ? (width - 3) : (width + 26);
+            return nextIsLeaning ? (width - 3) : (width + vm.leaningExtra);
         }
         return width;
     }
 
     /**
      * Automatically optimizes stacking and packs each shelf right up to the top and right borders:
-     * - Stacks pile all the way up to the top border of the shelf (up to MAX_STACK_TO_BORDER = 8 horizontal books high).
+     * - Stacks pile all the way up to the top border of the shelf.
      * - When a stack has only 1 or 2 horizontal books at the bottom, up to 3 spine-facing books can stand vertically on top of that bottom book (just like a real library bookcase).
      * - Multiple stacks and upright spines pack snugly right up to the right border of each shelf.
      */
     function packBooksIntoShelves(booksList, bayInnerWidth) {
-        const GAP = 4;
-        const STACK_WIDTH = 172; // 168px stack layer + 4px margin
+        const vm = getViewportShelfMetrics();
+        const GAP = vm.gap;
+        const STACK_WIDTH = vm.stackWidth;
+        const maxStack = vm.maxStackToBorder;
         const stackedBooks = booksList.filter(b => b.spine_style === 'stacked');
         const explicitTopSpines = booksList.filter(b => b.spine_style === 'top-spine');
         const otherUprightBooks = booksList.filter(b => b.spine_style !== 'stacked' && b.spine_style !== 'top-spine');
@@ -863,7 +975,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const topSpines = topSpineQueue.splice(0, 3);
                 stackGroups.push({ bottomBooks, topSpines });
             } else {
-                const slice = stackedBooks.slice(sIdx, sIdx + MAX_STACK_TO_BORDER);
+                const slice = stackedBooks.slice(sIdx, sIdx + maxStack);
                 sIdx += slice.length;
                 stackGroups.push({ bottomBooks: slice, topSpines: [] });
             }
@@ -939,9 +1051,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderShelves() {
         shelvesContainer.innerHTML = '';
 
-        // Measure the real interior width of the wooden bookcase bay (container width minus 2*18px bookcase walls and 2*10px bay padding)
-        const containerWidth = shelvesContainer.clientWidth || 1024;
-        const bayInnerWidth = Math.max(320, containerWidth - 56);
+        // Measure the real interior width of the wooden bookcase bay
+        const vm = getViewportShelfMetrics();
+        const containerWidth = shelvesContainer.clientWidth || window.innerWidth || 1024;
+        const bayInnerWidth = Math.max(250, containerWidth - vm.wallPadding);
 
         const packedShelves = packBooksIntoShelves(state.books, bayInnerWidth);
 
@@ -1725,28 +1838,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         return Math.abs(hash);
     }
 
-    // Refinement #1: Smart Title Wrapping & Automatic Font Scaling for Long Book Titles
+    // Refinement #1: Smart Title Wrapping & Automatic Font Scaling for Long Book Titles (Desktop, Tablet & Phone)
     function getSmartSpineTitleStyle(title, spineWidth, spineHeight) {
         const len = (title || '').length;
-        const isCompact = spineHeight < 218;
-        let fontSize = '10.2px';
+        const isCompact = spineHeight < 210;
+        const isMobileSpine = spineWidth < 52;
+        let fontSize = isMobileSpine ? '8.8px' : '10.2px';
         let lineClamp = isCompact ? 3 : 4;
-        let letterSpacing = '0.025em';
+        let letterSpacing = isMobileSpine ? '0.015em' : '0.025em';
 
         if (len <= 11) {
-            fontSize = spineWidth >= 60 ? '10.8px' : '10.2px';
+            fontSize = isMobileSpine ? '9.1px' : (spineWidth >= 60 ? '10.8px' : '10.2px');
             lineClamp = 3;
-            letterSpacing = '0.03em';
+            letterSpacing = isMobileSpine ? '0.02em' : '0.03em';
         } else if (len <= 20) {
-            fontSize = '9.4px';
+            fontSize = isMobileSpine ? '8.3px' : '9.4px';
             lineClamp = isCompact ? 3 : 4;
-            letterSpacing = '0.02em';
+            letterSpacing = isMobileSpine ? '0.01em' : '0.02em';
         } else if (len <= 32) {
-            fontSize = '8.5px';
+            fontSize = isMobileSpine ? '7.6px' : '8.5px';
             lineClamp = isCompact ? 4 : 5;
-            letterSpacing = '0.01em';
+            letterSpacing = '0.005em';
         } else {
-            fontSize = '7.8px';
+            fontSize = isMobileSpine ? '7.1px' : '7.8px';
             lineClamp = isCompact ? 4 : 5;
             letterSpacing = '0em';
         }
@@ -2216,17 +2330,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // If there are standing spine-facing books resting on top of the 1-2 bottom stacked books, render them above the horizontal base
         if (topSpines && topSpines.length > 0) {
+            const vm = getViewportShelfMetrics();
             const topRow = document.createElement('div');
             topRow.className = 'stack-top-spines';
-            // Total usable vertical height is ~278px; each bottom horizontal book takes 35px (33px + 2px gap)
-            const maxTopSpineHeight = 276 - (bottomBooks.length * 35);
+            const maxTopSpineHeight = vm.maxTopSpineBaseH - (bottomBooks.length * vm.stackLayerPitch);
 
             topSpines.forEach((tb, idx) => {
                 const slotIdx = baseThemeIdx + bottomBooks.length + idx;
                 const theme = getBookStyle(slotIdx, tb);
                 const naturalMetrics = getBookSpineMetrics(tb);
-                const topSpineWidth = Math.min(53, Math.max(48, naturalMetrics.width - 8));
-                const topSpineHeight = Math.min(maxTopSpineHeight, maxTopSpineHeight - ((idx * 7) % 14));
+                const topSpineWidth = Math.min(vm.topSpineMaxW, Math.max(vm.topSpineMinW, naturalMetrics.width - 8));
+                const topSpineHeight = Math.min(maxTopSpineHeight, maxTopSpineHeight - ((idx * 6) % 12));
                 topRow.appendChild(createDoodleBook(tb, theme, { width: topSpineWidth, height: topSpineHeight }, slotIdx));
             });
 
@@ -2250,8 +2364,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="stack-layer select-none" style="background-color: ${color}; color: ${palette.text}; transform: translateX(${offsetX}px);">
                     <div class="stack-vector-endcap">${endcaps.leftSvg}</div>
                     <div class="flex-1 px-1.5 text-center overflow-hidden">
-                        <div class="font-lora font-bold text-[10.5px] leading-tight truncate" style="color: ${palette.text};">${escapeHtml(displayTitle)}</div>
-                        <div class="font-lora italic text-[8.5px] leading-tight truncate" style="color: ${palette.subText || palette.text};">${escapeHtml(displayAuthor)}</div>
+                        <div class="font-lora font-bold text-[10px] sm:text-[10.5px] leading-tight truncate" style="color: ${palette.text};">${escapeHtml(displayTitle)}</div>
+                        <div class="font-lora italic text-[8px] sm:text-[8.5px] leading-tight truncate" style="color: ${palette.subText || palette.text};">${escapeHtml(displayAuthor)}</div>
                     </div>
                     <div class="stack-vector-endcap">${endcaps.rightSvg}</div>
                 </div>
@@ -2293,7 +2407,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // "Auto" pill button so user can reset to automatic varied shelf rotation
         const autoBtn = document.createElement('button');
         autoBtn.type = 'button';
-        autoBtn.className = `px-2 py-0.5 text-[10px] font-bold rounded-full border-2 border-[#2c221e] transition-transform ${
+        autoBtn.className = `px-2.5 py-1 md:px-2 md:py-0.5 text-[11px] md:text-[10px] font-bold rounded-full border-2 border-[#2c221e] transition-transform ${
             !activePaletteName ? 'bg-[#2c221e] text-[#fffdf7] scale-105' : 'bg-[#fffdf7] text-[#2c221e] hover:bg-[#f4e8d6]'
         }`;
         autoBtn.innerText = 'Auto';
@@ -2318,7 +2432,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             sw.type = 'button';
             sw.title = pal.name;
             sw.style.backgroundColor = pal.bg;
-            sw.className = `w-5 h-5 rounded-full border-2 border-[#2c221e] transition-transform ${
+            sw.className = `w-6 h-6 md:w-5 md:h-5 rounded-full border-2 border-[#2c221e] transition-transform ${
                 isSelected ? 'ring-2 ring-offset-1 ring-[#2c221e] scale-115' : 'hover:scale-110'
             }`;
             sw.addEventListener('click', async () => {

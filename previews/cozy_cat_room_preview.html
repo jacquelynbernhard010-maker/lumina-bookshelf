@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview: The Cozy Cat Room & Expandable Bookshelf</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Gaegu:wght@400;700&family=Patrick+Hand&family=Lora:ital,wght@0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #2c221e;
+            --paper: #fffdf9;
+            --cream: #f5ebd8;
+            --terracotta: #e07a5f;
+            --matcha: #81b29a;
+            --honey: #f2cc8f;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Patrick Hand', cursive, sans-serif;
+            background-color: #e8dac3;
+            color: var(--ink);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .pixel-art {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        .wobbly-box {
+            border: 2.5px solid var(--ink);
+            border-radius: 18px 14px 20px 15px;
+            box-shadow: 4px 4px 0px var(--ink);
+        }
+
+        .hand-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background-color: var(--honey);
+            border: 2px solid var(--ink);
+            border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+            box-shadow: 2.5px 2.5px 0px var(--ink);
+            padding: 6px 14px;
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: var(--ink);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .hand-btn:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 4px 4px 0px var(--ink);
+        }
+        .hand-btn:active {
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0px var(--ink);
+        }
+
+        /* ================= RETRACTABLE LEFT SIDEBAR ================= */
+        .cozy-sidebar {
+            position: fixed;
+            top: 16px;
+            bottom: 16px;
+            left: 16px;
+            width: 280px;
+            background: var(--paper);
+            border: 3px solid var(--ink);
+            border-radius: 18px;
+            box-shadow: 6px 7px 0px var(--ink);
+            z-index: 60;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px 18px;
+            transition: transform 0.38s cubic-bezier(0.34, 1.4, 0.64, 1);
+        }
+
+        .cozy-sidebar.is-collapsed {
+            transform: translateX(calc(-100% - 20px));
+        }
+
+        /* Pull-tab attached to the right edge of the sidebar */
+        .sidebar-toggle-tab {
+            position: absolute;
+            top: 28px;
+            right: -44px;
+            width: 44px;
+            height: 48px;
+            background: var(--paper);
+            border: 3px solid var(--ink);
+            border-left: none;
+            border-radius: 0 14px 14px 0;
+            box-shadow: 4px 4px 0px var(--ink);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            font-weight: 900;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+        .sidebar-toggle-tab:hover {
+            background: #faedcd;
+        }
+
+        .washi-strip {
+            background: rgba(242, 204, 143, 0.7);
+            border: 1px dashed rgba(44, 34, 30, 0.35);
+        }
+
+        /* ================= COZY CAT ROOM STAGE ================= */
+        .room-viewport {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at center, #f6ecdc 0%, #dfc9ab 100%);
+            overflow: hidden;
+            transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), filter 0.5s ease;
+        }
+
+        /* When bookshelf is expanded, the background room softly zooms toward the wall shelf and blurs slightly */
+        body.shelf-expanded .room-viewport {
+            transform: scale(1.22) translate(-12%, 8%);
+            filter: brightness(0.82) blur(2px);
+        }
+
+        .room-scene-wrapper {
+            position: relative;
+            width: min(94vw, 1280px);
+            aspect-ratio: 2400 / 1450;
+            border: 3.5px solid var(--ink);
+            border-radius: 20px;
+            box-shadow: 10px 12px 0px var(--ink);
+            overflow: hidden;
+            background: #f5ebd8;
+        }
+
+        .room-bg-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Interactive Wall Bookshelf Hotspot inside the Cozy Room */
+        /* In main_cover_reference.png (2400x1450), the wall shelf sits at roughly left: 58.3%, top: 18.8%, width: 26.2%, height: 32.5% */
+        .room-shelf-hotspot {
+            position: absolute;
+            left: 58.3%;
+            top: 18.8%;
+            width: 26.3%;
+            height: 32.8%;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 4.1% 1.8% 1.6% 1.8%;
+        }
+
+        .room-shelf-hotspot:hover {
+            transform: scale(1.035);
+            box-shadow: 0 0 0 3px #fffdf7, 0 0 0 6px var(--ink), 0 12px 28px rgba(44, 34, 30, 0.35);
+            background: rgba(255, 253, 245, 0.08);
+        }
+
+        /* Floating Call-to-Action Badge on the Room Bookshelf */
+        .shelf-hotspot-badge {
+            position: absolute;
+            top: -38px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fffdf9;
+            border: 2px solid var(--ink);
+            box-shadow: 3px 3px 0px var(--ink);
+            border-radius: 999px;
+            padding: 3px 14px;
+            font-size: 0.92rem;
+            font-weight: 700;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            animation: gentleBob 2.4s ease-in-out infinite;
+        }
+
+        @keyframes gentleBob {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-5px); }
+        }
+
+        /* Miniature Vector Spines overlay inside the Room Shelf so your real books appear on the wall! */
+        .mini-shelf-row {
+            width: 100%;
+            height: 44%;
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            padding: 0 4px;
+        }
+
+        .mini-vector-spine {
+            height: 82%;
+            flex: 1;
+            max-width: 14px;
+            border: 1.5px solid #231815;
+            border-radius: 2px;
+            position: relative;
+        }
+
+        /* Interactive Sleeping Cat Hotspot on the Sofa */
+        .room-cat-hotspot {
+            position: absolute;
+            left: 33%;
+            top: 61%;
+            width: 9.5%;
+            height: 11.5%;
+            cursor: pointer;
+            z-index: 20;
+        }
+
+        .room-cat-bubble {
+            position: absolute;
+            top: -32px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fffdf9;
+            border: 1.5px solid var(--ink);
+            box-shadow: 2px 2px 0px var(--ink);
+            border-radius: 999px;
+            padding: 1px 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+        .room-cat-hotspot:hover .room-cat-bubble,
+        .room-cat-hotspot.purring .room-cat-bubble {
+            opacity: 1;
+        }
+
+        /* ================= EXPANDED FULL VECTOR BOOKSHELF OVERLAY ================= */
+        .expanded-shelf-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 24px 20px 80px;
+            pointer-events: none;
+            opacity: 0;
+            transform: scale(0.84) translateY(24px);
+            transition: opacity 0.42s cubic-bezier(0.22, 1, 0.36, 1), transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        body.shelf-expanded .expanded-shelf-modal {
+            pointer-events: auto;
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        /* Shift shelf centered when sidebar is open vs collapsed */
+        body.shelf-expanded:not(.sidebar-collapsed) .expanded-shelf-modal {
+            padding-left: 316px;
+        }
+
+        .wooden-bookcase {
+            width: 100%;
+            max-width: 940px;
+            background: linear-gradient(180deg, #a87449 0%, #99653c 100%);
+            border: 3.5px solid var(--ink);
+            border-radius: 16px 16px 12px 12px;
+            box-shadow: 10px 12px 0px var(--ink);
+            padding: 0 18px 18px 18px;
+            position: relative;
+        }
+
+        .bookcase-crown {
+            height: 20px;
+            margin: 0 -18px;
+            background: linear-gradient(180deg, #b98558 0%, #966238 100%);
+            border-bottom: 3px solid var(--ink);
+            border-radius: 12px 12px 0 0;
+            box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.25);
+        }
+
+        .bookcase-bay {
+            position: relative;
+            height: 274px;
+            padding: 10px 12px 2px 12px;
+            background-color: #f4e8d6;
+            background-image: repeating-linear-gradient(
+                90deg,
+                rgba(138, 90, 54, 0.05) 0px,
+                rgba(138, 90, 54, 0.05) 2px,
+                transparent 2px,
+                transparent 48px
+            );
+            border-left: 3px solid var(--ink);
+            border-right: 3px solid var(--ink);
+            box-shadow:
+                inset 0 16px 22px rgba(44, 34, 30, 0.16),
+                inset 12px 0 16px rgba(44, 34, 30, 0.11),
+                inset -12px 0 16px rgba(44, 34, 30, 0.11);
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .sketch-shelf {
+            background: linear-gradient(180deg, #c69264 0%, #ad794d 35%, #966239 100%);
+            border: 3px solid var(--ink);
+            box-shadow:
+                inset 0 2px 0 rgba(255, 255, 255, 0.28),
+                0 5px 0px #704726,
+                0 8px 0px var(--ink);
+            height: 25px;
+            position: relative;
+            z-index: 5;
+        }
+
+        /* Vector Spines in Expanded View */
+        .preview-spine {
+            border: 2.5px solid #231815;
+            border-radius: 6px;
+            box-shadow:
+                inset 3px 0 0 rgba(255, 255, 255, 0.22),
+                inset -3px 0 0 rgba(0, 0, 0, 0.14),
+                2.5px 3px 0px #231815;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 4px;
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            flex-shrink: 0;
+        }
+        .preview-spine:hover {
+            transform: translateY(-18px) scale(1.04);
+            z-index: 30;
+        }
+        .preview-spine-title {
+            font-family: 'Cinzel', Georgia, serif;
+            font-weight: 700;
+            font-size: 9.5px;
+            line-height: 1.2;
+            text-align: center;
+            text-transform: uppercase;
+            padding: 6px 3px;
+            border-radius: 4px;
+            width: 100%;
+            word-break: break-word;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================= 1. RETRACTABLE LEFT SIDEBAR (Replaces Top Header) ================= -->
+    <aside id="cozySidebar" class="cozy-sidebar">
+        <!-- Washi tape accents -->
+        <div class="absolute -top-2.5 left-8 w-20 h-5 washi-strip" style="transform: rotate(-2deg);"></div>
+
+        <!-- Retract / Expand Tab Button -->
+        <button id="btnToggleSidebar" class="sidebar-toggle-tab" title="Retract or Open Sidebar">
+            <span id="sidebarArrow">◀</span>
+        </button>
+
+        <div class="space-y-4 overflow-y-auto pr-1">
+            <!-- Brand Title -->
+            <div>
+                <div class="inline-block px-2.5 py-0.5 bg-[#faedcd] border border-[#2c221e] rounded-full text-[11px] font-bold mb-1">
+                    Interactive Concept Preview
+                </div>
+                <h1 class="text-3xl font-bold tracking-wide leading-none">The Cozy Nook</h1>
+                <p class="text-sm text-[#6b584d] mt-0.5">your quiet little reading room ~</p>
+            </div>
+
+            <!-- Primary CTA: Slip a Book In -->
+            <button class="hand-btn w-full py-2 text-base" style="background-color: var(--terracotta); color: #fff;">
+                <span>+ Slip a Book In</span>
+            </button>
+
+            <!-- Search Box -->
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-[#7d695c] mb-1">Find a Book</label>
+                <input type="text" placeholder="Search title or author..." 
+                       class="w-full px-3 py-1.5 bg-white border-2 border-[#2c221e] rounded-xl text-sm shadow-[2px_2px_0_#2c221e] focus:outline-none">
+            </div>
+
+            <!-- Shelf Filter Pills (Vertical Stack in Sidebar) -->
+            <div class="space-y-1.5 pt-2 border-t-2 border-dashed border-[#e6dcce]">
+                <label class="block text-xs font-bold uppercase tracking-wider text-[#7d695c]">Your Shelves</label>
+                <button class="w-full text-left px-3 py-1.5 rounded-xl border-2 border-[#2c221e] bg-[#f4a261] font-bold text-sm shadow-[2px_2px_0_#2c221e] flex justify-between">
+                    <span>All Books</span>
+                    <span>16</span>
+                </button>
+                <button class="w-full text-left px-3 py-1.5 rounded-xl border-2 border-[#2c221e] bg-white hover:bg-[#faedcd] font-bold text-sm shadow-[2px_2px_0_#2c221e] flex justify-between">
+                    <span>Currently Reading</span>
+                    <span>5</span>
+                </button>
+                <button class="w-full text-left px-3 py-1.5 rounded-xl border-2 border-[#2c221e] bg-white hover:bg-[#faedcd] font-bold text-sm shadow-[2px_2px_0_#2c221e] flex justify-between">
+                    <span>Favorites</span>
+                    <span>4</span>
+                </button>
+            </div>
+
+            <!-- Google Drive Auto-Sync Section (Replaces Supabase!) -->
+            <div class="p-3 bg-[#fdf8ee] border-2 border-[#2c221e] rounded-xl shadow-[2px_2px_0_#2c221e] space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-[#2c221e]">Google Drive Library</span>
+                    <span id="driveBadge" class="text-[11px] font-bold px-2 py-0.2 rounded-full bg-[#e2f0cb] border border-[#2c221e]">Connected</span>
+                </div>
+                <p class="text-xs text-[#6b584d] leading-snug">
+                    Watching folder <b>/Cozy Nook Books</b>. Any EPUB or PDF dropped into your Drive automatically appears on your shelf!
+                </p>
+                <button id="btnSyncDrive" class="hand-btn w-full text-xs py-1 bg-white">
+                    <span id="syncBtnText">Sync Drive Folder Now</span>
+                </button>
+            </div>
+
+            <!-- Room / Bookcase Controls -->
+            <div class="pt-2 border-t-2 border-dashed border-[#e6dcce] space-y-2">
+                <label class="block text-xs font-bold uppercase tracking-wider text-[#7d695c]">View & Finish</label>
+                <button id="btnSidebarToggleShelf" class="hand-btn w-full text-sm py-1.5" style="background-color: var(--matcha); color: #fff;">
+                    <span id="sidebarShelfBtnText">Open Full Bookshelf</span>
+                </button>
+                <button id="btnWoodFinish" class="hand-btn w-full text-xs py-1 bg-[#f4e8d6]">
+                    Wood: Honey Oak
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer Hint -->
+        <div class="pt-2 border-t border-[#e6dcce] text-[11px] text-[#786457] text-center">
+            Tip: Click the wall bookshelf in the room to zoom in!
+        </div>
+    </aside>
+
+    <!-- ================= 2. COZY CAT ROOM VIEWPORT ================= -->
+    <main class="room-viewport" id="roomViewport">
+        <div class="room-scene-wrapper">
+            <!-- Pixel Art Cozy Cat Room Scene -->
+            <img src="../assets/images/cat_room/main_cover_reference.png" alt="Cozy Cat Room" class="room-bg-img pixel-art">
+
+            <!-- Interactive Hotspot: The Wall Bookshelf -->
+            <div class="room-shelf-hotspot" id="roomShelfHotspot" title="Click to expand your full bookshelf!">
+                <div class="shelf-hotspot-badge">
+                    <span>Click Shelf to Browse Your 16 Books</span>
+                </div>
+            </div>
+
+            <!-- Interactive Hotspot: Sleeping Ginger Cat on the Sofa -->
+            <div class="room-cat-hotspot" id="roomCatHotspot" title="Pet Mochi on the sofa!">
+                <div class="room-cat-bubble" id="roomCatBubble">purrrr... Mochi loves the sunny sofa!</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ================= 3. EXPANDED FULL VECTOR BOOKSHELF OVERLAY ================= -->
+    <section class="expanded-shelf-modal" id="expandedShelfModal">
+        <div class="wooden-bookcase" id="expandedBookcase">
+            <!-- Top Bar above Crown: Minimize back to Room button -->
+            <div class="flex items-center justify-between px-4 py-2.5 bg-[#fdf8ee] border-b-2 border-[#2c221e] -mx-[18px] rounded-t-[13px]">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-lg text-[#2c221e]">Your Expanded Bookshelf</span>
+                    <span class="text-xs font-bold px-2.5 py-0.5 bg-[#e2f0cb] border border-[#2c221e] rounded-full">Synced with Google Drive</span>
+                </div>
+                <button id="btnMinimizeToRoom" class="hand-btn text-xs py-1 px-3.5 bg-[#faedcd]">
+                    ← Minimize Back to Cozy Room
+                </button>
+            </div>
+
+            <div class="bookcase-crown"></div>
+
+            <!-- Shelf Bay 1 with our New Expanded Palette Vector Spines -->
+            <div class="bookcase-bay" id="previewBay1"></div>
+            <div class="sketch-shelf flex items-center justify-center">
+                <span class="bg-[#fdf6e4] border border-[#2c221e] rounded px-3 text-[10px] font-bold">Shelf 1 • Click any book or minimize back to room</span>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        const bookPalette = [
+            { name: 'Mustard Gold', bg: '#E5A93C', text: '#2A1F10', stroke: '#543410', plaque: 'rgba(255,253,247,0.42)' },
+            { name: 'Classic Navy', bg: '#263366', text: '#FBF7EE', stroke: '#8FA1E0', plaque: '#192247' },
+            { name: 'Dusty Rose',   bg: '#D98880', text: '#2B1C1A', stroke: '#6E2622', plaque: 'rgba(255,251,247,0.38)' },
+            { name: 'Forest Green', bg: '#236343', text: '#F4E4BA', stroke: '#78C994', plaque: '#17452E' },
+            { name: 'Terracotta',   bg: '#C86446', text: '#FDFBF7', stroke: '#F7C5B4', plaque: '#9E462C' },
+            { name: 'Dusty Sage',   bg: '#829A7F', text: '#223120', stroke: '#2D422B', plaque: 'rgba(253,251,247,0.38)' },
+            { name: 'Cognac',       bg: '#9E5E38', text: '#FBF7EE', stroke: '#F2C19E', plaque: '#733F20' },
+            { name: 'Antique Linen',bg: '#EFE6D5', text: '#2E3842', stroke: '#6B5643', plaque: 'rgba(255,255,255,0.58)' },
+            { name: 'Peacock Teal', bg: '#2E6F74', text: '#FDFBF7', stroke: '#8CE0E6', plaque: '#1D4B4F' },
+            { name: 'Dusty Plum',   bg: '#5E3D56', text: '#FDFBF7', stroke: '#D9A3CC', plaque: '#42283C' },
+            { name: 'Powder Blue',  bg: '#8EAFBD', text: '#1E2D33', stroke: '#29424D', plaque: 'rgba(253,251,247,0.44)' },
+            { name: 'Coral Red',    bg: '#F06461', text: '#FFFDF7', stroke: '#78222B', plaque: 'rgba(255,253,247,0.22)' }
+        ];
+
+        const sampleBooks = [
+            { title: 'The Time Machine', author: 'H. G. Wells', w: 56, h: 242 },
+            { title: 'The Joy Luck Club', author: 'Amy Tan', w: 58, h: 248 },
+            { title: 'Whose Body?', author: 'Dorothy Sayers', w: 52, h: 236 },
+            { title: 'The Clue', author: 'Carolyn Wells', w: 54, h: 244 },
+            { title: 'Blue Hand', author: 'Edgar Wallace', w: 52, h: 238 },
+            { title: 'At the Villa Rose', author: 'A. E. W. Mason', w: 58, h: 250 },
+            { title: 'Cyberpunk 2077', author: 'Rafał Kosik', w: 60, h: 252 },
+            { title: 'Pride & Prejudice', author: 'Jane Austen', w: 56, h: 244 },
+            { title: 'Little Women', author: 'Louisa M. Alcott', w: 60, h: 248 },
+            { title: 'The Secret Garden', author: 'F. H. Burnett', w: 56, h: 240 },
+            { title: 'Anne of Green Gables', author: 'L. M. Montgomery', w: 58, h: 246 },
+            { title: 'Jane Eyre', author: 'Charlotte Brontë', w: 54, h: 238 }
+        ];
+
+        const bay1 = document.getElementById('previewBay1');
+        sampleBooks.forEach((b, i) => {
+            const pal = bookPalette[i % bookPalette.length];
+            const spine = document.createElement('div');
+            spine.className = 'preview-spine';
+            spine.style.width = b.w + 'px';
+            spine.style.height = b.h + 'px';
+            spine.style.backgroundColor = pal.bg;
+            spine.style.color = pal.text;
+            spine.innerHTML = `
+                <svg viewBox="0 0 52 32" class="w-full h-auto" fill="none">
+                    <line x1="4" y1="4" x2="48" y2="4" stroke="${pal.stroke}" stroke-width="1.8"/>
+                    <polygon points="26,8 38,18 26,28 14,18" fill="none" stroke="${pal.stroke}" stroke-width="1.6"/>
+                    <circle cx="26" cy="18" r="1.8" fill="${pal.text}"/>
+                </svg>
+                <div class="preview-spine-title" style="background: ${pal.plaque}; border: 1.5px solid ${pal.stroke};">
+                    ${b.title}
+                    <div style="font-family: 'Lora', serif; font-style: italic; font-size: 8px; text-transform: none; opacity: 0.9; margin-top: 3px;">
+                        ${b.author}
+                    </div>
+                </div>
+                <svg viewBox="0 0 52 32" class="w-full h-auto" fill="none">
+                    <polygon points="26,4 38,14 26,24 14,14" fill="none" stroke="${pal.stroke}" stroke-width="1.6"/>
+                    <circle cx="26" cy="14" r="1.8" fill="${pal.text}"/>
+                    <line x1="4" y1="28" x2="48" y2="28" stroke="${pal.stroke}" stroke-width="1.8"/>
+                </svg>
+            `;
+            bay1.appendChild(spine);
+        });
+
+        // Sidebar Retract / Expand Logic
+        const sidebar = document.getElementById('cozySidebar');
+        const btnToggleSidebar = document.getElementById('btnToggleSidebar');
+        const sidebarArrow = document.getElementById('sidebarArrow');
+
+        btnToggleSidebar.addEventListener('click', () => {
+            const collapsed = sidebar.classList.toggle('is-collapsed');
+            document.body.classList.toggle('sidebar-collapsed', collapsed);
+            sidebarArrow.textContent = collapsed ? '▶' : '◀';
+        });
+
+        // Expand / Minimize Bookshelf Logic
+        const roomShelfHotspot = document.getElementById('roomShelfHotspot');
+        const btnMinimizeToRoom = document.getElementById('btnMinimizeToRoom');
+        const btnSidebarToggleShelf = document.getElementById('btnSidebarToggleShelf');
+        const sidebarShelfBtnText = document.getElementById('sidebarShelfBtnText');
+
+        function setShelfExpanded(expanded) {
+            document.body.classList.toggle('shelf-expanded', expanded);
+            sidebarShelfBtnText.textContent = expanded ? '← Minimize to Cozy Room' : 'Open Full Bookshelf';
+        }
+
+        roomShelfHotspot.addEventListener('click', () => setShelfExpanded(true));
+        btnMinimizeToRoom.addEventListener('click', () => setShelfExpanded(false));
+        btnSidebarToggleShelf.addEventListener('click', () => {
+            setShelfExpanded(!document.body.classList.contains('shelf-expanded'));
+        });
+
+        // Clicking backdrop outside the expanded bookcase minimizes back to room
+        document.getElementById('expandedShelfModal').addEventListener('click', (e) => {
+            if (e.target.id === 'expandedShelfModal') {
+                setShelfExpanded(false);
+            }
+        });
+
+        // Simulated Google Drive Sync button in preview
+        const btnSyncDrive = document.getElementById('btnSyncDrive');
+        const syncBtnText = document.getElementById('syncBtnText');
+        btnSyncDrive.addEventListener('click', () => {
+            syncBtnText.textContent = 'Checking Google Drive...';
+            setTimeout(() => {
+                syncBtnText.textContent = 'Up to date (16 books)';
+            }, 900);
+        });
+    </script>
+</body>
+</html>

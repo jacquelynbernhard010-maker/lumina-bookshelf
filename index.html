@@ -10,53 +10,77 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Gaegu:wght@400;700&family=Patrick+Hand&family=Lora:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body class="p-4 md:p-8">
+<body class="p-3 sm:p-4 md:p-8">
 
     <!-- Main Cozy Container -->
     <div class="max-w-4xl mx-auto">
 
-        <!-- Top Hand-Drawn Header -->
-        <header class="bg-[#fffdf9] wobbly-border p-6 mb-8 shadow-[4px_4px_0px_#2c221e] relative">
-            <!-- Washi tape at top -->
-            <div class="absolute -top-3 left-12 w-28 h-6 washi-tape"></div>
-            <div class="absolute -top-3 right-16 w-24 h-6 washi-tape" style="transform: rotate(2deg); background: rgba(129, 178, 154, 0.6);"></div>
+        <!-- Compact Mobile Top Bar (Shown on phones/small tablets < 768px; opens the Retractable Side Panel) -->
+        <div class="mobile-top-bar md:hidden bg-[#fffdf9] border-2 border-[#2c221e] rounded-2xl px-3.5 py-2.5 mb-4 shadow-[3px_3px_0px_#2c221e] flex items-center justify-between gap-2">
+            <button type="button" id="btnOpenMobileSidebar" class="hand-btn hand-btn-sm px-3 py-1 text-sm font-bold bg-[#faedcd] flex items-center gap-1.5" title="Open Shelf Menu & Search">
+                <span>☰ Menu</span>
+            </button>
+            <h1 class="text-xl font-bold tracking-wide truncate">The Cozy Nook</h1>
+            <button type="button" id="btnQuickMobileUpload" class="hand-btn hand-btn-sm px-3 py-1 text-sm font-bold hand-btn-terracotta" title="Slip a Book In">
+                <span>+ Book</span>
+            </button>
+        </div>
+
+        <!-- Backdrop for Mobile Retractable Side Panel -->
+        <div id="mobileSidebarBackdrop" class="mobile-sidebar-backdrop md:hidden"></div>
+
+        <!-- Top Hand-Drawn Header on Desktop / Retractable Left Side Panel on Mobile (< 768px) -->
+        <header id="mainNavPanel" class="cozy-nav-panel bg-[#fffdf9] wobbly-border p-6 mb-8 shadow-[4px_4px_0px_#2c221e] relative">
+            <!-- Tactile Left-Edge Pull Tab on Mobile to Expand/Retract Side Panel anytime -->
+            <button type="button" id="btnMobilePullTab" class="mobile-pull-tab md:hidden" title="Toggle Side Panel">
+                <span id="mobilePullTabIcon">▶</span>
+            </button>
+
+            <!-- Washi tape at top (desktop) -->
+            <div class="hidden md:block absolute -top-3 left-12 w-28 h-6 washi-tape"></div>
+            <div class="hidden md:block absolute -top-3 right-16 w-24 h-6 washi-tape" style="transform: rotate(2deg); background: rgba(129, 178, 154, 0.6);"></div>
 
             <div class="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h1 class="text-3xl md:text-4xl font-bold tracking-wide">The Cozy Nook</h1>
+                <div class="w-full md:w-auto flex items-start justify-between gap-2">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-2xl md:text-4xl font-bold tracking-wide">The Cozy Nook</h2>
+                        </div>
+                        <p class="text-sm md:text-lg text-[#6b584d] -mt-0.5 md:-mt-1">your quiet little corner of hand-picked digital books ~</p>
                     </div>
-                    <p class="text-lg text-[#6b584d] -mt-1">your quiet little corner of hand-picked digital books ~</p>
+                    <button type="button" id="btnCloseMobileSidebar" class="md:hidden w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] flex items-center justify-center font-bold text-sm flex-shrink-0" title="Retract Side Panel">
+                        ◀
+                    </button>
                 </div>
 
                 <!-- Handcrafted UI Buttons -->
-                <div class="flex flex-wrap items-center gap-3">
-                    <button id="btnWoodTheme" class="hand-btn px-3.5 py-2 text-sm font-bold flex items-center gap-1.5 bg-[#f4e8d6]" title="Change Bookcase Wood Finish">
+                <div class="cozy-nav-actions flex flex-wrap items-center gap-2.5 md:gap-3 w-full md:w-auto">
+                    <button id="btnOpenUpload" class="hand-btn px-5 py-2 text-base font-bold hand-btn-terracotta flex items-center justify-center gap-2 w-full md:w-auto order-first md:order-last">
+                        <span>+ Slip a Book In</span>
+                    </button>
+
+                    <button id="btnWoodTheme" class="hand-btn px-3.5 py-2 text-sm font-bold flex items-center justify-center gap-1.5 bg-[#f4e8d6] flex-1 md:flex-initial" title="Change Bookcase Wood Finish">
                         <span id="woodThemeLabel">Wood: Honey Oak</span>
                     </button>
 
-                    <button id="btnPlant" class="hand-btn px-4 py-2 text-base font-bold flex items-center gap-2 hidden" style="background-color: var(--matcha);" title="Open Cozy Houseplants Tray">
+                    <button id="btnPlant" class="hand-btn px-4 py-2 text-base font-bold flex items-center justify-center gap-2 hidden" style="background-color: var(--matcha);" title="Open Cozy Houseplants Tray">
                         <img src="assets/images/plants/01_monstera.png" alt="" class="w-5 h-5 pixel-art-img -my-1">
                         <span id="plantLabel">Cozy Plants</span>
                     </button>
 
-                    <button id="btnOpenCloud" class="hand-btn px-4 py-2 text-base font-bold flex items-center gap-2" title="Supabase Cloud Sync">
+                    <button id="btnOpenCloud" class="hand-btn px-4 py-2 text-sm md:text-base font-bold flex items-center justify-center gap-2 flex-1 md:flex-initial" title="Supabase Cloud Sync">
                         <span id="cloudLabel">Cloud Sync</span>
-                    </button>
-
-                    <button id="btnOpenUpload" class="hand-btn px-5 py-2 text-base font-bold hand-btn-terracotta flex items-center gap-2">
-                        <span>+ Slip a Book In</span>
                     </button>
                 </div>
             </div>
 
             <!-- Search and Shelf Filter Pills -->
-            <div class="flex flex-wrap items-center justify-between gap-4 mt-6 pt-4 border-t-2 border-dashed border-[#e6dcce]">
+            <div class="cozy-nav-filters flex flex-wrap items-center justify-between gap-4 mt-5 md:mt-6 pt-4 border-t-2 border-dashed border-[#e6dcce]">
                 <div class="search-box-wrap">
                     <input type="text" id="searchInput" placeholder="Search title or author..." autocomplete="off">
                 </div>
 
-                <div class="flex items-center gap-2 overflow-x-auto pb-1" id="shelfNavList">
+                <div class="cozy-shelf-pills flex items-center gap-2 overflow-x-auto pb-1 w-full md:w-auto" id="shelfNavList">
                     <button class="shelf-pill active" data-shelf-id="all">
                         All Books (<span id="totalBooksCount">0</span>)
                     </button>
@@ -141,17 +165,17 @@
 
     <!-- ================= PULL-OUT BOOK MODAL ================= -->
     <div id="readModal" class="modal-backdrop">
-        <div class="bounce-in bg-[#fffefb] wobbly-border max-w-2xl w-full p-6 md:p-8 shadow-[8px_8px_0px_#2c221e] relative">
-            <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-32 h-6 washi-tape"></div>
+        <div class="bounce-in bg-[#fffefb] wobbly-border max-w-2xl w-full max-h-[90dvh] overflow-y-auto cozy-scroll p-5 md:p-8 shadow-[8px_8px_0px_#2c221e] relative">
+            <div class="hidden sm:block absolute -top-3 left-1/2 -translate-x-1/2 w-32 h-6 washi-tape"></div>
 
-            <button id="btnCloseReadModal" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-[#faedcd] border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] flex items-center justify-center font-bold text-lg hover:scale-110 active:scale-95 transition-transform" title="Put back on shelf">
+            <button id="btnCloseReadModal" class="absolute top-3.5 right-3.5 md:top-4 md:right-4 w-9 h-9 rounded-full bg-[#faedcd] border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] flex items-center justify-center font-bold text-lg hover:scale-110 active:scale-95 transition-transform z-20" title="Put back on shelf">
                 ✕
             </button>
 
-            <div class="flex flex-col md:flex-row gap-6 items-start mt-2">
+            <div class="flex flex-col md:flex-row gap-4 md:gap-6 items-center md:items-start mt-1 md:mt-2">
                 <!-- Book Cover Column -->
-                <div class="flex flex-col items-center w-full md:w-48 flex-shrink-0">
-                    <div id="modalCover" class="w-full h-64 rounded-xl border-2 border-[#2c221e] shadow-[4px_4px_0px_#2c221e] flex flex-col justify-between p-4 relative overflow-hidden bg-cover bg-center">
+                <div class="flex flex-col items-center w-36 sm:w-44 md:w-48 flex-shrink-0">
+                    <div id="modalCover" class="w-full h-48 sm:h-56 md:h-64 rounded-xl border-2 border-[#2c221e] shadow-[4px_4px_0px_#2c221e] flex flex-col justify-between p-3 md:p-4 relative overflow-hidden bg-cover bg-center">
                         <div class="flex justify-end items-start z-10">
                             <span id="modalEmoji" class="hidden"></span>
                             <span id="modalFileType" class="text-xs px-2 py-0.5 rounded bg-black/40 text-white font-bold uppercase">EPUB</span>
@@ -162,7 +186,7 @@
                             <p id="modalBookAuthor" class="font-lora italic text-xs text-[#5c4a3e]">Author Name</p>
                         </div>
                     </div>
-                    <div class="mt-2.5 w-full">
+                    <div class="mt-2 w-full">
                         <label for="changeCoverFileInput" class="w-full text-center hand-btn hand-btn-sm bg-[#faedcd] cursor-pointer text-xs font-bold py-1.5 flex items-center justify-center gap-1.5 hover:bg-[#f8e6b8] shadow-sm select-none">
                             Change Cover
                         </label>
@@ -173,7 +197,7 @@
                 <!-- Book Details & Placement Controls -->
                 <div class="flex-1 flex flex-col justify-between w-full">
                     <div>
-                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2 pr-8 md:pr-0">
                             <div class="flex items-center gap-2">
                                 <span class="text-xs font-bold px-2 py-0.5 bg-[#fefae0] border border-[#2c221e] rounded">CURRENTLY READING</span>
                                 <span class="text-xs text-[#8c786c]" id="modalShelfBadge">Saved to your shelf</span>
@@ -183,14 +207,14 @@
                             </button>
                         </div>
 
-                        <h2 id="modalDetailTitle" class="text-2xl font-bold text-[#2c221e] leading-snug">Book Title</h2>
-                        <p id="modalDetailAuthor" class="text-base font-bold text-[#e07a5f] mb-1">by Author</p>
+                        <h2 id="modalDetailTitle" class="text-xl md:text-2xl font-bold text-[#2c221e] leading-snug">Book Title</h2>
+                        <p id="modalDetailAuthor" class="text-sm md:text-base font-bold text-[#e07a5f] mb-1">by Author</p>
                     </div>
 
                     <!-- SHELF ARRANGEMENT STYLES -->
-                    <div class="my-4 pt-3 border-t-2 border-dashed border-[#e0d6c5]">
+                    <div class="my-3 md:my-4 pt-3 border-t-2 border-dashed border-[#e0d6c5]">
                         <label class="block text-xs font-bold text-[#5a483d] mb-2">Shelf Arrangement Style (Stacks pile to the top border; 1–2 stacked books hold spines on top):</label>
-                        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        <div class="grid grid-cols-3 sm:grid-cols-5 gap-1.5 md:gap-2">
                             <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="spine">Spine</button>
                             <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="front">Front</button>
                             <button type="button" class="btn-spine-style hand-btn hand-btn-sm" data-style="leaning">Lean</button>
@@ -204,7 +228,7 @@
                                 <label class="block text-xs font-bold text-[#5a483d]">Spine Color Palette:</label>
                                 <span id="selectedPaletteLabel" class="text-[11px] font-bold text-[#7d695c]">Auto Varied</span>
                             </div>
-                            <div id="spineColorSwatches" class="flex flex-wrap items-center gap-1.5"></div>
+                            <div id="spineColorSwatches" class="flex flex-wrap items-center gap-2 md:gap-1.5"></div>
                         </div>
                     </div>
 
@@ -218,7 +242,7 @@
                             <div id="modalProgFill" class="h-full bg-[#e07a5f] rounded-full border-r border-[#2c221e]" style="width: 0%;"></div>
                         </div>
 
-                        <div class="flex items-center justify-between gap-3 mt-5">
+                        <div class="flex items-center justify-between gap-2 mt-4 md:mt-5">
                             <button id="btnDeleteBook" class="text-xs font-bold text-[#a84242] hover:underline">
                                 Remove from shelf
                             </button>
@@ -239,7 +263,7 @@
 
     <!-- ================= ADD BOOK MODAL ================= -->
     <div id="uploadModal" class="modal-backdrop">
-        <div class="bounce-in bg-[#fffefb] wobbly-border max-w-md w-full p-6 shadow-[8px_8px_0px_#2c221e] relative">
+        <div class="bounce-in bg-[#fffefb] wobbly-border max-w-md w-full max-h-[90dvh] overflow-y-auto cozy-scroll p-5 md:p-6 shadow-[8px_8px_0px_#2c221e] relative">
             <button id="btnCloseUploadModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold">✕</button>
             
             <h3 class="text-2xl font-bold mb-1">Slip a New Book In</h3>
@@ -319,7 +343,7 @@
 
     <!-- ================= SUPABASE CLOUD MODAL ================= -->
     <div id="cloudModal" class="modal-backdrop">
-        <div class="bounce-in bg-[#fffefb] wobbly-border max-w-md w-full p-6 shadow-[8px_8px_0px_#2c221e] relative">
+        <div class="bounce-in bg-[#fffefb] wobbly-border max-w-md w-full max-h-[90dvh] overflow-y-auto cozy-scroll p-5 md:p-6 shadow-[8px_8px_0px_#2c221e] relative">
             <button id="btnCloseCloudModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold">✕</button>
 
             <h3 class="text-2xl font-bold mb-1">Supabase Cloud Sync</h3>

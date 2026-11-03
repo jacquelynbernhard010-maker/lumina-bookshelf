@@ -57,6 +57,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // State
     let currentReadingMode = localStorage.getItem('cozy_reading_mode') || 'single'; // 'single', 'spread', or 'scroll'
+    if (window.innerWidth < 640 && currentReadingMode === 'spread') {
+        currentReadingMode = 'single';
+    }
     let currentFontSize = parseInt(localStorage.getItem('cozy_reader_font_size') || '105', 10);
     let currentTheme = localStorage.getItem('cozy_reader_theme') || 'theme-sepia';
     let currentFontFamily = localStorage.getItem('cozy_reader_font') || "'Lora', Georgia, serif";
@@ -374,6 +377,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                             if (rendition) rendition.next();
                         }
                     });
+
+                    // Horizontal touch swipe for phones & tablets
+                    let touchStartX = 0;
+                    let touchStartY = 0;
+                    doc.addEventListener('touchstart', (e) => {
+                        if (!e.changedTouches || !e.changedTouches.length) return;
+                        touchStartX = e.changedTouches[0].screenX;
+                        touchStartY = e.changedTouches[0].screenY;
+                    }, { passive: true });
+
+                    doc.addEventListener('touchend', (e) => {
+                        if (!e.changedTouches || !e.changedTouches.length) return;
+                        const deltaX = e.changedTouches[0].screenX - touchStartX;
+                        const deltaY = e.changedTouches[0].screenY - touchStartY;
+                        if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.35) {
+                            if (deltaX < 0) {
+                                if (rendition) rendition.next();
+                            } else {
+                                if (rendition) rendition.prev();
+                            }
+                        }
+                    }, { passive: true });
                 }
             }
         });
