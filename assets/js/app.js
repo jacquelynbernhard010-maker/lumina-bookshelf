@@ -4,129 +4,211 @@
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Curated 10-tone Vector Spine & Stack Color Palettes (from vector_spine_shelf_preview.html)
-    const coverThemes = [
+    // Expanded Book Spine & Stack Color Palette (Current favorites + new expanded tones + vector classics)
+    const bookPalette = [
+        // Current favorites
+        {
+            name: 'Mustard Gold',
+            bg: '#E5A93C',
+            text: '#2A1F10',
+            subText: '#4A3519',
+            ribbon: '#236343',
+            accent: '#543410',
+            plaqueBg: 'rgba(255, 253, 247, 0.42)',
+            plaqueSolid: '#693B16',
+            plaqueStroke: '#543410',
+            plaqueInnerStroke: '#784C1A'
+        },
+        {
+            name: 'Classic Navy',
+            bg: '#263366',
+            text: '#FBF7EE',
+            subText: '#D5DDF5',
+            ribbon: '#E5A93C',
+            accent: '#8FA1E0',
+            plaqueBg: '#192247',
+            plaqueSolid: '#192247',
+            plaqueStroke: '#8FA1E0',
+            plaqueInnerStroke: '#B8C5F2'
+        },
+        {
+            name: 'Dusty Rose',
+            bg: '#D98880',
+            text: '#2B1C1A',
+            subText: '#4D2B28',
+            ribbon: '#9C8EB9',
+            accent: '#6E2622',
+            plaqueBg: 'rgba(255, 251, 247, 0.38)',
+            plaqueSolid: '#F5D6D3',
+            plaqueStroke: '#6E2622',
+            plaqueInnerStroke: '#943B36'
+        },
+        {
+            name: 'Forest Green',
+            bg: '#236343',
+            text: '#F4E4BA',
+            subText: '#D8F3DC',
+            ribbon: '#C86446',
+            accent: '#78C994',
+            plaqueBg: '#17452E',
+            plaqueSolid: '#2F7D56',
+            plaqueStroke: '#78C994',
+            plaqueInnerStroke: '#B0EBCA'
+        },
+
+        // New expanded tones
+        {
+            name: 'Terracotta',
+            bg: '#C86446',
+            text: '#FDFBF7',
+            subText: '#FFE4D9',
+            ribbon: '#829A7F',
+            accent: '#592012',
+            plaqueBg: '#9E462C',
+            plaqueSolid: '#9E462C',
+            plaqueStroke: '#F7C5B4',
+            plaqueInnerStroke: '#FFE0D4'
+        },
+        {
+            name: 'Dusty Sage',
+            bg: '#829A7F',
+            text: '#223120',
+            subText: '#2F452C',
+            ribbon: '#D49B35',
+            accent: '#2D422B',
+            plaqueBg: 'rgba(253, 251, 247, 0.38)',
+            plaqueSolid: '#647D61',
+            plaqueStroke: '#2D422B',
+            plaqueInnerStroke: '#436140'
+        },
+        {
+            name: 'Cognac',
+            bg: '#9E5E38',
+            text: '#FBF7EE',
+            subText: '#F5DEC9',
+            ribbon: '#2E6F74',
+            accent: '#42210D',
+            plaqueBg: '#733F20',
+            plaqueSolid: '#733F20',
+            plaqueStroke: '#F2C19E',
+            plaqueInnerStroke: '#F7D9C1'
+        },
+        {
+            name: 'Antique Linen',
+            bg: '#EFE6D5',
+            text: '#2E3842',
+            subText: '#4A5561',
+            ribbon: '#B86B77',
+            accent: '#6B5643',
+            plaqueBg: 'rgba(255, 255, 255, 0.58)',
+            plaqueSolid: '#DFD2BC',
+            plaqueStroke: '#6B5643',
+            plaqueInnerStroke: '#8C735B'
+        },
+        {
+            name: 'Peacock Teal',
+            bg: '#2E6F74',
+            text: '#FDFBF7',
+            subText: '#D2F0F2',
+            ribbon: '#C86446',
+            accent: '#8CE0E6',
+            plaqueBg: '#1D4B4F',
+            plaqueSolid: '#1D4B4F',
+            plaqueStroke: '#8CE0E6',
+            plaqueInnerStroke: '#B8F1F5'
+        },
+        {
+            name: 'Dusty Plum',
+            bg: '#5E3D56',
+            text: '#FDFBF7',
+            subText: '#F0D5E9',
+            ribbon: '#8EAFBD',
+            accent: '#D9A3CC',
+            plaqueBg: '#42283C',
+            plaqueSolid: '#42283C',
+            plaqueStroke: '#D9A3CC',
+            plaqueInnerStroke: '#EBC5E1'
+        },
+        {
+            name: 'Powder Blue',
+            bg: '#8EAFBD',
+            text: '#1E2D33',
+            subText: '#2C424B',
+            ribbon: '#9E5E38',
+            accent: '#29424D',
+            plaqueBg: 'rgba(253, 251, 247, 0.44)',
+            plaqueSolid: '#6E91A1',
+            plaqueStroke: '#29424D',
+            plaqueInnerStroke: '#3F606E'
+        },
+
+        // Additional vibrant vector classics
         {
             name: 'Coral Red',
-            bg: '#f06461',
-            accent: '#78222b',
+            bg: '#F06461',
+            text: '#FFFDF7',
+            subText: '#FFE2D8',
+            ribbon: '#81B29A',
+            accent: '#78222B',
             plaqueBg: 'rgba(255, 253, 247, 0.22)',
-            plaqueSolid: '#c04245',
-            plaqueStroke: '#78222b',
-            plaqueInnerStroke: '#ffd1d3',
-            text: '#fffdf7',
-            subText: '#ffe2d8',
-            ribbon: '#81b29a'
+            plaqueSolid: '#C04245',
+            plaqueStroke: '#78222B',
+            plaqueInnerStroke: '#FFD1D3'
         },
         {
             name: 'Royal Purple',
-            bg: '#6c4db5',
-            accent: '#b399eb',
-            plaqueBg: '#4d328c',
-            plaqueSolid: '#4d328c',
-            plaqueStroke: '#b399eb',
-            plaqueInnerStroke: '#d8caf5',
-            text: '#fffdf7',
-            subText: '#dfd4f7',
-            ribbon: '#e07a5f'
-        },
-        {
-            name: 'Warm Goldenrod',
-            bg: '#f4b340',
-            accent: '#542e0e',
-            plaqueBg: 'rgba(255, 253, 247, 0.42)',
-            plaqueSolid: '#e59d24',
-            plaqueStroke: '#542e0e',
-            plaqueInnerStroke: '#784418',
-            text: '#381b04',
-            subText: '#542e0e',
-            ribbon: '#6c4db5'
-        },
-        {
-            name: 'Deep Indigo Navy',
-            bg: '#252961',
-            accent: '#8286cc',
-            plaqueBg: '#191b45',
-            plaqueSolid: '#191b45',
-            plaqueStroke: '#8286cc',
-            plaqueInnerStroke: '#b0b3eb',
-            text: '#fffdf7',
-            subText: '#c8cbf5',
-            ribbon: '#f4b340'
-        },
-        {
-            name: 'Blush Dusty Rose',
-            bg: '#e59fa0',
-            accent: '#8f2934',
-            plaqueBg: '#f9dcdc',
-            plaqueSolid: '#f9dcdc',
-            plaqueStroke: '#b3424d',
-            plaqueInnerStroke: '#d97780',
-            text: '#6e1922',
-            subText: '#8f2934',
-            ribbon: '#296541'
-        },
-        {
-            name: 'Forest Emerald',
-            bg: '#296541',
-            accent: '#78c994',
-            plaqueBg: '#1e4d30',
-            plaqueSolid: '#3d8c5b',
-            plaqueStroke: '#78c994',
-            plaqueInnerStroke: '#b0ebca',
-            text: '#fffdf7',
-            subText: '#d1fae5',
-            ribbon: '#f06461'
+            bg: '#6C4DB5',
+            text: '#FFFDF7',
+            subText: '#DFD4F7',
+            ribbon: '#E07A5F',
+            accent: '#B399EB',
+            plaqueBg: '#4D328C',
+            plaqueSolid: '#4D328C',
+            plaqueStroke: '#B399EB',
+            plaqueInnerStroke: '#D8CAF5'
         },
         {
             name: 'Soft Lavender',
-            bg: '#a890d3',
-            accent: '#4a2c6b',
+            bg: '#A890D3',
+            text: '#2D1447',
+            subText: '#4A2C6B',
+            ribbon: '#236343',
+            accent: '#4A2C6B',
             plaqueBg: 'rgba(255, 253, 247, 0.36)',
-            plaqueSolid: '#886eb8',
-            plaqueStroke: '#4a2c6b',
-            plaqueInnerStroke: '#65418c',
-            text: '#2d1447',
-            subText: '#4a2c6b',
-            ribbon: '#296541'
+            plaqueSolid: '#886EB8',
+            plaqueStroke: '#4A2C6B',
+            plaqueInnerStroke: '#65418C'
         },
         {
             name: 'Wine Burgundy',
             bg: '#773037',
-            accent: '#eb888c',
-            plaqueBg: '#521a20',
-            plaqueSolid: '#521a20',
-            plaqueStroke: '#eb888c',
-            plaqueInnerStroke: '#f7b2b5',
-            text: '#fffdf7',
-            subText: '#ffd4d6',
-            ribbon: '#f4b340'
-        },
-        {
-            name: 'Mustard Amber',
-            bg: '#fabd44',
-            accent: '#693b16',
-            plaqueBg: '#693b16',
-            plaqueSolid: '#693b16',
-            plaqueStroke: '#231815',
-            plaqueInnerStroke: '#9c5a25',
-            text: '#fffdf7',
-            subText: '#fde68a',
-            ribbon: '#6c4db5'
-        },
-        {
-            name: 'Vintage Olive',
-            bg: '#326e4a',
-            accent: '#9be0b4',
-            plaqueBg: '#204a31',
-            plaqueSolid: '#204a31',
-            plaqueStroke: '#9be0b4',
-            plaqueInnerStroke: '#c4f2d5',
-            text: '#fffdf7',
-            subText: '#d5f5e0',
-            ribbon: '#e07a5f'
+            text: '#FFFDF7',
+            subText: '#FFD4D6',
+            ribbon: '#E5A93C',
+            accent: '#EB888C',
+            plaqueBg: '#521A20',
+            plaqueSolid: '#521A20',
+            plaqueStroke: '#EB888C',
+            plaqueInnerStroke: '#F7B2B5'
         }
     ];
+
+    const coverThemes = bookPalette;
+
+    // Helper to pick a color palette based on user customization or shelf slot index
+    function getBookStyle(index, book = null) {
+        if (book) {
+            if (book.palette_name) {
+                const byName = bookPalette.find(p => p.name === book.palette_name);
+                if (byName) return byName;
+            }
+            if (book.custom_spine_color) {
+                const byHex = bookPalette.find(p => p.bg.toLowerCase() === String(book.spine_color || '').toLowerCase());
+                if (byHex) return byHex;
+            }
+        }
+        return bookPalette[Math.abs(index) % bookPalette.length];
+    }
 
     // Feature flag: Set to true in the future to re-enable the Cozy Houseplants Greenhouse & Shelf Decorator
     const ENABLE_COZY_PLANTS = false;
@@ -941,7 +1023,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Render all upright spines / front / leaning books snugly across to the right border
             shelfData.upright.forEach((book) => {
                 const slotIdx = globalThemeCounter;
-                const theme = coverThemes[slotIdx % coverThemes.length];
+                const theme = getBookStyle(slotIdx, book);
                 globalThemeCounter++;
                 bay.appendChild(createDoodleBook(book, theme, null, slotIdx));
             });
@@ -2141,7 +2223,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             topSpines.forEach((tb, idx) => {
                 const slotIdx = baseThemeIdx + bottomBooks.length + idx;
-                const theme = coverThemes[slotIdx % coverThemes.length];
+                const theme = getBookStyle(slotIdx, tb);
                 const naturalMetrics = getBookSpineMetrics(tb);
                 const topSpineWidth = Math.min(53, Math.max(48, naturalMetrics.width - 8));
                 const topSpineHeight = Math.min(maxTopSpineHeight, maxTopSpineHeight - ((idx * 7) % 14));
@@ -2154,7 +2236,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Render the horizontal stacked books at the bottom (with matching Vector Colors & Ornament End-Caps)
         bottomBooks.forEach((b, i) => {
             const slotIdx = baseThemeIdx + i;
-            const palette = coverThemes[slotIdx % coverThemes.length];
+            const palette = getBookStyle(slotIdx, b);
             const color = palette.bg;
             const displayTitle = cleanTitle(b.title);
             const displayAuthor = cleanAuthor(b.author);
@@ -2196,6 +2278,69 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    function renderSpineColorSwatches(book, currentTheme) {
+        const swatchContainer = document.getElementById('spineColorSwatches');
+        const labelEl = document.getElementById('selectedPaletteLabel');
+        if (!swatchContainer) return;
+
+        swatchContainer.innerHTML = '';
+        const activePaletteName = book.palette_name || '';
+
+        if (labelEl) {
+            labelEl.innerText = activePaletteName ? `${activePaletteName}` : `Auto Varied (${currentTheme ? currentTheme.name : 'Default'})`;
+        }
+
+        // "Auto" pill button so user can reset to automatic varied shelf rotation
+        const autoBtn = document.createElement('button');
+        autoBtn.type = 'button';
+        autoBtn.className = `px-2 py-0.5 text-[10px] font-bold rounded-full border-2 border-[#2c221e] transition-transform ${
+            !activePaletteName ? 'bg-[#2c221e] text-[#fffdf7] scale-105' : 'bg-[#fffdf7] text-[#2c221e] hover:bg-[#f4e8d6]'
+        }`;
+        autoBtn.innerText = 'Auto';
+        autoBtn.title = 'Automatically vary spine color across the shelf';
+        autoBtn.addEventListener('click', async () => {
+            book.palette_name = '';
+            book.custom_spine_color = false;
+            await window.storageEngine.updateBook(book.id, {
+                palette_name: '',
+                custom_spine_color: false
+            });
+            renderShelves();
+            renderSpineColorSwatches(book, currentTheme);
+            showToast('Set spine color to Auto Varied', 'success');
+        });
+        swatchContainer.appendChild(autoBtn);
+
+        // Render a swatch circle for every color in bookPalette
+        bookPalette.forEach((pal) => {
+            const isSelected = activePaletteName === pal.name;
+            const sw = document.createElement('button');
+            sw.type = 'button';
+            sw.title = pal.name;
+            sw.style.backgroundColor = pal.bg;
+            sw.className = `w-5 h-5 rounded-full border-2 border-[#2c221e] transition-transform ${
+                isSelected ? 'ring-2 ring-offset-1 ring-[#2c221e] scale-115' : 'hover:scale-110'
+            }`;
+            sw.addEventListener('click', async () => {
+                book.palette_name = pal.name;
+                book.spine_color = pal.bg;
+                book.custom_spine_color = true;
+                if (!book.cover_url && modalCover) {
+                    modalCover.style.backgroundColor = pal.bg;
+                }
+                await window.storageEngine.updateBook(book.id, {
+                    palette_name: pal.name,
+                    spine_color: pal.bg,
+                    custom_spine_color: true
+                });
+                renderShelves();
+                renderSpineColorSwatches(book, pal);
+                showToast(`Spine color set to ${pal.name}!`, 'success');
+            });
+            swatchContainer.appendChild(sw);
+        });
+    }
+
     async function openBookModal(book, theme) {
         state.selectedBook = book;
         const displayTitle = cleanTitle(book.title);
@@ -2207,7 +2352,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (modalCoverTitleBox) modalCoverTitleBox.classList.add('hidden');
         } else {
             modalCover.style.backgroundImage = 'none';
-            modalCover.style.backgroundColor = book.spine_color || theme.bg;
+            modalCover.style.backgroundColor = theme ? theme.bg : (book.spine_color || '#E5A93C');
             if (modalCoverTitleBox) modalCoverTitleBox.classList.remove('hidden');
         }
 
@@ -2235,6 +2380,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 b.className = 'btn-spine-style hand-btn hand-btn-sm bg-white';
             }
         });
+
+        renderSpineColorSwatches(book, theme);
 
         readModal.classList.add('active');
     }
