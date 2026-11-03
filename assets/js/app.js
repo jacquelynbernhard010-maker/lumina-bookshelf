@@ -760,10 +760,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
                 <div id="catSprite" class="pixel-cat-sprite ${currentCat.id}"></div>
             </div>
-            <div class="text-[11px] font-bold text-[#8c735b] select-none pb-1 hidden sm:block">
-                <span>The Cozy Nook Bookcase</span>
+            <div class="flex items-center gap-2 pb-1.5">
+                <button type="button" id="btnQuickAutoPlants" class="hand-btn hand-btn-sm text-[11px] font-bold px-2.5 py-0.5 bg-[#e2f0cb] text-[#2c221e]" title="Auto-arrange plants neatly across your shelves and book stacks">
+                    Auto-Style Plants
+                </button>
+                <div class="text-[11px] font-bold text-[#8c735b] select-none hidden sm:block">
+                    <span>The Cozy Nook Bookcase</span>
+                </div>
             </div>
         `;
+
+        const btnQuickAuto = topHeader.querySelector('#btnQuickAutoPlants');
+        if (btnQuickAuto) {
+            btnQuickAuto.addEventListener('click', () => {
+                cycleCuratedPlantPreset();
+            });
+        }
 
         const cozyCat = topHeader.querySelector('#cozyCat');
         if (cozyCat) {
@@ -859,6 +871,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Cozy Houseplants Greenhouse & Drag-and-Drop Shelf Decorator ---
 
+    const PLANT_PRESET_ORDER = ['balanced', 'jungle', 'zen', 'cottage'];
+    let currentPresetIdx = -1;
+    let activeSpotFilter = 'auto';
+    let targetedSpotId = null;
+
     function savePlacedPlants() {
         try {
             localStorage.setItem('cozy_shelf_plants', JSON.stringify(state.placedPlants));
@@ -870,6 +887,237 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!plantLabel) return;
         const count = state.placedPlants.length;
         plantLabel.innerText = count > 0 ? `Cozy Plants (${count})` : 'Cozy Plants';
+    }
+
+    // Computes all well-organized, non-overlapping plant spots on the current bookcase
+    function computeOrganizedPlantSpots(bookcaseEl) {
+        if (!bookcaseEl) return [];
+        const bcRect = bookcaseEl.getBoundingClientRect();
+        if (bcRect.width <= 0) return [];
+        const spots = [];
+
+        // 1. Shelftop Crown Spots (avoiding Mochi on the far left 0..20%)
+        spots.push({
+            spotId: 'shelftop-center',
+            category: 'shelftop',
+            label: 'Shelftop Center',
+            xPercent: 52,
+            surfaceY: 10,
+            defaultSize: 80
+        });
+        spots.push({
+            spotId: 'shelftop-right',
+            category: 'shelftop',
+            label: 'Shelftop Right',
+            xPercent: 83,
+            surfaceY: 10,
+            defaultSize: 80
+        });
+        spots.push({
+            spotId: 'shelftop-left-mid',
+            category: 'shelftop',
+            label: 'Shelftop Mid-Left',
+            xPercent: 28,
+            surfaceY: 10,
+            defaultSize: 64
+        });
+
+        // 2. Top of Horizontal Book Stacks (that don't have standing spines on top and have >= 70px vertical room)
+        const bays = bookcaseEl.querySelectorAll('.bookcase-bay');
+        const planks = bookcaseEl.querySelectorAll('.sketch-shelf');
+
+        bays.forEach((bay, sIdx) => {
+            const bayRect = bay.getBoundingClientRect();
+            const stackGroups = bay.querySelectorAll('.stack-group');
+
+            stackGroups.forEach((sg, gIdx) => {
+                if (sg.querySelector('.stack-top-spines')) return;
+                const sgRect = sg.getBoundingClientRect();
+                const headroom = sgRect.top - bayRect.top;
+                if (headroom >= 66) {
+                    const centerPx = (sgRect.left + sgRect.width / 2) - bcRect.left - 32;
+                    const xPercent = Math.max(2, Math.min(90, (centerPx / bcRect.width) * 100));
+                    const surfaceY = Math.round((sgRect.top - bcRect.top) + 4);
+                    spots.push({
+                        spotId: `stack-${sIdx}-${gIdx}`,
+                        category: 'stack',
+                        label: `Stack Top`,
+                        xPercent: Number(xPercent.toFixed(1)),
+                        surfaceY,
+                        defaultSize: 64
+                    });
+                }
+            });
+
+            // 3. Open Shelf Nook on each shelf plank (right after the last book/bookend)
+            const plank = planks[sIdx];
+            if (plank) {
+                const pRect = plank.getBoundingClientRect();
+                const plankSurfaceY = Math.round((pRect.top - bcRect.top) + 4);
+
+                let maxBookRightPx = 24;
+                Array.from(bay.children).forEach((child) => {
+                    if (child.classList.contains('doodle-book') || child.classList.contains('stack-group') || child.classList.contains('shelf-bookend')) {
+                        const cRect = child.getBoundingClientRect();
+                        const rightRel = cRect.right - bcRect.left;
+                        if (rightRel > maxBookRightPx) maxBookRightPx = rightRel;
+                    }
+                });
+
+                const openWidthPx = (bcRect.width - 24) - maxBookRightPx;
+                if (openWidthPx >= 68) {
+                    const nookXPx = Math.min(bcRect.width - 96, maxBookRightPx + 14);
+                    const nookXPercent = Math.max(15, Math.min(89, (nookXPx / bcRect.width) * 100));
+                    spots.push({
+                        spotId: `nook-${sIdx}-a`,
+                        category: 'nook',
+                        label: `Shelf ${sIdx + 1} Nook`,
+                        xPercent: Number(nookXPercent.toFixed(1)),
+                        surfaceY: plankSurfaceY,
+                        defaultSize: 80
+                    });
+
+                    // If there is plenty of open shelf space, add a second corner nook on the right
+                    if (openWidthPx >= 185 && nookXPercent < 74) {
+                        spots.push({
+                            spotId: `nook-${sIdx}-b`,
+                            category: 'nook',
+                            label: `Shelf ${sIdx + 1} Corner`,
+                            xPercent: 86,
+                            surfaceY: plankSurfaceY,
+                            defaultSize: 80
+                        });
+                    }
+                } else {
+                    // Fallback neat corner spot if shelf is full
+                    spots.push({
+                        spotId: `nook-${sIdx}-corner`,
+                        category: 'nook',
+                        label: `Shelf ${sIdx + 1} Corner`,
+                        xPercent: 88,
+                        surfaceY: plankSurfaceY,
+                        defaultSize: 64
+                    });
+                }
+            }
+        });
+
+        return spots;
+    }
+
+    // Finds the best unoccupied organized spot matching the active category filter
+    function pickBestOrganizedSpot(bookcaseEl, preferredCategory = 'auto') {
+        const allSpots = computeOrganizedPlantSpots(bookcaseEl);
+        if (allSpots.length === 0) return { xPercent: 70, surfaceY: 10, defaultSize: 80, label: 'Shelftop' };
+
+        // 1. If the user explicitly clicked a "+ Plant Spot" marker on the shelf, use it!
+        if (targetedSpotId) {
+            const targeted = allSpots.find(s => s.spotId === targetedSpotId);
+            if (targeted) {
+                targetedSpotId = null;
+                return targeted;
+            }
+        }
+
+        // 2. Filter by category if requested
+        const candidates = preferredCategory === 'auto'
+            ? allSpots
+            : allSpots.filter(s => s.category === preferredCategory);
+        const pool = candidates.length > 0 ? candidates : allSpots;
+
+        // 3. Pick the first spot that doesn't already have a plant right on it
+        for (const spot of pool) {
+            const occupied = state.placedPlants.some(p => {
+                const pBottom = p.yPx + (p.size || 80);
+                return Math.abs(p.xPercent - spot.xPercent) < 8 && Math.abs(pBottom - spot.surfaceY) < 24;
+            });
+            if (!occupied) return spot;
+        }
+
+        // 4. If all spots in pool are occupied, slightly offset from the first spot
+        const fallback = pool[state.placedPlants.length % pool.length];
+        return {
+            ...fallback,
+            xPercent: Math.min(90, Math.max(8, fallback.xPercent + ((state.placedPlants.length % 3) - 1) * 6))
+        };
+    }
+
+    // Applies one of the 4 curated interior-designer plant layouts tailored to the user's current books
+    function applyCuratedPlantPreset(presetKey) {
+        const bookcaseEl = document.querySelector('.wooden-bookcase');
+        if (!bookcaseEl) return;
+
+        const spots = computeOrganizedPlantSpots(bookcaseEl);
+        const shelftopCenter = spots.find(s => s.spotId === 'shelftop-center') || { xPercent: 52, surfaceY: 10 };
+        const shelftopRight = spots.find(s => s.spotId === 'shelftop-right') || { xPercent: 83, surfaceY: 10 };
+        const shelftopLeft = spots.find(s => s.spotId === 'shelftop-left-mid') || { xPercent: 28, surfaceY: 10 };
+        const stackSpots = spots.filter(s => s.category === 'stack');
+        const nookSpots = spots.filter(s => s.category === 'nook');
+
+        const newPlants = [];
+        const addAtSpot = (spot, file, name, sizeOverride, flipped = false) => {
+            if (!spot) return;
+            const sz = sizeOverride || spot.defaultSize || 80;
+            newPlants.push({
+                id: 'plant-' + Date.now() + '-' + Math.floor(Math.random() * 10000) + '-' + newPlants.length,
+                file,
+                name,
+                xPercent: spot.xPercent,
+                yPx: spot.surfaceY - sz,
+                size: sz,
+                flipped
+            });
+        };
+
+        if (presetKey === 'jungle') {
+            addAtSpot(shelftopLeft, '28_string_of_pearls.png', 'String of Pearls', 64, false);
+            addAtSpot(shelftopCenter, '02_banana_plant.png', 'Banana Plant', 96, false);
+            addAtSpot(shelftopRight, '29_hanging_fern.png', 'Hanging Fern', 80, true);
+            if (stackSpots[0]) addAtSpot(stackSpots[0], '05_spider_plant.png', 'Spider Plant', 64, false);
+            if (nookSpots[0]) addAtSpot(nookSpots[0], '22_monstera_dark_pot.png', 'Dark Monstera', 80, false);
+            if (nookSpots[1]) addAtSpot(nookSpots[1], '25_parlor_palm.png', 'Parlor Palm', 80, true);
+        } else if (presetKey === 'zen') {
+            addAtSpot(shelftopCenter, '10_bonsai.png', 'Bonsai', 80, false);
+            addAtSpot(shelftopRight, '08_lucky_bamboo.png', 'Lucky Bamboo', 80, false);
+            if (stackSpots[0]) addAtSpot(stackSpots[0], '11_aloe_vera.png', 'Aloe Vera', 64, false);
+            if (nookSpots[0]) addAtSpot(nookSpots[0], '09_boxwood_topiary.png', 'Boxwood Topiary', 80, false);
+            if (nookSpots[1]) addAtSpot(nookSpots[1], '24_money_tree.png', 'Money Tree', 80, false);
+        } else if (presetKey === 'cottage') {
+            addAtSpot(shelftopCenter, '21_window_box.png', 'Window Box', 80, false);
+            addAtSpot(shelftopRight, '16_rose_bush.png', 'Rose Bush', 80, false);
+            if (stackSpots[0]) addAtSpot(stackSpots[0], '13_african_violet.png', 'African Violet', 64, false);
+            if (nookSpots[0]) addAtSpot(nookSpots[0], '15_ranunculus.png', 'Ranunculus', 80, false);
+            if (nookSpots[1]) addAtSpot(nookSpots[1], '14_geranium.png', 'Geranium', 80, true);
+        } else {
+            // 'balanced' default
+            addAtSpot(shelftopCenter, '10_bonsai.png', 'Bonsai', 80, false);
+            addAtSpot(shelftopRight, '17_hanging_pothos.png', 'Hanging Pothos', 80, false);
+            if (stackSpots[0]) addAtSpot(stackSpots[0], '20_teacup_plant.png', 'Teacup Plant', 64, false);
+            if (nookSpots[0]) addAtSpot(nookSpots[0], '01_monstera.png', 'Monstera', 80, false);
+            if (nookSpots[1]) addAtSpot(nookSpots[1], '12_peace_lily.png', 'Peace Lily', 80, true);
+        }
+
+        state.placedPlants = newPlants;
+        savePlacedPlants();
+        renderPlacedPlants(bookcaseEl);
+
+        // Highlight active preset pill if open
+        document.querySelectorAll('.plant-preset-pill').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.preset === presetKey);
+        });
+
+        const presetNames = {
+            balanced: 'Balanced Nook',
+            jungle: 'Lush Jungle',
+            zen: 'Zen Study',
+            cottage: 'Cottage Bloom'
+        };
+        showToast(`Styled shelf with "${presetNames[presetKey] || 'Balanced Nook'}" layout!`, 'success');
+    }
+
+    function cycleCuratedPlantPreset() {
+        currentPresetIdx = (currentPresetIdx + 1) % PLANT_PRESET_ORDER.length;
+        applyCuratedPlantPreset(PLANT_PRESET_ORDER[currentPresetIdx]);
     }
 
     // Snaps plant bottom (yPx + size) to nearby bookcase surfaces (shelftop crown, shelf planks, or book stacks)
@@ -915,28 +1163,63 @@ document.addEventListener('DOMContentLoaded', async () => {
         const catalogGrid = document.getElementById('plantCatalogGrid');
         const btnCloseTray = document.getElementById('btnClosePlantTray');
         const btnClearPlants = document.getElementById('btnClearPlants');
+        const btnAutoStyle = document.getElementById('btnAutoStylePlants');
 
         updatePlantButtonUI();
+
+        const refreshMarkers = () => {
+            const bc = document.querySelector('.wooden-bookcase');
+            if (bc) renderPlacedPlants(bc);
+        };
 
         if (btnPlant && trayDrawer) {
             btnPlant.addEventListener('click', () => {
                 trayDrawer.classList.toggle('hidden');
+                refreshMarkers();
             });
         }
         if (btnCloseTray && trayDrawer) {
             btnCloseTray.addEventListener('click', () => {
                 trayDrawer.classList.add('hidden');
+                targetedSpotId = null;
+                refreshMarkers();
+            });
+        }
+        if (btnAutoStyle) {
+            btnAutoStyle.addEventListener('click', () => {
+                cycleCuratedPlantPreset();
             });
         }
         if (btnClearPlants) {
             btnClearPlants.addEventListener('click', () => {
                 state.placedPlants = [];
                 savePlacedPlants();
-                const bc = document.querySelector('.wooden-bookcase');
-                if (bc) renderPlacedPlants(bc);
+                document.querySelectorAll('.plant-preset-pill').forEach(b => b.classList.remove('active'));
+                refreshMarkers();
                 showToast('Cleared all plants from the shelf', 'success');
             });
         }
+
+        // Curated Preset Buttons
+        document.querySelectorAll('.plant-preset-pill').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const preset = btn.dataset.preset;
+                currentPresetIdx = PLANT_PRESET_ORDER.indexOf(preset);
+                applyCuratedPlantPreset(preset);
+            });
+        });
+
+        // Target Spot Filter Pills (Best Open Spot / Shelftop / Top of Stack / Shelf Nook)
+        document.querySelectorAll('.plant-spot-pill').forEach(btn => {
+            btn.addEventListener('click', () => {
+                activeSpotFilter = btn.dataset.spot || 'auto';
+                targetedSpotId = null;
+                document.querySelectorAll('.plant-spot-pill').forEach(b => {
+                    b.classList.toggle('active', b === btn);
+                });
+                refreshMarkers();
+            });
+        });
 
         if (!catalogGrid) return;
         catalogGrid.innerHTML = '';
@@ -944,13 +1227,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         COZY_PLANTS.forEach((plant) => {
             const card = document.createElement('div');
             card.className = 'plant-tray-item';
-            card.title = `Drag ${plant.name} onto the shelf or click to place`;
+            card.title = `Click to place ${plant.name} into the selected shelf spot, or drag anywhere`;
             card.innerHTML = `
                 <img src="assets/images/plants/${plant.file}" alt="${escapeHtml(plant.name)}">
                 <span class="plant-tray-name">${escapeHtml(plant.name)}</span>
             `;
 
-            // Pointer-based drag from tray onto bookcase (or click to auto-place)
+            // Pointer-based drag from tray onto bookcase (or click to auto-place into organized spot)
             card.addEventListener('pointerdown', (e) => {
                 if (e.button !== 0 && e.pointerType === 'mouse') return;
                 e.preventDefault();
@@ -1012,26 +1295,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                             showToast(`Placed ${plant.name} on the shelf!`, 'success');
                         }
                     } else {
-                        // Simple click: place on first shelf plank or shelftop with slight stagger
-                        const firstPlank = bookcaseEl.querySelector('.sketch-shelf');
-                        let targetY = -70;
-                        if (firstPlank) {
-                            const pRect = firstPlank.getBoundingClientRect();
-                            targetY = Math.round((pRect.top - bcRect.top) + 4 - defaultSize);
-                        }
-                        const staggerX = 52 + ((state.placedPlants.length * 9) % 36);
+                        // Organized click-to-place: automatically finds the best open spot (or user-targeted spot)
+                        const bestSpot = pickBestOrganizedSpot(bookcaseEl, activeSpotFilter);
+                        const sz = bestSpot.defaultSize || 80;
                         state.placedPlants.push({
                             id: 'plant-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
                             file: plant.file,
                             name: plant.name,
-                            xPercent: staggerX,
-                            yPx: targetY,
-                            size: defaultSize,
+                            xPercent: bestSpot.xPercent,
+                            yPx: bestSpot.surfaceY - sz,
+                            size: sz,
                             flipped: false
                         });
                         savePlacedPlants();
                         renderPlacedPlants(bookcaseEl);
-                        showToast(`Added ${plant.name}! Drag it anywhere on the shelf.`, 'success');
+                        showToast(`Placed ${plant.name} in ${bestSpot.label}!`, 'success');
                     }
                 };
 
@@ -1053,7 +1331,41 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderPlacedPlants(bookcaseEl) {
         if (!bookcaseEl) return;
-        bookcaseEl.querySelectorAll('.placed-plant').forEach(el => el.remove());
+        bookcaseEl.querySelectorAll('.placed-plant, .shelf-plant-spot-marker').forEach(el => el.remove());
+
+        // When the Cozy Greenhouse drawer is open, display interactive "+ Plant Spot" guide markers on unoccupied spots
+        const trayDrawer = document.getElementById('plantTrayDrawer');
+        const isGreenhouseOpen = trayDrawer && !trayDrawer.classList.contains('hidden');
+        if (isGreenhouseOpen) {
+            const spots = computeOrganizedPlantSpots(bookcaseEl);
+            spots.forEach((spot) => {
+                if (activeSpotFilter !== 'auto' && spot.category !== activeSpotFilter) return;
+                const isOccupied = state.placedPlants.some(p => {
+                    const pBottom = p.yPx + (p.size || 80);
+                    return Math.abs(p.xPercent - spot.xPercent) < 8 && Math.abs(pBottom - spot.surfaceY) < 24;
+                });
+                if (isOccupied) return;
+
+                const marker = document.createElement('div');
+                marker.className = `shelf-plant-spot-marker ${targetedSpotId === spot.spotId ? 'is-targeted' : ''}`;
+                marker.style.left = `${spot.xPercent}%`;
+                marker.style.top = `${spot.surfaceY - 58}px`;
+                marker.title = `Click to target ${spot.label} for your next plant`;
+                marker.innerHTML = `
+                    <span class="text-xs leading-none">+</span>
+                    <span>${escapeHtml(spot.label)}</span>
+                `;
+                marker.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    targetedSpotId = (targetedSpotId === spot.spotId) ? null : spot.spotId;
+                    renderPlacedPlants(bookcaseEl);
+                    if (targetedSpotId) {
+                        showToast(`Selected "${spot.label}" — click any plant above to place it here!`, 'success');
+                    }
+                });
+                bookcaseEl.appendChild(marker);
+            });
+        }
 
         state.placedPlants.forEach((p) => {
             const size = p.size || 80;
@@ -1131,7 +1443,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 state.placedPlants = state.placedPlants.filter(item => item.id !== p.id);
                 if (state.activePlantId === p.id) state.activePlantId = null;
                 savePlacedPlants();
-                wrap.remove();
+                renderPlacedPlants(bookcaseEl);
             });
 
             // Dragging placed plant around the bookcase (or click to pin toolbar open)

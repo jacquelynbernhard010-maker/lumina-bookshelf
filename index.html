@@ -64,22 +64,44 @@
             </div>
         </header>
 
-        <!-- Cozy Greenhouse Plant Drawer (Drag or click plants onto the shelf!) -->
-        <section id="plantTrayDrawer" class="plant-tray-drawer hidden mb-8 bg-[#fffdf9] wobbly-border p-4 shadow-[4px_4px_0px_#2c221e] relative">
-            <div class="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2 border-b-2 border-dashed border-[#e6dcce]">
-                <div class="flex items-center gap-2">
+        <!-- Cozy Greenhouse Plant Drawer (Organized Auto-Style, Spot Picker & Drag-and-Drop) -->
+        <section id="plantTrayDrawer" class="plant-tray-drawer hidden mb-8 bg-[#fffdf9] wobbly-border p-4 md:p-5 shadow-[4px_4px_0px_#2c221e] relative">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2.5 border-b-2 border-dashed border-[#e6dcce]">
+                <div class="flex items-center gap-2 flex-wrap">
                     <span class="font-bold text-lg text-[#2c221e]">Cozy Greenhouse (30 Plants)</span>
                     <span class="text-xs font-bold bg-[#e2f0cb] text-[#2c221e] px-2.5 py-0.5 rounded-full border border-[#2c221e]">
-                        Drag onto shelf or click to add
+                        Click a spot or drag to decorate
                     </span>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button id="btnAutoStylePlants" class="hand-btn hand-btn-sm text-xs font-bold px-3.5 py-1 flex items-center gap-1.5" style="background-color: var(--matcha);" title="Automatically arrange plants neatly across your shelves, book stacks, and shelftop">
+                        <span>Auto-Style Shelf</span>
+                    </button>
                     <button id="btnClearPlants" class="hand-btn hand-btn-sm bg-[#fffdf7] text-xs font-bold px-3 py-1" title="Remove all plants from the shelf">
-                        Clear Shelf Plants
+                        Clear All
                     </button>
                     <button id="btnClosePlantTray" class="w-7 h-7 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold text-xs hover:scale-105 transition-transform" title="Close Greenhouse">
                         ✕
                     </button>
+                </div>
+            </div>
+
+            <!-- Curated Style Presets & Target Spot Picker -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-2.5 border-b border-[#e6dcce]">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-xs font-bold text-[#6b584d] mr-1">Curated Looks:</span>
+                    <button type="button" class="plant-preset-pill" data-preset="balanced">Balanced Nook</button>
+                    <button type="button" class="plant-preset-pill" data-preset="jungle">Lush Jungle</button>
+                    <button type="button" class="plant-preset-pill" data-preset="zen">Zen Study</button>
+                    <button type="button" class="plant-preset-pill" data-preset="cottage">Cottage Bloom</button>
+                </div>
+
+                <div class="flex items-center gap-1.5 flex-wrap" id="plantSpotSelector">
+                    <span class="text-xs font-bold text-[#6b584d] mr-1">Place Into:</span>
+                    <button type="button" class="plant-spot-pill active" data-spot="auto">Best Open Spot</button>
+                    <button type="button" class="plant-spot-pill" data-spot="shelftop">Shelftop</button>
+                    <button type="button" class="plant-spot-pill" data-spot="stack">Top of Stack</button>
+                    <button type="button" class="plant-spot-pill" data-spot="nook">Shelf Nook</button>
                 </div>
             </div>
 
@@ -88,7 +110,7 @@
             </div>
 
             <p class="text-xs text-[#786457] mt-2.5 font-semibold">
-                Tip: Drag any plant directly onto a wooden shelf plank, onto a stack of books, or up onto the shelftop next to Mochi! Hover a placed plant to resize (<kbd class="px-1 bg-[#f4e8d6] rounded border border-[#2c221e]/30">S/M/L</kbd>), flip (<kbd class="px-1 bg-[#f4e8d6] rounded border border-[#2c221e]/30">↔</kbd>), or remove (<kbd class="px-1 bg-[#f4e8d6] rounded border border-[#2c221e]/30">✕</kbd>).
+                Tip: Click <b>Auto-Style Shelf</b> (or any <b>Curated Look</b>) for an instant, balanced arrangement—or click a dashed <b>+ Plant Spot</b> directly on the bookcase to place a plant right into that nook!
             </p>
         </section>
 
