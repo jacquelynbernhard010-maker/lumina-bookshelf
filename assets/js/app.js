@@ -1043,6 +1043,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Dismiss pinned plant toolbar when clicking outside any placed plant
+    document.addEventListener('pointerdown', (e) => {
+        if (!e.target.closest('.placed-plant')) {
+            state.activePlantId = null;
+            document.querySelectorAll('.placed-plant.is-active').forEach(el => el.classList.remove('is-active'));
+        }
+    });
+
     function renderPlacedPlants(bookcaseEl) {
         if (!bookcaseEl) return;
         bookcaseEl.querySelectorAll('.placed-plant').forEach(el => el.remove());
@@ -1050,10 +1058,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         state.placedPlants.forEach((p) => {
             const size = p.size || 80;
             const wrap = document.createElement('div');
-            wrap.className = 'placed-plant';
+            wrap.className = `placed-plant ${state.activePlantId === p.id ? 'is-active' : ''}`;
             wrap.style.left = `${p.xPercent}%`;
             wrap.style.top = `${p.yPx}px`;
-            wrap.title = `${p.name} (Drag to move)`;
+            wrap.title = `${p.name} (Click for controls, drag to move)`;
 
             const sizeLabel = size <= 64 ? 'S' : (size >= 96 ? 'L' : 'M');
 
@@ -1068,16 +1076,35 @@ document.addEventListener('DOMContentLoaded', async () => {
                      style="width: ${size}px; height: ${size}px;">
             `;
 
-            // Flip button
+            // Sticky hover timer (650ms grace period so cursor never loses the bubble)
+            let hoverTimer = null;
+            wrap.addEventListener('mouseenter', () => {
+                if (hoverTimer) {
+                    clearTimeout(hoverTimer);
+                    hoverTimer = null;
+                }
+                wrap.classList.add('is-hovered');
+            });
+            wrap.addEventListener('mouseleave', () => {
+                hoverTimer = setTimeout(() => {
+                    wrap.classList.remove('is-hovered');
+                }, 650);
+            });
+
+            const spriteImg = wrap.querySelector('.placed-plant-sprite');
+
+            // Flip button (updates in-place so bubble stays open right under cursor)
             const btnFlip = wrap.querySelector('.btn-flip');
             btnFlip.addEventListener('click', (e) => {
                 e.stopPropagation();
                 p.flipped = !p.flipped;
+                state.activePlantId = p.id;
+                wrap.classList.add('is-active');
+                spriteImg.classList.toggle('is-flipped', p.flipped);
                 savePlacedPlants();
-                renderPlacedPlants(bookcaseEl);
             });
 
-            // Size cycle button (64 -> 80 -> 96)
+            // Size cycle button (64 -> 80 -> 96, updates in-place so you can click repeatedly)
             const btnSize = wrap.querySelector('.btn-size');
             btnSize.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -1086,34 +1113,57 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Keep bottom edge anchored at the same surface
                 p.yPx = (p.yPx + oldSize) - nextSize;
                 p.size = nextSize;
+                state.activePlantId = p.id;
+                wrap.classList.add('is-active');
+
+                wrap.style.top = `${p.yPx}px`;
+                spriteImg.style.width = `${nextSize}px`;
+                spriteImg.style.height = `${nextSize}px`;
+                btnSize.textContent = nextSize <= 64 ? 'S' : (nextSize >= 96 ? 'L' : 'M');
                 savePlacedPlants();
-                renderPlacedPlants(bookcaseEl);
             });
 
             // Delete button
             const btnDel = wrap.querySelector('.btn-del');
             btnDel.addEventListener('click', (e) => {
                 e.stopPropagation();
+                if (hoverTimer) clearTimeout(hoverTimer);
                 state.placedPlants = state.placedPlants.filter(item => item.id !== p.id);
+                if (state.activePlantId === p.id) state.activePlantId = null;
                 savePlacedPlants();
-                renderPlacedPlants(bookcaseEl);
+                wrap.remove();
             });
 
-            // Dragging placed plant around the bookcase
+            // Dragging placed plant around the bookcase (or click to pin toolbar open)
             wrap.addEventListener('pointerdown', (e) => {
                 if (e.target.closest('.plant-ctrl-btn')) return;
                 if (e.button !== 0 && e.pointerType === 'mouse') return;
                 e.preventDefault();
                 e.stopPropagation();
 
-                wrap.classList.add('is-dragging');
-                const bcRect = bookcaseEl.getBoundingClientRect();
+                // Pin this plant's adjustment bubble open
+                document.querySelectorAll('.placed-plant.is-active').forEach(el => {
+                    if (el !== wrap) el.classList.remove('is-active');
+                });
+                state.activePlantId = p.id;
+                wrap.classList.add('is-active');
+
+                const startX = e.clientX;
+                const startY = e.clientY;
+                let hasMoved = false;
+
                 const wrapRect = wrap.getBoundingClientRect();
                 const offsetX = e.clientX - wrapRect.left;
                 const offsetY = e.clientY - wrapRect.top;
                 const curSize = p.size || 80;
 
                 const onPointerMove = (moveEv) => {
+                    if (!hasMoved && Math.hypot(moveEv.clientX - startX, moveEv.clientY - startY) > 4) {
+                        hasMoved = true;
+                        wrap.classList.add('is-dragging');
+                    }
+                    if (!hasMoved) return;
+
                     const freshBcRect = bookcaseEl.getBoundingClientRect();
                     const rawX = moveEv.clientX - freshBcRect.left - offsetX;
                     const xPercent = Math.max(-2, Math.min(94, (rawX / freshBcRect.width) * 100));
@@ -1130,7 +1180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     window.removeEventListener('pointermove', onPointerMove);
                     window.removeEventListener('pointerup', onPointerUp);
                     wrap.classList.remove('is-dragging');
-                    savePlacedPlants();
+                    if (hasMoved) savePlacedPlants();
                 };
 
                 window.addEventListener('pointermove', onPointerMove);
