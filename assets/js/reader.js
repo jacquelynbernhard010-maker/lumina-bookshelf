@@ -65,6 +65,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const zenText = document.getElementById('zenText');
     const btnMenuZen = document.getElementById('btnMenuZen');
 
+    // Mobile / Tablet Center Title & Reader Side Panel Elements
+    const mobileCenterTitle = document.getElementById('mobileCenterTitle');
+    const btnReaderPullTab = document.getElementById('btnReaderPullTab');
+    const readerPullTabIcon = document.getElementById('readerPullTabIcon');
+    const readerDrawerBackdrop = document.getElementById('readerDrawerBackdrop');
+    const btnSidebarFullscreen = document.getElementById('btnSidebarFullscreen');
+    const sidebarFullscreenIcon = document.getElementById('sidebarFullscreenIcon');
+    const sidebarFullscreenText = document.getElementById('sidebarFullscreenText');
+    const btnSidebarZen = document.getElementById('btnSidebarZen');
+    const btnSidebarBookmark = document.getElementById('btnSidebarBookmark');
+    const sidebarBookmarkIcon = document.getElementById('sidebarBookmarkIcon');
+    const sidebarBookmarkText = document.getElementById('sidebarBookmarkText');
+    const btnSidebarDownload = document.getElementById('btnSidebarDownload');
+
     // State
     let currentReadingMode = localStorage.getItem('cozy_reading_mode') || 'single'; // 'single', 'spread', or 'scroll'
     if (window.innerWidth < 640 && currentReadingMode === 'spread') {
@@ -99,9 +113,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     bookTitle.innerText = book.title;
     bookAuthor.innerText = book.author || 'Unknown Author';
     document.title = `${book.title} - The Cozy Nook`;
+    if (mobileCenterTitle) mobileCenterTitle.innerText = book.title;
 
-    // Download handler
-    btnDownloadBook.addEventListener('click', () => {
+    function updateChapterTitle(title) {
+        if (chapterTitleEl) chapterTitleEl.innerText = title;
+        if (mobileCenterTitle) mobileCenterTitle.innerText = title;
+    }
+
+    // Download handler for both desktop and mobile side panel
+    function handleDownloadBook() {
         if (book.file_blob) {
             const url = URL.createObjectURL(book.file_blob);
             const a = document.createElement('a');
@@ -112,7 +132,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (book.file_url) {
             window.open(book.file_url, '_blank');
         }
-    });
+    }
+    if (btnDownloadBook) btnDownloadBook.addEventListener('click', handleDownloadBook);
+    if (btnSidebarDownload) btnSidebarDownload.addEventListener('click', handleDownloadBook);
 
     // Prepare ePub input source
     let epubSource;
@@ -322,8 +344,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentReadingMode = mode;
         localStorage.setItem('cozy_reading_mode', mode);
 
-        // Update mode button styles
+        // Update mode button styles (top bar and side panel)
         modeButtons.forEach(b => {
+            if (b) b.classList.toggle('active', b.dataset.mode === mode);
+        });
+        document.querySelectorAll('.sidebar-mode-btn').forEach(b => {
             b.classList.toggle('active', b.dataset.mode === mode);
         });
 
@@ -579,6 +604,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (btnMenuFullscreen) {
             btnMenuFullscreen.innerText = active ? '🗗 Exit Full Screen (F)' : '⛶ Toggle Full Screen (F)';
         }
+        if (btnSidebarFullscreen) {
+            btnSidebarFullscreen.classList.toggle('active-action', active);
+            if (sidebarFullscreenIcon) sidebarFullscreenIcon.innerText = active ? '🗗' : '⛶';
+            if (sidebarFullscreenText) sidebarFullscreenText.innerText = active ? 'Exit Full' : 'Full Screen';
+        }
         showToast(active ? 'Entered Full Screen' : 'Exited Full Screen', 'info');
         setTimeout(() => {
             if (rendition) rendition.resize();
@@ -603,6 +633,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (btnFullscreen) btnFullscreen.addEventListener('click', toggleFullscreen);
+    if (btnSidebarFullscreen) btnSidebarFullscreen.addEventListener('click', toggleFullscreen);
     if (btnMenuFullscreen) {
         btnMenuFullscreen.addEventListener('click', () => {
             appearanceMenu.classList.remove('show');
@@ -610,11 +641,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     if (btnFloatingZen) btnFloatingZen.addEventListener('click', toggleZenMode);
+    if (btnSidebarZen) btnSidebarZen.addEventListener('click', toggleZenMode);
     if (btnMenuZen) {
         btnMenuZen.addEventListener('click', () => {
             appearanceMenu.classList.remove('show');
             toggleZenMode();
         });
+    }
+
+    // Sidebar Mode button click listeners
+    document.querySelectorAll('.sidebar-mode-btn').forEach(b => {
+        b.addEventListener('click', () => {
+            renderReaderEngine(b.dataset.mode);
+        });
+    });
+
+    if (btnSidebarBookmark) {
+        btnSidebarBookmark.addEventListener('click', toggleBookmarkCurrentPage);
     }
 
     // Auto reveal header if mouse nears top in Zen mode
@@ -746,7 +789,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             card.addEventListener('click', (e) => {
                 if (e.target.closest('.btn-delete-bookmark')) return;
                 rendition.display(bm.cfi);
-                tocSidebar.classList.remove('open');
+                setDrawerOpen(false);
                 showToast(`Jumped to ${bm.title || 'bookmark'}`, 'info');
             });
 
@@ -775,11 +818,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             bookmarkIcon.innerText = '';
             bookmarkText.innerText = 'Bookmarked';
             if (pageBookmarkRibbon) pageBookmarkRibbon.classList.add('active');
+            if (btnSidebarBookmark) {
+                btnSidebarBookmark.classList.add('is-bookmarked');
+                if (sidebarBookmarkText) sidebarBookmarkText.innerText = 'Page Bookmarked ✓';
+            }
         } else {
             btnAddBookmark.classList.remove('is-bookmarked');
             bookmarkIcon.innerText = '';
             bookmarkText.innerText = 'Bookmark';
             if (pageBookmarkRibbon) pageBookmarkRibbon.classList.remove('active');
+            if (btnSidebarBookmark) {
+                btnSidebarBookmark.classList.remove('is-bookmarked');
+                if (sidebarBookmarkText) sidebarBookmarkText.innerText = 'Bookmark Current Page';
+            }
         }
     }
 
@@ -797,10 +848,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         bookmarkList.classList.add('hidden');
     }
 
-    // --- Drawer Tabs (Chapters vs Bookmarks) ---
+    // --- Drawer / Side Panel Management ---
 
-    btnToggleDrawer.addEventListener('click', () => tocSidebar.classList.toggle('open'));
-    btnCloseDrawer.addEventListener('click', () => tocSidebar.classList.remove('open'));
+    function setDrawerOpen(isOpen) {
+        if (isOpen) {
+            tocSidebar.classList.add('open');
+            if (readerDrawerBackdrop) readerDrawerBackdrop.classList.add('active');
+            if (readerPullTabIcon) readerPullTabIcon.innerText = '❮';
+        } else {
+            tocSidebar.classList.remove('open');
+            if (readerDrawerBackdrop) readerDrawerBackdrop.classList.remove('active');
+            if (readerPullTabIcon) readerPullTabIcon.innerText = '❯';
+        }
+    }
+
+    if (btnToggleDrawer) btnToggleDrawer.addEventListener('click', () => setDrawerOpen(!tocSidebar.classList.contains('open')));
+    if (btnCloseDrawer) btnCloseDrawer.addEventListener('click', () => setDrawerOpen(false));
+    if (readerDrawerBackdrop) readerDrawerBackdrop.addEventListener('click', () => setDrawerOpen(false));
+    if (btnReaderPullTab) btnReaderPullTab.addEventListener('click', () => setDrawerOpen(!tocSidebar.classList.contains('open')));
 
     tabChapters.addEventListener('click', showChaptersTab);
     tabBookmarks.addEventListener('click', showBookmarksTab);
@@ -819,8 +884,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             link.href = 'javascript:void(0)';
             link.addEventListener('click', () => {
                 rendition.display(item.href);
-                tocSidebar.classList.remove('open');
-                chapterTitleEl.innerText = item.label.trim();
+                setDrawerOpen(false);
+                updateChapterTitle(item.label.trim());
             });
             tocList.appendChild(link);
         });

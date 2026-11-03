@@ -20,19 +20,22 @@
             <a href="index.html" class="hand-nav-btn" title="Return to Wooden Shelves">
                 ← Shelf
             </a>
-            <button class="hand-nav-btn" id="btnToggleDrawer" title="Chapters & Bookmarks">
-                <span>Contents</span>
+            <button class="hand-nav-btn" id="btnToggleDrawer" title="Reading Menu & Contents">
+                <span>☰ Menu</span>
                 <span id="headerBookmarkBadge" class="hidden text-xs bg-[#e07a5f] text-white px-1.5 py-0.2 rounded-full font-bold">0</span>
             </button>
-            <div class="book-meta">
+            <div class="book-meta hidden lg:block">
                 <h1 class="book-title" id="bookTitle">Loading Book...</h1>
                 <span class="book-author" id="bookAuthor">...</span>
             </div>
         </div>
 
-        <!-- Center: Reading Mode Switcher (Single, Two-Pages, Continuous Scroll) -->
+        <!-- Center: Chapter Title on Mobile/Tablet or Desktop Mode Switcher -->
         <div class="nav-center">
-            <div class="mode-switcher-wrap">
+            <div class="mobile-center-title lg:hidden" id="mobileCenterTitle">
+                ...
+            </div>
+            <div class="mode-switcher-wrap hidden lg:flex">
                 <button class="mode-btn active" id="btnModeSingle" data-mode="single" title="One Page at a time">
                     Single
                 </button>
@@ -46,8 +49,8 @@
         </div>
 
         <div class="nav-right">
-            <!-- Fullscreen Button -->
-            <button class="hand-nav-btn" id="btnFullscreen" title="Toggle Full Screen (F)">
+            <!-- Fullscreen Button (Desktop) -->
+            <button class="hand-nav-btn hidden lg:inline-flex" id="btnFullscreen" title="Toggle Full Screen (F)">
                 <span id="fullscreenIcon">⛶</span>
                 <span id="fullscreenText">Full Screen</span>
             </button>
@@ -107,7 +110,7 @@
                 </div>
             </div>
 
-            <button class="hand-nav-btn" id="btnDownloadBook" title="Download File">
+            <button class="hand-nav-btn hidden lg:inline-flex" id="btnDownloadBook" title="Download File">
                 Download
             </button>
         </div>
@@ -115,6 +118,14 @@
 
     <!-- Reader Main Stage -->
     <div class="reader-stage" id="readerStage">
+        <!-- Tactile Pull Tab for Mobile/Tablet Side Panel -->
+        <button class="reader-pull-tab lg:hidden" id="btnReaderPullTab" title="Open Reading Panel">
+            <span id="readerPullTabIcon">❯</span>
+        </button>
+
+        <!-- Backdrop overlay for slide-out drawer -->
+        <div class="reader-drawer-backdrop" id="readerDrawerBackdrop"></div>
+
         <!-- Floating Zen / Distraction-Free Toggle Pill -->
         <button id="btnFloatingZen" class="floating-zen-btn" title="Toggle distraction-free view (Z)">
             <span id="zenIcon">🌿</span>
@@ -124,14 +135,62 @@
         <!-- Visual Bookmark Ribbon on Page Corner -->
         <div id="pageBookmarkRibbon" class="page-corner-ribbon" title="Click to bookmark this page"></div>
         
-        <!-- Slide-out Drawer (Chapters & Saved Bookmarks) -->
+        <!-- Slide-out Reader Side Panel (Modes, Quick Actions, Chapters & Bookmarks) -->
         <aside class="toc-sidebar" id="tocSidebar">
             <div class="toc-header">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-base text-[#2c221e]">📖 Reading Panel</span>
+                </div>
+                <button class="btn-icon" id="btnCloseDrawer" title="Close Panel">✕</button>
+            </div>
+
+            <!-- Reading Options & Quick Controls Card -->
+            <div class="sidebar-options-section">
+                <div class="sidebar-section-title">
+                    <span>READING MODE</span>
+                    <span class="text-[11px] text-[#8c7b6f] font-normal">Page flow</span>
+                </div>
+                <div class="sidebar-mode-grid">
+                    <button class="sidebar-mode-btn active" data-mode="single" id="btnSidebarSingle">
+                        📄 Single Page
+                    </button>
+                    <button class="sidebar-mode-btn" data-mode="scroll" id="btnSidebarScroll">
+                        📜 Endless Scroll
+                    </button>
+                    <button class="sidebar-mode-btn col-span-2 hidden sm:block" data-mode="spread" id="btnSidebarSpread">
+                        📖 Two Pages Spread
+                    </button>
+                </div>
+
+                <div class="sidebar-section-title mt-3">
+                    <span>DISPLAY & QUICK ACTIONS</span>
+                </div>
+                <div class="sidebar-action-grid">
+                    <button class="sidebar-action-btn" id="btnSidebarFullscreen">
+                        <span id="sidebarFullscreenIcon">⛶</span>
+                        <span id="sidebarFullscreenText">Full Screen</span>
+                    </button>
+                    <button class="sidebar-action-btn" id="btnSidebarZen">
+                        <span>🌿</span>
+                        <span>Zen View</span>
+                    </button>
+                    <button class="sidebar-action-btn col-span-2" id="btnSidebarBookmark">
+                        <span id="sidebarBookmarkIcon">🔖</span>
+                        <span id="sidebarBookmarkText">Bookmark Current Page</span>
+                    </button>
+                    <button class="sidebar-action-btn col-span-2" id="btnSidebarDownload">
+                        <span>💾</span>
+                        <span>Download EPUB File</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Navigation Tabs (Chapters vs Bookmarks) -->
+            <div class="drawer-tabs-wrapper">
                 <div class="drawer-tabs">
                     <button class="drawer-tab active" id="tabChapters">Chapters</button>
                     <button class="drawer-tab" id="tabBookmarks">Bookmarks (<span id="bookmarkCount">0</span>)</button>
                 </div>
-                <button class="btn-icon" id="btnCloseDrawer">✕</button>
             </div>
             
             <!-- Tab Content: Chapters -->
@@ -139,7 +198,7 @@
 
             <!-- Tab Content: Bookmarks -->
             <div class="toc-content hidden" id="bookmarkList">
-                <p class="text-xs text-[#786457] p-3 italic">No bookmarks yet. Click the "Bookmark" button on any page to save your favorite spots!</p>
+                <p class="text-xs text-[#786457] p-3 italic">No bookmarks yet. Click "Bookmark" to save your favorite spots!</p>
             </div>
         </aside>
 
