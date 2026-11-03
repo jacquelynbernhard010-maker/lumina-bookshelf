@@ -259,93 +259,159 @@ body {
   transform: translate(-50%, -10px);
 }
 
-/* Style 1: Handcrafted Cozy Book Spine */
+/* Style 1: Handcrafted Vector Book Spine */
 .book-body {
-  border: 2.5px solid var(--ink);
+  border: 2.5px solid #231815;
   box-shadow:
-    inset 6px 0 8px rgba(255, 255, 255, 0.3),
-    inset -6px 0 8px rgba(0, 0, 0, 0.2),
-    3px 2px 0px var(--ink);
-  border-radius: 7px 5px 5px 7px;
+    inset 3.5px 0 0 rgba(255, 255, 255, 0.22),
+    inset -3.5px 0 0 rgba(0, 0, 0, 0.14),
+    2.5px 3px 0px #231815;
+  border-radius: 6px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: stretch;
-  padding: 9px 6px;
+  padding: 5px 4px;
   position: relative;
-  background-image: repeating-linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.04) 0px,
-    rgba(255, 255, 255, 0.04) 1px,
-    transparent 1px,
-    transparent 3px
-  );
+  overflow: visible;
 }
 
-/* Raised bookbinding bands at top and bottom of spine */
-.spine-band {
+/* Fixed-aspect Top & Bottom SVG Ornament Caps (never stretch or squish) */
+.vector-cap {
   width: 100%;
-  height: 5px;
-  border-top: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
-  opacity: 0.45;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  pointer-events: none;
 }
 
-/* Framed title compartment on the spine */
-.spine-title-frame {
-  margin: 7px 0;
-  padding: 8px 4px;
-  border-top: 1px solid currentColor;
-  border-bottom: 1px solid currentColor;
-  background: rgba(255, 253, 248, 0.14);
-  border-radius: 3px;
+.vector-cap svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* Center compartment zone holding the vector plaque/cameo/medallion */
+.vector-center-zone {
   flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 1px;
+  position: relative;
+}
+
+/* Ornate Vector Plaque Variants */
+.vector-plaque {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
+  padding: 6px 3px;
+  position: relative;
   overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  transition: transform 0.15s ease;
 }
 
+.vector-plaque.plaque-rect {
+  border-radius: 4px;
+  border: 1.6px solid var(--plaque-stroke, currentColor);
+  background: var(--plaque-bg, rgba(255, 253, 247, 0.2));
+}
+
+.vector-plaque.plaque-double {
+  border-radius: 3px;
+  border: 1.8px solid var(--plaque-stroke, currentColor);
+  background: var(--plaque-bg, rgba(255, 253, 247, 0.3));
+  box-shadow: inset 0 0 0 2px transparent, inset 0 0 0 3px var(--plaque-stroke, currentColor);
+  padding: 8px 4px;
+}
+
+.vector-plaque.plaque-cameo {
+  border-radius: 999px;
+  border: 2.2px solid var(--plaque-stroke, currentColor);
+  background: var(--plaque-bg, rgba(255, 253, 247, 0.24));
+  box-shadow: inset 0 0 0 2.5px var(--spine-bg, transparent), inset 0 0 0 3.7px var(--plaque-inner-stroke, currentColor);
+  padding: 12px 4px;
+  min-height: 82px;
+}
+
+.vector-plaque.plaque-medallion {
+  border-radius: 6px;
+  border: 1.8px solid var(--plaque-stroke, currentColor);
+  background: var(--plaque-bg, rgba(0, 0, 0, 0.22));
+  box-shadow: inset 0 0 0 2px var(--spine-bg, transparent), inset 0 0 0 3px var(--plaque-stroke, currentColor);
+  padding: 7px 3px;
+}
+
+.vector-plaque.plaque-arch {
+  border-radius: 9px;
+  border: 2px solid var(--plaque-stroke, currentColor);
+  background: var(--plaque-bg, rgba(0, 0, 0, 0.2));
+  padding: 7px 3px;
+}
+
+.vector-plaque.plaque-open {
+  border: none;
+  background: transparent;
+  padding: 4px 2px;
+}
+
+.vector-plaque.plaque-stamp {
+  border-radius: 3.5px;
+  border: 1.8px solid #231815;
+  background: var(--plaque-bg, #542e0e);
+  padding: 6px 3px;
+}
+
+/* Smart Responsive Vector Spine Title & Author Typography */
 .spine-title-text {
-  font-family: 'Lora', Georgia, serif;
-  font-weight: 600;
-  font-size: 11px;
-  line-height: 1.25;
-  letter-spacing: 0.01em;
+  font-family: 'Cinzel', 'Lora', Georgia, serif;
+  font-weight: 700;
+  font-size: 10px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   display: -webkit-box;
-  -webkit-line-clamp: 5;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
   word-break: break-word;
+  overflow-wrap: anywhere;
+  width: 100%;
 }
 
-/* Subtle ornamental divider rule inside spine */
+/* Subtle ornamental divider rule inside spine plaque */
 .spine-divider {
-  width: 55%;
-  height: 1px;
+  width: 56%;
+  height: 1.2px;
   background: currentColor;
-  opacity: 0.38;
-  margin: 2px auto 4px;
+  opacity: 0.55;
+  margin: 3px auto 2px;
   flex-shrink: 0;
 }
 
-/* Author compartment near foot of spine */
+/* Author compartment inside or below vector plaque */
 .spine-author-frame {
-  padding: 2px 2px 6px;
+  padding: 1px 2px 0;
   text-align: center;
   flex-shrink: 0;
+  width: 100%;
 }
 
 .spine-author-text {
   font-family: 'Lora', Georgia, serif;
   font-style: italic;
-  font-size: 9.5px;
-  line-height: 1.18;
-  opacity: 0.92;
+  font-weight: 600;
+  font-size: 8.5px;
+  line-height: 1.15;
+  opacity: 0.94;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -386,7 +452,7 @@ body {
   transform: translateY(-20px) rotate(8.5deg) scale(1.04);
 }
 
-/* Style 4: Stacked Book Layer (Stacks all the way to the top border; 1-2 stacked books can hold standing spines on top) */
+/* Style 4: Stacked Book Layer (Vector Horizontal Stack Styling) */
 .stack-group {
   display: flex;
   flex-direction: column;
@@ -419,29 +485,36 @@ body {
 }
 
 .stack-layer {
-  border: 2.5px solid var(--ink);
-  border-radius: 5px 6px 6px 5px;
+  border: 2.5px solid #231815;
+  border-radius: 5px;
   box-shadow:
-    inset 0 3px 5px rgba(255, 255, 255, 0.28),
-    inset 0 -3px 5px rgba(0, 0, 0, 0.18),
-    2px 2px 0px var(--ink);
+    inset 0 2.5px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -2.5px 0 rgba(0, 0, 0, 0.14),
+    2px 2.5px 0px #231815;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 2px 7px;
+  padding: 2px 5px;
   height: 33px;
   width: 168px;
   position: relative;
   overflow: hidden;
 }
 
-.stack-band-vert {
-  width: 4px;
-  height: 100%;
-  border-left: 1.5px solid currentColor;
-  border-right: 1.5px solid currentColor;
-  opacity: 0.45;
+.stack-vector-endcap {
+  width: 24px;
+  height: 25px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.stack-vector-endcap svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 /* Ribbon bookmark dangling down (reflects reading progress) */

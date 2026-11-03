@@ -4,16 +4,128 @@
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Whimsical color themes for hand-drawn book spines
+    // Curated 10-tone Vector Spine & Stack Color Palettes (from vector_spine_shelf_preview.html)
     const coverThemes = [
-        { bg: '#81b29a', text: '#1e2d24', ribbon: '#e07a5f' }, // Matcha
-        { bg: '#e07a5f', text: '#fffdf7', ribbon: '#f2cc8f' }, // Terracotta
-        { bg: '#f2cc8f', text: '#3f2b12', ribbon: '#81b29a' }, // Honey
-        { bg: '#9d8189', text: '#fffdf7', ribbon: '#e07a5f' }, // Dusty Rose
-        { bg: '#8ecae6', text: '#103b4f', ribbon: '#e07a5f' }, // Sky Blue
-        { bg: '#e76f51', text: '#fffdf7', ribbon: '#f2cc8f' }, // Rust
-        { bg: '#eed9c4', text: '#4a2e18', ribbon: '#81b29a' }, // Soft Oat
-        { bg: '#e9c46a', text: '#2c221e', ribbon: '#e07a5f' }  // Little Prince Yellow
+        {
+            name: 'Coral Red',
+            bg: '#f06461',
+            accent: '#78222b',
+            plaqueBg: 'rgba(255, 253, 247, 0.22)',
+            plaqueSolid: '#c04245',
+            plaqueStroke: '#78222b',
+            plaqueInnerStroke: '#ffd1d3',
+            text: '#fffdf7',
+            subText: '#ffe2d8',
+            ribbon: '#81b29a'
+        },
+        {
+            name: 'Royal Purple',
+            bg: '#6c4db5',
+            accent: '#b399eb',
+            plaqueBg: '#4d328c',
+            plaqueSolid: '#4d328c',
+            plaqueStroke: '#b399eb',
+            plaqueInnerStroke: '#d8caf5',
+            text: '#fffdf7',
+            subText: '#dfd4f7',
+            ribbon: '#e07a5f'
+        },
+        {
+            name: 'Warm Goldenrod',
+            bg: '#f4b340',
+            accent: '#542e0e',
+            plaqueBg: 'rgba(255, 253, 247, 0.42)',
+            plaqueSolid: '#e59d24',
+            plaqueStroke: '#542e0e',
+            plaqueInnerStroke: '#784418',
+            text: '#381b04',
+            subText: '#542e0e',
+            ribbon: '#6c4db5'
+        },
+        {
+            name: 'Deep Indigo Navy',
+            bg: '#252961',
+            accent: '#8286cc',
+            plaqueBg: '#191b45',
+            plaqueSolid: '#191b45',
+            plaqueStroke: '#8286cc',
+            plaqueInnerStroke: '#b0b3eb',
+            text: '#fffdf7',
+            subText: '#c8cbf5',
+            ribbon: '#f4b340'
+        },
+        {
+            name: 'Blush Dusty Rose',
+            bg: '#e59fa0',
+            accent: '#8f2934',
+            plaqueBg: '#f9dcdc',
+            plaqueSolid: '#f9dcdc',
+            plaqueStroke: '#b3424d',
+            plaqueInnerStroke: '#d97780',
+            text: '#6e1922',
+            subText: '#8f2934',
+            ribbon: '#296541'
+        },
+        {
+            name: 'Forest Emerald',
+            bg: '#296541',
+            accent: '#78c994',
+            plaqueBg: '#1e4d30',
+            plaqueSolid: '#3d8c5b',
+            plaqueStroke: '#78c994',
+            plaqueInnerStroke: '#b0ebca',
+            text: '#fffdf7',
+            subText: '#d1fae5',
+            ribbon: '#f06461'
+        },
+        {
+            name: 'Soft Lavender',
+            bg: '#a890d3',
+            accent: '#4a2c6b',
+            plaqueBg: 'rgba(255, 253, 247, 0.36)',
+            plaqueSolid: '#886eb8',
+            plaqueStroke: '#4a2c6b',
+            plaqueInnerStroke: '#65418c',
+            text: '#2d1447',
+            subText: '#4a2c6b',
+            ribbon: '#296541'
+        },
+        {
+            name: 'Wine Burgundy',
+            bg: '#773037',
+            accent: '#eb888c',
+            plaqueBg: '#521a20',
+            plaqueSolid: '#521a20',
+            plaqueStroke: '#eb888c',
+            plaqueInnerStroke: '#f7b2b5',
+            text: '#fffdf7',
+            subText: '#ffd4d6',
+            ribbon: '#f4b340'
+        },
+        {
+            name: 'Mustard Amber',
+            bg: '#fabd44',
+            accent: '#693b16',
+            plaqueBg: '#693b16',
+            plaqueSolid: '#693b16',
+            plaqueStroke: '#231815',
+            plaqueInnerStroke: '#9c5a25',
+            text: '#fffdf7',
+            subText: '#fde68a',
+            ribbon: '#6c4db5'
+        },
+        {
+            name: 'Vintage Olive',
+            bg: '#326e4a',
+            accent: '#9be0b4',
+            plaqueBg: '#204a31',
+            plaqueSolid: '#204a31',
+            plaqueStroke: '#9be0b4',
+            plaqueInnerStroke: '#c4f2d5',
+            text: '#fffdf7',
+            subText: '#d5f5e0',
+            ribbon: '#e07a5f'
+        }
     ];
 
     // Feature flag: Set to true in the future to re-enable the Cozy Houseplants Greenhouse & Shelf Decorator
@@ -828,9 +940,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Render all upright spines / front / leaning books snugly across to the right border
             shelfData.upright.forEach((book) => {
-                const theme = coverThemes[globalThemeCounter % coverThemes.length];
+                const slotIdx = globalThemeCounter;
+                const theme = coverThemes[slotIdx % coverThemes.length];
                 globalThemeCounter++;
-                bay.appendChild(createDoodleBook(book, theme));
+                bay.appendChild(createDoodleBook(book, theme, null, slotIdx));
             });
 
             const remainingSpace = bayInnerWidth - shelfData.usedWidth;
@@ -1520,12 +1633,410 @@ document.addEventListener('DOMContentLoaded', async () => {
         return 'dangle-ribbon';
     }
 
+    function computeBookSeed(book) {
+        const seedStr = `${book.title || ''}-${book.author || ''}-${book.id || 0}`;
+        let hash = 0;
+        for (let i = 0; i < seedStr.length; i++) {
+            hash = ((hash << 5) - hash) + seedStr.charCodeAt(i);
+            hash |= 0;
+        }
+        return Math.abs(hash);
+    }
+
+    // Refinement #1: Smart Title Wrapping & Automatic Font Scaling for Long Book Titles
+    function getSmartSpineTitleStyle(title, spineWidth, spineHeight) {
+        const len = (title || '').length;
+        const isCompact = spineHeight < 218;
+        let fontSize = '10.2px';
+        let lineClamp = isCompact ? 3 : 4;
+        let letterSpacing = '0.025em';
+
+        if (len <= 11) {
+            fontSize = spineWidth >= 60 ? '10.8px' : '10.2px';
+            lineClamp = 3;
+            letterSpacing = '0.03em';
+        } else if (len <= 20) {
+            fontSize = '9.4px';
+            lineClamp = isCompact ? 3 : 4;
+            letterSpacing = '0.02em';
+        } else if (len <= 32) {
+            fontSize = '8.5px';
+            lineClamp = isCompact ? 4 : 5;
+            letterSpacing = '0.01em';
+        } else {
+            fontSize = '7.8px';
+            lineClamp = isCompact ? 4 : 5;
+            letterSpacing = '0em';
+        }
+
+        return `font-size: ${fontSize}; -webkit-line-clamp: ${lineClamp}; letter-spacing: ${letterSpacing};`;
+    }
+
+    // Refinement #2 & #3: 10 Non-Stretched Fixed-Aspect SVG Vector Spine Ornament Archetypes
+    function getVectorSpineMotifParts(motifIdx, palette, isCompact = false) {
+        const s = palette.accent || '#78222b';
+        const inner = palette.plaqueInnerStroke || s;
+        const dot = palette.text || '#fffdf7';
+        const m = ((motifIdx % 10) + 10) % 10;
+
+        if (isCompact) {
+            // Compact fixed-aspect caps for shorter spines standing on top of 1-2 book horizontal stacks
+            const compactTop = `
+                <svg viewBox="0 0 52 26" fill="none" preserveAspectRatio="xMidYMid meet">
+                    <line x1="4" y1="4" x2="48" y2="4" stroke="${s}" stroke-width="1.6"/>
+                    <polygon points="26,7 36,14 26,21 16,14" fill="none" stroke="${s}" stroke-width="1.5"/>
+                    <circle cx="26" cy="14" r="1.6" fill="${dot}"/>
+                    <line x1="4" y1="24" x2="48" y2="24" stroke="${s}" stroke-width="1.4"/>
+                </svg>`;
+            const compactBottom = `
+                <svg viewBox="0 0 52 26" fill="none" preserveAspectRatio="xMidYMid meet">
+                    <line x1="4" y1="2" x2="48" y2="2" stroke="${s}" stroke-width="1.4"/>
+                    <polygon points="26,5 36,12 26,19 16,12" fill="none" stroke="${s}" stroke-width="1.5"/>
+                    <circle cx="26" cy="12" r="1.6" fill="${dot}"/>
+                    <line x1="4" y1="22" x2="48" y2="22" stroke="${s}" stroke-width="1.6"/>
+                </svg>`;
+            return {
+                topSvg: compactTop,
+                bottomSvg: compactBottom,
+                plaqueClass: m % 2 === 0 ? 'plaque-rect' : 'plaque-medallion',
+                lowerOrnamentSvg: ''
+            };
+        }
+
+        switch (m) {
+            case 0: // Archetype 1: Aztec Folk Cross & Framed Plaque
+                return {
+                    plaqueClass: 'plaque-rect',
+                    lowerOrnamentSvg: '',
+                    topSvg: `
+                        <svg viewBox="0 0 52 46" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <line x1="4" y1="5" x2="48" y2="5" stroke="${s}" stroke-width="1.8"/>
+                            <line x1="4" y1="9" x2="48" y2="9" stroke="${s}" stroke-width="1.8"/>
+                            <polygon points="26,13 40,26 26,39 12,26" fill="none" stroke="${s}" stroke-width="1.8"/>
+                            <line x1="17" y1="18" x2="35" y2="34" stroke="${s}" stroke-width="1.3"/>
+                            <line x1="35" y1="18" x2="17" y2="34" stroke="${s}" stroke-width="1.3"/>
+                            <line x1="4" y1="43" x2="48" y2="43" stroke="${s}" stroke-width="1.8"/>
+                        </svg>`,
+                    bottomSvg: `
+                        <svg viewBox="0 0 52 46" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <line x1="4" y1="3" x2="48" y2="3" stroke="${s}" stroke-width="1.8"/>
+                            <polygon points="26,7 40,20 26,33 12,20" fill="none" stroke="${s}" stroke-width="1.8"/>
+                            <line x1="17" y1="12" x2="35" y2="28" stroke="${s}" stroke-width="1.3"/>
+                            <line x1="35" y1="12" x2="17" y2="28" stroke="${s}" stroke-width="1.3"/>
+                            <line x1="4" y1="37" x2="48" y2="37" stroke="${s}" stroke-width="1.8"/>
+                            <line x1="4" y1="41" x2="48" y2="41" stroke="${s}" stroke-width="1.8"/>
+                        </svg>`
+                };
+
+            case 1: // Archetype 2: Concentric Diamond Medallion
+                return {
+                    plaqueClass: 'plaque-medallion',
+                    lowerOrnamentSvg: '',
+                    topSvg: `
+                        <svg viewBox="0 0 52 44" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <polygon points="26,6 43,22 26,38 9,22" fill="none" stroke="${s}" stroke-width="1.6"/>
+                            <polygon points="26,12 37,22 26,32 15,22" fill="none" stroke="${inner}" stroke-width="1.2"/>
+                            <circle cx="26" cy="22" r="2" fill="${dot}"/>
+                        </svg>`,
+                    bottomSvg: `
+                        <svg viewBox="0 0 52 44" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <polygon points="26,6 43,22 26,38 9,22" fill="none" stroke="${s}" stroke-width="1.6"/>
+                            <polygon points="26,12 37,22 26,32 15,22" fill="none" stroke="${inner}" stroke-width="1.2"/>
+                            <circle cx="26" cy="22" r="2" fill="${dot}"/>
+                        </svg>`
+                };
+
+            case 2: // Archetype 3: Vertical Barcode Ribs & Concentric Square Stamp
+                return {
+                    plaqueClass: 'plaque-double',
+                    lowerOrnamentSvg: '',
+                    topSvg: `
+                        <svg viewBox="0 0 52 48" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <g stroke="${s}" stroke-width="1.5">
+                                <line x1="6" y1="4" x2="6" y2="22"/><line x1="10" y1="4" x2="10" y2="22"/>
+                                <line x1="14" y1="4" x2="14" y2="22"/><line x1="18" y1="4" x2="18" y2="22"/>
+                                <line x1="22" y1="4" x2="22" y2="22"/><line x1="26" y1="4" x2="26" y2="22"/>
+                                <line x1="30" y1="4" x2="30" y2="22"/><line x1="34" y1="4" x2="34" y2="22"/>
+                                <line x1="38" y1="4" x2="38" y2="22"/><line x1="42" y1="4" x2="42" y2="22"/>
+                                <line x1="46" y1="4" x2="46" y2="22"/>
+                                <line x1="3" y1="25" x2="49" y2="25" stroke-width="1.9"/>
+                            </g>
+                            <rect x="16" y="29" width="20" height="16" fill="none" stroke="${s}" stroke-width="1.5"/>
+                            <rect x="21" y="33" width="10" height="8" fill="${s}"/>
+                        </svg>`,
+                    bottomSvg: `
+                        <svg viewBox="0 0 52 48" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <rect x="16" y="3" width="20" height="16" fill="none" stroke="${s}" stroke-width="1.5"/>
+                            <rect x="21" y="7" width="10" height="8" fill="${s}"/>
+                            <g stroke="${s}" stroke-width="1.5">
+                                <line x1="3" y1="23" x2="49" y2="23" stroke-width="1.9"/>
+                                <line x1="6" y1="26" x2="6" y2="44"/><line x1="10" y1="26" x2="10" y2="44"/>
+                                <line x1="14" y1="26" x2="14" y2="44"/><line x1="18" y1="26" x2="18" y2="44"/>
+                                <line x1="22" y1="26" x2="22" y2="44"/><line x1="26" y1="26" x2="26" y2="44"/>
+                                <line x1="30" y1="26" x2="30" y2="44"/><line x1="34" y1="26" x2="34" y2="44"/>
+                                <line x1="38" y1="26" x2="38" y2="44"/><line x1="42" y1="26" x2="42" y2="44"/>
+                                <line x1="46" y1="26" x2="46" y2="44"/>
+                            </g>
+                        </svg>`
+                };
+
+            case 3: // Archetype 4: Graduated Horizontal Rib Clusters
+                return {
+                    plaqueClass: 'plaque-open',
+                    lowerOrnamentSvg: '',
+                    topSvg: `
+                        <svg viewBox="0 0 52 38" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <g stroke="${s}" stroke-width="1.9" stroke-linecap="round">
+                                <line x1="13" y1="8" x2="39" y2="8"/>
+                                <line x1="10" y1="14" x2="42" y2="14"/>
+                                <line x1="7" y1="20" x2="45" y2="20"/>
+                                <line x1="10" y1="26" x2="42" y2="26"/>
+                                <line x1="13" y1="32" x2="39" y2="32"/>
+                            </g>
+                        </svg>`,
+                    bottomSvg: `
+                        <svg viewBox="0 0 52 54" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <g stroke="${s}" stroke-width="1.8" stroke-linecap="round">
+                                <line x1="13" y1="5" x2="39" y2="5"/>
+                                <line x1="10" y1="10" x2="42" y2="10"/>
+                                <line x1="7" y1="15" x2="45" y2="15"/>
+                                <line x1="10" y1="20" x2="42" y2="20"/>
+                                <line x1="13" y1="25" x2="39" y2="25"/>
+                                <line x1="13" y1="34" x2="39" y2="34"/>
+                                <line x1="10" y1="39" x2="42" y2="39"/>
+                                <line x1="7" y1="44" x2="45" y2="44"/>
+                                <line x1="10" y1="49" x2="42" y2="49"/>
+                            </g>
+                        </svg>`
+                };
+
+            case 4: // Archetype 5: Vintage Oval Cameo & Filigree Scroll
+                return {
+                    plaqueClass: 'plaque-cameo',
+                    lowerOrnamentSvg: '',
+                    topSvg: `
+                        <svg viewBox="0 0 52 36" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <g stroke="${s}" stroke-width="1.6" fill="none">
+                                <line x1="6" y1="7" x2="46" y2="7"/>
+                                <path d="M12 20 C19 11, 21 25, 26 16 C31 25, 33 11, 40 20"/>
+                                <circle cx="26" cy="16" r="1.8" fill="${s}"/>
+                                <line x1="6" y1="29" x2="46" y2="29"/>
+                            </g>
+                        </svg>`,
+                    bottomSvg: `
+                        <svg viewBox="0 0 52 36" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <g stroke="${s}" stroke-width="1.6" fill="none">
+                                <line x1="6" y1="7" x2="46" y2="7"/>
+                                <path d="M12 20 C19 11, 21 25, 26 16 C31 25, 33 11, 40 20"/>
+                                <circle cx="26" cy="16" r="1.8" fill="${s}"/>
+                                <line x1="6" y1="28" x2="46" y2="28"/>
+                                <line x1="6" y1="32" x2="46" y2="32"/>
+                            </g>
+                        </svg>`
+                };
+
+            case 5: // Archetype 6: Ribbed Header & Diagonal Lattice Cross
+                return {
+                    plaqueClass: 'plaque-rect',
+                    lowerOrnamentSvg: '',
+                    topSvg: `
+                        <svg viewBox="0 0 52 50" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <g stroke="${s}" stroke-width="1.3">
+                                <line x1="5" y1="5" x2="47" y2="5"/><line x1="5" y1="9" x2="47" y2="9"/>
+                                <line x1="5" y1="13" x2="47" y2="13"/><line x1="5" y1="17" x2="47" y2="17"/>
+                                <line x1="3" y1="21" x2="49" y2="21" stroke-width="1.8"/>
+                                <line x1="11" y1="25" x2="41" y2="44" stroke-width="1.5"/>
+                                <line x1="41" y1="25" x2="11" y2="44" stroke-width="1.5"/>
+                                <line x1="3" y1="48" x2="49" y2="48" stroke-width="1.8"/>
+                            </g>
+                        </svg>`,
+                    bottomSvg: `
+                        <svg viewBox="0 0 52 50" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <g stroke="${s}" stroke-width="1.3">
+                                <line x1="3" y1="2" x2="49" y2="2" stroke-width="1.8"/>
+                                <line x1="11" y1="6" x2="41" y2="25" stroke-width="1.5"/>
+                                <line x1="41" y1="6" x2="11" y2="25" stroke-width="1.5"/>
+                                <line x1="3" y1="29" x2="49" y2="29" stroke-width="1.8"/>
+                                <line x1="5" y1="33" x2="47" y2="33"/><line x1="5" y1="37" x2="47" y2="37"/>
+                                <line x1="5" y1="41" x2="47" y2="41"/><line x1="5" y1="45" x2="47" y2="45"/>
+                            </g>
+                        </svg>`
+                };
+
+            case 6: // Archetype 7: Radiating Folk Rhombus
+                return {
+                    plaqueClass: 'plaque-medallion',
+                    lowerOrnamentSvg: '',
+                    topSvg: `
+                        <svg viewBox="0 0 52 46" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <g stroke="${s}" stroke-width="1.5" fill="none">
+                                <polygon points="26,9 41,23 26,37 11,23"/>
+                                <polygon points="26,14 35,23 26,32 17,23"/>
+                                <line x1="26" y1="3" x2="26" y2="9"/>
+                                <line x1="26" y1="37" x2="26" y2="43"/>
+                                <line x1="4" y1="23" x2="11" y2="23"/>
+                                <line x1="41" y1="23" x2="48" y2="23"/>
+                            </g>
+                        </svg>`,
+                    bottomSvg: `
+                        <svg viewBox="0 0 52 46" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <g stroke="${s}" stroke-width="1.5" fill="none">
+                                <polygon points="26,9 41,23 26,37 11,23"/>
+                                <polygon points="26,14 35,23 26,32 17,23"/>
+                                <line x1="26" y1="3" x2="26" y2="9"/>
+                                <line x1="26" y1="37" x2="26" y2="43"/>
+                                <line x1="4" y1="23" x2="11" y2="23"/>
+                                <line x1="41" y1="23" x2="48" y2="23"/>
+                            </g>
+                        </svg>`
+                };
+
+            case 7: // Archetype 8: Stamp Block & Calligraphic Teardrop Loop Knot
+                return {
+                    plaqueClass: 'plaque-stamp',
+                    topSvg: `
+                        <svg viewBox="0 0 52 20" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <line x1="6" y1="8" x2="46" y2="8" stroke="${s}" stroke-width="1.8"/>
+                            <circle cx="26" cy="14" r="2" fill="${s}"/>
+                        </svg>`,
+                    lowerOrnamentSvg: `
+                        <div class="vector-cap mt-1">
+                            <svg viewBox="0 0 52 54" fill="none" preserveAspectRatio="xMidYMid meet">
+                                <g stroke="${s}" stroke-width="2" fill="none" stroke-linecap="round">
+                                    <path d="M26 8 C14 22, 14 36, 26 46 C38 36, 38 22, 26 8 Z"/>
+                                    <path d="M26 19 C19 28, 19 37, 26 46 C33 37, 33 28, 26 19 Z"/>
+                                    <line x1="26" y1="3" x2="26" y2="8"/>
+                                    <line x1="26" y1="46" x2="26" y2="51"/>
+                                </g>
+                            </svg>
+                        </div>`,
+                    bottomSvg: `
+                        <svg viewBox="0 0 52 20" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <circle cx="26" cy="6" r="2" fill="${s}"/>
+                            <line x1="6" y1="13" x2="46" y2="13" stroke="${s}" stroke-width="1.8"/>
+                        </svg>`
+                };
+
+            case 8: // Archetype 9: Recessed Arch Plaque & Celtic Figure-8 Braid
+                return {
+                    plaqueClass: 'plaque-arch',
+                    topSvg: `
+                        <svg viewBox="0 0 52 20" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <line x1="5" y1="7" x2="47" y2="7" stroke="${s}" stroke-width="1.8"/>
+                            <line x1="9" y1="12" x2="43" y2="12" stroke="${s}" stroke-width="1.3"/>
+                        </svg>`,
+                    lowerOrnamentSvg: `
+                        <div class="vector-cap mt-1">
+                            <svg viewBox="0 0 52 52" fill="none" preserveAspectRatio="xMidYMid meet">
+                                <g stroke="${s}" stroke-width="2" fill="none">
+                                    <path d="M18 8 C13 19, 39 29, 34 40 C30 48, 22 48, 18 40 C13 29, 39 19, 34 8 Z"/>
+                                    <path d="M34 8 C39 19, 13 29, 18 40 C22 48, 30 48, 34 40 C39 29, 13 19, 18 8 Z"/>
+                                </g>
+                            </svg>
+                        </div>`,
+                    bottomSvg: `
+                        <svg viewBox="0 0 52 20" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <line x1="9" y1="8" x2="43" y2="8" stroke="${s}" stroke-width="1.3"/>
+                            <line x1="5" y1="13" x2="47" y2="13" stroke="${s}" stroke-width="1.8"/>
+                        </svg>`
+                };
+
+            default: // Archetype 10: Quatrefoil Floral Clover & Recessed Frame
+                return {
+                    plaqueClass: 'plaque-rect',
+                    lowerOrnamentSvg: '',
+                    topSvg: `
+                        <svg viewBox="0 0 52 44" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <g stroke="${s}" stroke-width="1.6" fill="none">
+                                <circle cx="26" cy="19" r="7"/>
+                                <circle cx="20.5" cy="19" r="4.5"/>
+                                <circle cx="31.5" cy="19" r="4.5"/>
+                                <circle cx="26" cy="13.5" r="4.5"/>
+                                <circle cx="26" cy="24.5" r="4.5"/>
+                                <line x1="5" y1="38" x2="47" y2="38"/>
+                            </g>
+                        </svg>`,
+                    bottomSvg: `
+                        <svg viewBox="0 0 52 44" fill="none" preserveAspectRatio="xMidYMid meet">
+                            <g stroke="${s}" stroke-width="1.6" fill="none">
+                                <line x1="5" y1="6" x2="47" y2="6"/>
+                                <circle cx="26" cy="25" r="7"/>
+                                <circle cx="20.5" cy="25" r="4.5"/>
+                                <circle cx="31.5" cy="25" r="4.5"/>
+                                <circle cx="26" cy="19.5" r="4.5"/>
+                                <circle cx="26" cy="30.5" r="4.5"/>
+                            </g>
+                        </svg>`
+                };
+        }
+    }
+
+    // Refinement #4: Matching Vector Ornament End-Caps for Horizontal Stacked Books
+    function getHorizontalStackEndcapSvg(motifIdx, palette) {
+        const s = palette.accent || '#78222b';
+        const inner = palette.plaqueInnerStroke || s;
+        const dot = palette.text || '#fffdf7';
+        const m = ((motifIdx % 5) + 5) % 5;
+
+        if (m === 0) {
+            // Folk Cross Diamond
+            const svg = `
+                <svg viewBox="0 0 24 24" fill="none">
+                    <line x1="3" y1="3" x2="3" y2="21" stroke="${s}" stroke-width="1.6"/>
+                    <polygon points="14,4 21,12 14,20 7,12" fill="none" stroke="${s}" stroke-width="1.5"/>
+                    <line x1="10" y1="8" x2="18" y2="16" stroke="${s}" stroke-width="1.2"/>
+                    <line x1="18" y1="8" x2="10" y2="16" stroke="${s}" stroke-width="1.2"/>
+                </svg>`;
+            return { leftSvg: svg, rightSvg: svg };
+        } else if (m === 1) {
+            // Concentric Diamond with Pearl Dot
+            const svg = `
+                <svg viewBox="0 0 24 24" fill="none">
+                    <polygon points="12,3 21,12 12,21 3,12" fill="none" stroke="${s}" stroke-width="1.5"/>
+                    <polygon points="12,7 17,12 12,17 7,12" fill="none" stroke="${inner}" stroke-width="1.1"/>
+                    <circle cx="12" cy="12" r="1.6" fill="${dot}"/>
+                </svg>`;
+            return { leftSvg: svg, rightSvg: svg };
+        } else if (m === 2) {
+            // Concentric Squares
+            const svg = `
+                <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="4" y="4" width="16" height="16" fill="none" stroke="${s}" stroke-width="1.5"/>
+                    <rect x="7.5" y="7.5" width="9" height="9" fill="none" stroke="${s}" stroke-width="1.2"/>
+                    <rect x="10" y="10" width="4" height="4" fill="${s}"/>
+                </svg>`;
+            return { leftSvg: svg, rightSvg: svg };
+        } else if (m === 3) {
+            // Vintage Oval Cameo Medallion
+            const svg = `
+                <svg viewBox="0 0 24 24" fill="none">
+                    <ellipse cx="12" cy="12" rx="7" ry="9" fill="${palette.plaqueSolid || s}" stroke="${s}" stroke-width="1.5"/>
+                    <ellipse cx="12" cy="12" rx="4.5" ry="6.5" fill="none" stroke="${inner}" stroke-width="1"/>
+                </svg>`;
+            return { leftSvg: svg, rightSvg: svg };
+        } else {
+            // Quatrefoil Clover
+            const svg = `
+                <svg viewBox="0 0 24 24" fill="none">
+                    <g stroke="${s}" stroke-width="1.4" fill="none">
+                        <circle cx="12" cy="12" r="4.5"/>
+                        <circle cx="8.5" cy="12" r="3"/>
+                        <circle cx="15.5" cy="12" r="3"/>
+                        <circle cx="12" cy="8.5" r="3"/>
+                        <circle cx="12" cy="15.5" r="3"/>
+                    </g>
+                </svg>`;
+            return { leftSvg: svg, rightSvg: svg };
+        }
+    }
+
     // Creates an individual book item on the shelf (or standing on top of a 1-2 book bottom stack)
-    function createDoodleBook(book, theme, customDimensions = null) {
+    function createDoodleBook(book, theme, customDimensions = null, slotIdx = 0) {
         const item = document.createElement('div');
         const rawStyle = book.spine_style || 'spine';
         const style = customDimensions ? 'spine' : (rawStyle === 'top-spine' ? 'spine' : rawStyle);
-        const color = book.spine_color || theme.bg;
+        const palette = theme || coverThemes[0];
+        const color = palette.bg;
         const displayTitle = cleanTitle(book.title);
         const displayAuthor = cleanAuthor(book.author);
         const ribbonClass = getRibbonClass(book);
@@ -1537,7 +2048,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             item.innerHTML = `
                 <div class="hover-tooltip">Take out</div>
                 <div class="book-front-cover">
-                    <div class="${ribbonClass}" style="background-color: ${theme.ribbon};"></div>
+                    <div class="${ribbonClass}" style="background-color: ${palette.ribbon};"></div>
                     <span class="text-xs font-bold uppercase tracking-wide bg-black/60 px-2 py-0.5 rounded text-white self-start backdrop-blur-sm shadow-sm z-10">${escapeHtml(book.file_type || 'epub')}</span>
                     
                     ${book.cover_url ? '' : `
@@ -1556,33 +2067,59 @@ document.addEventListener('DOMContentLoaded', async () => {
                 frontCoverEl.style.backgroundColor = '#2c221e';
             } else {
                 frontCoverEl.style.backgroundColor = color;
-                frontCoverEl.style.color = theme.text;
+                frontCoverEl.style.color = palette.text;
             }
         } else {
-            // Cozy Clothbound Hardcover Spine (Standing, Leaning, or Standing on top of a 1-2 book stack)
+            // Vector Book Spine (Standing, Leaning, or Standing on top of a 1-2 book stack)
             const metrics = getBookSpineMetrics(book);
             const spineWidth = customDimensions ? customDimensions.width : metrics.width;
             const height = customDimensions ? customDimensions.height : metrics.height;
-            const textColor = isLightColor(color) ? '#1e2d24' : '#fffdf7';
+            const isCompact = height < 218;
+
+            // Mix-and-match motif index so adjacent books never duplicate color OR ornament archetype
+            const seed = computeBookSeed(book);
+            const motifIdx = (slotIdx * 3 + (seed % 3)) % 10;
+            const motifParts = getVectorSpineMotifParts(motifIdx, palette, isCompact);
+            const titleStyle = getSmartSpineTitleStyle(displayTitle, spineWidth, height);
+
+            // For solid contrast stamp/cameo plaques, ensure text color contrasts against plaqueBg
+            const plaqueTextColor = (motifParts.plaqueClass === 'plaque-stamp')
+                ? '#fffdf7'
+                : palette.text;
+            const plaqueSubTextColor = (motifParts.plaqueClass === 'plaque-stamp')
+                ? '#fde68a'
+                : (palette.subText || palette.text);
 
             item.innerHTML = `
                 <div class="hover-tooltip">Take out</div>
-                <div class="book-body select-none" style="width: ${spineWidth}px; height: ${height}px; background-color: ${color}; color: ${textColor};">
-                    <div class="${ribbonClass}" style="background: ${theme.ribbon};"></div>
-                    <div class="spine-band"></div>
-                    <div class="spine-title-frame">
-                        <span class="spine-title-text">${escapeHtml(displayTitle)}</span>
+                <div class="book-body select-none" style="
+                    width: ${spineWidth}px;
+                    height: ${height}px;
+                    background-color: ${color};
+                    color: ${palette.text};
+                    --spine-bg: ${color};
+                    --plaque-bg: ${palette.plaqueBg};
+                    --plaque-stroke: ${palette.plaqueStroke || palette.accent};
+                    --plaque-inner-stroke: ${palette.plaqueInnerStroke || palette.accent};
+                ">
+                    <div class="${ribbonClass}" style="background: ${palette.ribbon};"></div>
+                    <div class="vector-cap vector-cap-top">${motifParts.topSvg}</div>
+                    <div class="vector-center-zone">
+                        <div class="vector-plaque ${motifParts.plaqueClass}" style="color: ${plaqueTextColor};">
+                            <span class="spine-title-text" style="${titleStyle}">${escapeHtml(displayTitle)}</span>
+                            <div class="spine-divider" style="background: ${palette.plaqueStroke || palette.accent};"></div>
+                            <div class="spine-author-frame">
+                                <span class="spine-author-text" style="color: ${plaqueSubTextColor};">${escapeHtml(displayAuthor)}</span>
+                            </div>
+                        </div>
+                        ${motifParts.lowerOrnamentSvg || ''}
                     </div>
-                    <div class="spine-divider"></div>
-                    <div class="spine-author-frame">
-                        <span class="spine-author-text">${escapeHtml(displayAuthor)}</span>
-                    </div>
-                    <div class="spine-band"></div>
+                    <div class="vector-cap vector-cap-bottom">${motifParts.bottomSvg}</div>
                 </div>
             `;
         }
 
-        item.addEventListener('click', () => openBookModal(book, theme));
+        item.addEventListener('click', () => openBookModal(book, palette));
         return item;
     }
 
@@ -1603,39 +2140,41 @@ document.addEventListener('DOMContentLoaded', async () => {
             const maxTopSpineHeight = 276 - (bottomBooks.length * 35);
 
             topSpines.forEach((tb, idx) => {
-                const theme = coverThemes[(baseThemeIdx + bottomBooks.length + idx) % coverThemes.length];
+                const slotIdx = baseThemeIdx + bottomBooks.length + idx;
+                const theme = coverThemes[slotIdx % coverThemes.length];
                 const naturalMetrics = getBookSpineMetrics(tb);
                 const topSpineWidth = Math.min(53, Math.max(48, naturalMetrics.width - 8));
                 const topSpineHeight = Math.min(maxTopSpineHeight, maxTopSpineHeight - ((idx * 7) % 14));
-                topRow.appendChild(createDoodleBook(tb, theme, { width: topSpineWidth, height: topSpineHeight }));
+                topRow.appendChild(createDoodleBook(tb, theme, { width: topSpineWidth, height: topSpineHeight }, slotIdx));
             });
 
             wrap.appendChild(topRow);
         }
 
-        // Render the horizontal stacked books at the bottom (or all the way to the top border)
+        // Render the horizontal stacked books at the bottom (with matching Vector Colors & Ornament End-Caps)
         bottomBooks.forEach((b, i) => {
-            const theme = coverThemes[(baseThemeIdx + i) % coverThemes.length];
-            const color = b.spine_color || theme.bg;
+            const slotIdx = baseThemeIdx + i;
+            const palette = coverThemes[slotIdx % coverThemes.length];
+            const color = palette.bg;
             const displayTitle = cleanTitle(b.title);
             const displayAuthor = cleanAuthor(b.author);
-            const textColor = isLightColor(color) ? '#1e2d24' : '#fffdf7';
             const offsetX = offsets[i % offsets.length];
+            const endcaps = getHorizontalStackEndcapSvg(slotIdx, palette);
 
             const layer = document.createElement('div');
             layer.className = 'doodle-book';
             layer.innerHTML = `
                 <div class="hover-tooltip">Take out</div>
-                <div class="stack-layer select-none" style="background-color: ${color}; color: ${textColor}; transform: translateX(${offsetX}px);">
-                    <div class="stack-band-vert"></div>
-                    <div class="flex-1 px-2 text-center overflow-hidden">
-                        <div class="font-lora font-semibold text-[11px] leading-tight truncate">${escapeHtml(displayTitle)}</div>
-                        <div class="font-lora italic text-[9px] opacity-85 truncate">${escapeHtml(displayAuthor)}</div>
+                <div class="stack-layer select-none" style="background-color: ${color}; color: ${palette.text}; transform: translateX(${offsetX}px);">
+                    <div class="stack-vector-endcap">${endcaps.leftSvg}</div>
+                    <div class="flex-1 px-1.5 text-center overflow-hidden">
+                        <div class="font-lora font-bold text-[10.5px] leading-tight truncate" style="color: ${palette.text};">${escapeHtml(displayTitle)}</div>
+                        <div class="font-lora italic text-[8.5px] leading-tight truncate" style="color: ${palette.subText || palette.text};">${escapeHtml(displayAuthor)}</div>
                     </div>
-                    <div class="stack-band-vert"></div>
+                    <div class="stack-vector-endcap">${endcaps.rightSvg}</div>
                 </div>
             `;
-            layer.addEventListener('click', () => openBookModal(b, theme));
+            layer.addEventListener('click', () => openBookModal(b, palette));
             wrap.appendChild(layer);
         });
 
