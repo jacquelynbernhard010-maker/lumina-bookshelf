@@ -225,19 +225,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         return `assets/images/decorations/${p.file}`;
     }
 
-    // 57-Item Cozy Shelf Decor Catalog (Mini Animated Cats, Knick-Knacks, Toys & Houseplants)
+    // 51-Item Cozy Shelf Decor Catalog (Mini Animated Cats, Knick-Knacks, Toys & Houseplants)
     const COZY_DECOR_CATALOG = [
-        // --- 1. Mini Animated Cats (8 items) ---
+        // --- 1. Mini Animated Cats (3 items) ---
         { id: 'cat-mochi-idle', file: 'cat_mochi_idle.gif', name: 'Mochi (Idle)', category: 'cats', folder: 'decorations', defaultSize: 72 },
         { id: 'cat-mochi-box', file: 'cat_mochi_box.gif', name: 'Mochi in Box', category: 'cats', folder: 'decorations', defaultSize: 72 },
         { id: 'cat-sleeping-curled', file: 'cat_sleeping_curled.gif', name: 'Ginger Cat (Sleeping)', category: 'cats', folder: 'decorations', defaultSize: 72 },
-        { id: 'cat-pochi-idle', file: 'cat_pochi_idle.gif', name: 'Pochi (Idle)', category: 'cats', folder: 'decorations', defaultSize: 72 },
-        { id: 'cat-pochi-sleep', file: 'cat_pochi_sleep.gif', name: 'Pochi (Sleeping)', category: 'cats', folder: 'decorations', defaultSize: 72 },
-        { id: 'cat-pochi-stretch', file: 'cat_pochi_stretch.gif', name: 'Pochi (Stretch)', category: 'cats', folder: 'decorations', defaultSize: 72 },
-        { id: 'cat-pochi-groom', file: 'cat_pochi_groom.gif', name: 'Pochi (Grooming)', category: 'cats', folder: 'decorations', defaultSize: 72 },
-        { id: 'cat-pochi-sit', file: 'cat_pochi_sit.gif', name: 'Pochi (Sitting)', category: 'cats', folder: 'decorations', defaultSize: 72 },
 
-        // --- 2. Cozy Knick-Knacks & Books (14 items) ---
+        // --- 2. Cozy Knick-Knacks & Books (13 items) ---
         { id: 'knick-coffee-cup', file: 'coffee_cup.png', name: 'Coffee Cup', category: 'knick-knacks', folder: 'decorations', defaultSize: 64 },
         { id: 'knick-tea-cup-1', file: 'tea_cup_1.png', name: 'Green Tea', category: 'knick-knacks', folder: 'decorations', defaultSize: 64 },
         { id: 'knick-tea-cup-2', file: 'tea_cup_2.png', name: 'Floral Teacup', category: 'knick-knacks', folder: 'decorations', defaultSize: 64 },
@@ -251,7 +246,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         { id: 'knick-books', file: 'books.png', name: 'Book Stack', category: 'knick-knacks', folder: 'decorations', defaultSize: 72 },
         { id: 'knick-book-1', file: 'book_1.png', name: 'Journal', category: 'knick-knacks', folder: 'decorations', defaultSize: 64 },
         { id: 'knick-book-2', file: 'book_2.png', name: 'Pencil & Pad', category: 'knick-knacks', folder: 'decorations', defaultSize: 64 },
-        { id: 'knick-twinkling-star', file: 'twinkling_star.gif', name: 'Twinkling Star', category: 'knick-knacks', folder: 'decorations', defaultSize: 64 },
 
         // --- 3. Cat Beds & Toys (5 items) ---
         { id: 'toy-cushion-teal', file: 'cat_cushion.png', name: 'Teal Cat Bed', category: 'toys', folder: 'decorations', defaultSize: 80 },
@@ -297,11 +291,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const COZY_PLANTS = COZY_DECOR_CATALOG;
 
     function loadInitialPlants() {
+        const removedFiles = new Set(['cat_pochi_idle.gif', 'cat_pochi_sleep.gif', 'cat_pochi_stretch.gif', 'cat_pochi_groom.gif', 'cat_pochi_sit.gif', 'twinkling_star.gif']);
         try {
             const raw = localStorage.getItem('cozy_shelf_plants');
             if (raw) {
                 const parsed = JSON.parse(raw);
-                if (Array.isArray(parsed)) return parsed;
+                if (Array.isArray(parsed)) {
+                    return parsed.filter(item => !removedFiles.has(item.file));
+                }
             }
         } catch (e) {}
         // Default starter cozy decor: sleeping ginger cat, bonsai plant, and Mochi in a box
