@@ -1196,7 +1196,8 @@ body {
   transform: translate(-50%, -85%) scale(1.08);
 }
 
-/* Curated Plant Preset & Target Spot Pills */
+/* Curated Decor Category & Target Spot Pills */
+.decor-cat-pill,
 .plant-preset-pill,
 .plant-spot-pill {
   font-size: 11px;
@@ -1209,12 +1210,21 @@ body {
   box-shadow: 1.5px 1.5px 0px var(--ink);
   cursor: pointer;
   transition: all 0.14s ease;
+  user-select: none;
 }
 
+.decor-cat-pill:hover,
 .plant-preset-pill:hover,
 .plant-spot-pill:hover {
-  background: #e9f5db;
+  background: #faedcd;
   transform: translateY(-1px);
+}
+
+.decor-cat-pill.active {
+  background: var(--honey);
+  color: var(--ink);
+  transform: translateY(1px);
+  box-shadow: 0.5px 0.5px 0px var(--ink);
 }
 
 .plant-preset-pill.active,

@@ -67,9 +67,9 @@
                         <span id="woodThemeLabel">Wood: Honey Oak</span>
                     </button>
 
-                    <button id="btnPlant" class="hand-btn px-4 py-2 text-sm md:text-base font-bold flex items-center justify-center gap-2 flex-1 md:flex-initial" style="background-color: var(--matcha);" title="Open Cozy Houseplants Tray">
-                        <img src="assets/images/plants/01_monstera.png" alt="" class="w-5 h-5 pixel-art-img -my-1">
-                        <span id="plantLabel">Cozy Plants</span>
+                    <button id="btnPlant" class="hand-btn px-4 py-2 text-sm md:text-base font-bold flex items-center justify-center gap-2 flex-1 md:flex-initial" style="background-color: var(--matcha);" title="Open Cozy Shelf Decor (Plants, Cats & Knick-Knacks)">
+                        <img src="assets/images/decorations/cat_mochi_idle.gif" alt="" class="w-5 h-5 pixel-art-img -my-1">
+                        <span id="plantLabel">Cozy Decor</span>
                     </button>
 
                     <button id="btnOpenBulkImport" class="hand-btn px-4 py-2 text-sm md:text-base font-bold flex items-center justify-center gap-2 flex-1 md:flex-initial hand-btn-honey" title="Import multiple books or an entire folder">
@@ -93,27 +93,39 @@
             </div>
         </header>
 
-        <!-- Cozy Greenhouse Plant Drawer (Spot Picker & Manual Decorating) -->
+        <!-- Cozy Decor Drawer (Spot Picker, Categories & Manual Decorating) -->
         <section id="plantTrayDrawer" class="plant-tray-drawer hidden mb-8 bg-[#fffdf9] wobbly-border p-4 md:p-5 shadow-[4px_4px_0px_#2c221e] relative">
             <div class="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2.5 border-b-2 border-dashed border-[#e6dcce]">
                 <div class="flex items-center gap-2 flex-wrap">
-                    <span class="font-bold text-lg text-[#2c221e]">Cozy Greenhouse (30 Plants)</span>
+                    <img src="assets/images/decorations/cat_mochi_idle.gif" alt="" class="w-6 h-6 pixel-art-img">
+                    <span id="decorDrawerTitle" class="font-bold text-lg text-[#2c221e]">Cozy Shelf Decor</span>
                     <span class="text-xs font-bold bg-[#e2f0cb] text-[#2c221e] px-2.5 py-0.5 rounded-full border border-[#2c221e]">
-                        Click a plant or spot to decorate
+                        Click any item or spot to decorate
                     </span>
                 </div>
                 <div class="flex items-center gap-2 flex-wrap">
-                    <button id="btnClearPlants" class="hand-btn hand-btn-sm bg-[#fffdf7] text-xs font-bold px-3 py-1" title="Remove all plants from the shelf">
+                    <button id="btnClearPlants" class="hand-btn hand-btn-sm bg-[#fffdf7] text-xs font-bold px-3 py-1" title="Remove all decorations from the shelf">
                         Clear All
                     </button>
-                    <button id="btnClosePlantTray" class="w-7 h-7 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold text-xs hover:scale-105 active:scale-95 transition-transform" title="Close Greenhouse">
+                    <button id="btnClosePlantTray" class="w-7 h-7 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold text-xs hover:scale-105 active:scale-95 transition-transform" title="Close Decor Drawer">
                         <img src="assets/images/icons/close.png" alt="Close" class="w-3 h-3 pixel-art-img">
                     </button>
                 </div>
             </div>
 
-            <!-- Target Spot Picker -->
-            <div class="flex items-center justify-between gap-3 mb-3 pb-2.5 border-b border-[#e6dcce]">
+            <!-- Category & Spot Selectors -->
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3 pb-2.5 border-b border-[#e6dcce]">
+                <!-- Category Filter Pills (No emojis, clean text) -->
+                <div class="flex items-center gap-1.5 flex-wrap" id="decorCategorySelector">
+                    <span class="text-xs font-bold text-[#6b584d] mr-1">Category:</span>
+                    <button type="button" class="decor-cat-pill active" data-cat="all">All (57)</button>
+                    <button type="button" class="decor-cat-pill" data-cat="cats">Mini Cats (8)</button>
+                    <button type="button" class="decor-cat-pill" data-cat="knick-knacks">Knick-Knacks (14)</button>
+                    <button type="button" class="decor-cat-pill" data-cat="toys">Cat Beds & Toys (5)</button>
+                    <button type="button" class="decor-cat-pill" data-cat="plants">Plants (30)</button>
+                </div>
+
+                <!-- Target Spot Picker -->
                 <div class="flex items-center gap-1.5 flex-wrap" id="plantSpotSelector">
                     <span class="text-xs font-bold text-[#6b584d] mr-1">Place Into:</span>
                     <button type="button" class="plant-spot-pill active" data-spot="auto">Best Open Spot</button>
@@ -124,11 +136,11 @@
             </div>
 
             <div id="plantCatalogGrid" class="plant-catalog-grid">
-                <!-- Populated by JS with all 30 pixel-art houseplants -->
+                <!-- Populated by JS with cats, knick-knacks, toys & plants -->
             </div>
 
             <p class="text-xs text-[#786457] mt-2.5 font-semibold">
-                Tip: Click any plant to place it on your shelves, or click a dashed <b>+ Plant Spot</b> directly on the bookcase to place a plant right into that nook!
+                Tip: Click any item to place it into the selected spot, or drag it straight to where you want it! You can flip, resize (S/M/L), or reposition them anytime.
             </p>
         </section>
 

@@ -213,39 +213,88 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Feature flag: Cozy Houseplants Greenhouse & Shelf Decorator
     const ENABLE_COZY_PLANTS = true;
 
-    // 30 Pixel-Art Cozy Houseplants Catalog
-    const COZY_PLANTS = [
-        { file: '01_monstera.png', name: 'Monstera' },
-        { file: '02_banana_plant.png', name: 'Banana Plant' },
-        { file: '03_red_aglaonema.png', name: 'Red Aglaonema' },
-        { file: '04_purple_oxalis.png', name: 'Purple Oxalis' },
-        { file: '05_spider_plant.png', name: 'Spider Plant' },
-        { file: '06_fern_basket.png', name: 'Fern Basket' },
-        { file: '07_dracaena_patterned_pot.png', name: 'Dracaena' },
-        { file: '08_lucky_bamboo.png', name: 'Lucky Bamboo' },
-        { file: '09_boxwood_topiary.png', name: 'Boxwood Topiary' },
-        { file: '10_bonsai.png', name: 'Bonsai' },
-        { file: '11_aloe_vera.png', name: 'Aloe Vera' },
-        { file: '12_peace_lily.png', name: 'Peace Lily' },
-        { file: '13_african_violet.png', name: 'African Violet' },
-        { file: '14_geranium.png', name: 'Geranium' },
-        { file: '15_ranunculus.png', name: 'Ranunculus' },
-        { file: '16_rose_bush.png', name: 'Rose Bush' },
-        { file: '17_hanging_pothos.png', name: 'Hanging Pothos' },
-        { file: '18_macrame_hanger.png', name: 'Macrame Hanger' },
-        { file: '19_face_pot.png', name: 'Face Pot' },
-        { file: '20_teacup_plant.png', name: 'Teacup Plant' },
-        { file: '21_window_box.png', name: 'Window Box' },
-        { file: '22_monstera_dark_pot.png', name: 'Dark Monstera' },
-        { file: '23_rubber_plant.png', name: 'Rubber Plant' },
-        { file: '24_money_tree.png', name: 'Money Tree' },
-        { file: '25_parlor_palm.png', name: 'Parlor Palm' },
-        { file: '26_broad_leaf.png', name: 'Broad Leaf' },
-        { file: '27_pothos_trellis.png', name: 'Pothos Trellis' },
-        { file: '28_string_of_pearls.png', name: 'String of Pearls' },
-        { file: '29_hanging_fern.png', name: 'Hanging Fern' },
-        { file: '30_variegated_patterned_pot.png', name: 'Variegated Pot' }
+    // Helper to resolve decoration asset URLs (supports both 'decorations' and 'plants' folders)
+    function getDecorImgSrc(p) {
+        if (!p || !p.file) return '';
+        if (p.folder === 'plants') return `assets/images/plants/${p.file}`;
+        if (p.folder === 'decorations') return `assets/images/decorations/${p.file}`;
+        // Fallback detection for legacy items saved before folder distinction
+        if (/^[0-3][0-9]_/.test(p.file)) {
+            return `assets/images/plants/${p.file}`;
+        }
+        return `assets/images/decorations/${p.file}`;
+    }
+
+    // 57-Item Cozy Shelf Decor Catalog (Mini Animated Cats, Knick-Knacks, Toys & Houseplants)
+    const COZY_DECOR_CATALOG = [
+        // --- 1. Mini Animated Cats (8 items) ---
+        { id: 'cat-mochi-idle', file: 'cat_mochi_idle.gif', name: 'Mochi (Idle)', category: 'cats', folder: 'decorations', defaultSize: 72 },
+        { id: 'cat-mochi-box', file: 'cat_mochi_box.gif', name: 'Mochi in Box', category: 'cats', folder: 'decorations', defaultSize: 72 },
+        { id: 'cat-sleeping-curled', file: 'cat_sleeping_curled.gif', name: 'Ginger Cat (Sleeping)', category: 'cats', folder: 'decorations', defaultSize: 72 },
+        { id: 'cat-pochi-idle', file: 'cat_pochi_idle.gif', name: 'Pochi (Idle)', category: 'cats', folder: 'decorations', defaultSize: 72 },
+        { id: 'cat-pochi-sleep', file: 'cat_pochi_sleep.gif', name: 'Pochi (Sleeping)', category: 'cats', folder: 'decorations', defaultSize: 72 },
+        { id: 'cat-pochi-stretch', file: 'cat_pochi_stretch.gif', name: 'Pochi (Stretch)', category: 'cats', folder: 'decorations', defaultSize: 72 },
+        { id: 'cat-pochi-groom', file: 'cat_pochi_groom.gif', name: 'Pochi (Grooming)', category: 'cats', folder: 'decorations', defaultSize: 72 },
+        { id: 'cat-pochi-sit', file: 'cat_pochi_sit.gif', name: 'Pochi (Sitting)', category: 'cats', folder: 'decorations', defaultSize: 72 },
+
+        // --- 2. Cozy Knick-Knacks & Books (14 items) ---
+        { id: 'knick-coffee-cup', file: 'coffee_cup.png', name: 'Coffee Cup', category: 'knick-knacks', folder: 'decorations', defaultSize: 64 },
+        { id: 'knick-tea-cup-1', file: 'tea_cup_1.png', name: 'Green Tea', category: 'knick-knacks', folder: 'decorations', defaultSize: 64 },
+        { id: 'knick-tea-cup-2', file: 'tea_cup_2.png', name: 'Floral Teacup', category: 'knick-knacks', folder: 'decorations', defaultSize: 64 },
+        { id: 'knick-croissant', file: 'croissant.png', name: 'Croissant', category: 'knick-knacks', folder: 'decorations', defaultSize: 64 },
+        { id: 'knick-candy-jar', file: 'candy_jar.png', name: 'Candy Jar', category: 'knick-knacks', folder: 'decorations', defaultSize: 72 },
+        { id: 'knick-jam-jar', file: 'jam_jar.png', name: 'Jam Jar', category: 'knick-knacks', folder: 'decorations', defaultSize: 64 },
+        { id: 'knick-camera', file: 'camera.png', name: 'Film Camera', category: 'knick-knacks', folder: 'decorations', defaultSize: 64 },
+        { id: 'knick-photo-frame', file: 'photo_frame.png', name: 'Photo Frame', category: 'knick-knacks', folder: 'decorations', defaultSize: 72 },
+        { id: 'knick-vase', file: 'vase.png', name: 'Ceramic Vase', category: 'knick-knacks', folder: 'decorations', defaultSize: 80 },
+        { id: 'knick-lamp', file: 'lamp.png', name: 'Reading Lamp', category: 'knick-knacks', folder: 'decorations', defaultSize: 80 },
+        { id: 'knick-books', file: 'books.png', name: 'Book Stack', category: 'knick-knacks', folder: 'decorations', defaultSize: 72 },
+        { id: 'knick-book-1', file: 'book_1.png', name: 'Journal', category: 'knick-knacks', folder: 'decorations', defaultSize: 64 },
+        { id: 'knick-book-2', file: 'book_2.png', name: 'Pencil & Pad', category: 'knick-knacks', folder: 'decorations', defaultSize: 64 },
+        { id: 'knick-twinkling-star', file: 'twinkling_star.gif', name: 'Twinkling Star', category: 'knick-knacks', folder: 'decorations', defaultSize: 64 },
+
+        // --- 3. Cat Beds & Toys (5 items) ---
+        { id: 'toy-cushion-teal', file: 'cat_cushion.png', name: 'Teal Cat Bed', category: 'toys', folder: 'decorations', defaultSize: 80 },
+        { id: 'toy-cushion-pink', file: 'cat_cushion_pink.png', name: 'Pink Cat Bed', category: 'toys', folder: 'decorations', defaultSize: 80 },
+        { id: 'toy-mouse', file: 'toy_mouse.png', name: 'Toy Mouse', category: 'toys', folder: 'decorations', defaultSize: 64 },
+        { id: 'toy-bell', file: 'toy_bell.png', name: 'Jingle Bell', category: 'toys', folder: 'decorations', defaultSize: 64 },
+        { id: 'toy-fish-snack', file: 'fish_snack.png', name: 'Fish Snack', category: 'toys', folder: 'decorations', defaultSize: 64 },
+
+        // --- 4. Pixel-Art Houseplants (30 items) ---
+        { id: 'plant-01', file: '01_monstera.png', name: 'Monstera', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-02', file: '02_banana_plant.png', name: 'Banana Plant', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-03', file: '03_red_aglaonema.png', name: 'Red Aglaonema', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-04', file: '04_purple_oxalis.png', name: 'Purple Oxalis', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-05', file: '05_spider_plant.png', name: 'Spider Plant', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-06', file: '06_fern_basket.png', name: 'Fern Basket', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-07', file: '07_dracaena_patterned_pot.png', name: 'Dracaena', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-08', file: '08_lucky_bamboo.png', name: 'Lucky Bamboo', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-09', file: '09_boxwood_topiary.png', name: 'Boxwood Topiary', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-10', file: '10_bonsai.png', name: 'Bonsai', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-11', file: '11_aloe_vera.png', name: 'Aloe Vera', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-12', file: '12_peace_lily.png', name: 'Peace Lily', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-13', file: '13_african_violet.png', name: 'African Violet', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-14', file: '14_geranium.png', name: 'Geranium', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-15', file: '15_ranunculus.png', name: 'Ranunculus', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-16', file: '16_rose_bush.png', name: 'Rose Bush', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-17', file: '17_hanging_pothos.png', name: 'Hanging Pothos', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-18', file: '18_macrame_hanger.png', name: 'Macrame Hanger', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-19', file: '19_face_pot.png', name: 'Face Pot', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-20', file: '20_teacup_plant.png', name: 'Teacup Plant', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-21', file: '21_window_box.png', name: 'Window Box', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-22', file: '22_monstera_dark_pot.png', name: 'Dark Monstera', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-23', file: '23_rubber_plant.png', name: 'Rubber Plant', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-24', file: '24_money_tree.png', name: 'Money Tree', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-25', file: '25_parlor_palm.png', name: 'Parlor Palm', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-26', file: '26_broad_leaf.png', name: 'Broad Leaf', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-27', file: '27_pothos_trellis.png', name: 'Pothos Trellis', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-28', file: '28_string_of_pearls.png', name: 'String of Pearls', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-29', file: '29_hanging_fern.png', name: 'Hanging Fern', category: 'plants', folder: 'plants', defaultSize: 80 },
+        { id: 'plant-30', file: '30_variegated_patterned_pot.png', name: 'Variegated Pot', category: 'plants', folder: 'plants', defaultSize: 80 }
     ];
+
+    // Alias for backward compatibility
+    const COZY_PLANTS = COZY_DECOR_CATALOG;
 
     function loadInitialPlants() {
         try {
@@ -255,10 +304,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (Array.isArray(parsed)) return parsed;
             }
         } catch (e) {}
-        // Default starter plants so the user can immediately see & drag them on the shelf
+        // Default starter cozy decor: sleeping ginger cat, bonsai plant, and Mochi in a box
         return [
-            { id: 'plant-starter-1', file: '10_bonsai.png', name: 'Bonsai', xPercent: 64, yPx: -70, size: 80, flipped: false },
-            { id: 'plant-starter-2', file: '01_monstera.png', name: 'Monstera', xPercent: 86, yPx: 234, size: 80, flipped: false }
+            { id: 'decor-starter-1', file: 'cat_sleeping_curled.gif', name: 'Ginger Cat (Sleeping)', folder: 'decorations', category: 'cats', xPercent: 24, yPx: -62, size: 72, flipped: false },
+            { id: 'decor-starter-2', file: '10_bonsai.png', name: 'Bonsai', folder: 'plants', category: 'plants', xPercent: 68, yPx: -70, size: 80, flipped: false },
+            { id: 'decor-starter-3', file: 'cat_mochi_box.gif', name: 'Mochi in Box', folder: 'decorations', category: 'cats', xPercent: 86, yPx: 234, size: 72, flipped: false }
         ];
     }
 
@@ -274,7 +324,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         extractedDescription: '',
         woodTheme: localStorage.getItem('cozy_wood_theme') || 'oak',
         catPose: localStorage.getItem('cozy_cat_pose') || 'pose-curled',
-        placedPlants: loadInitialPlants()
+        placedPlants: loadInitialPlants(),
+        activeDecorCategory: 'all'
     };
 
     // Authentic Pixel Cat Sprite Poses (from Free Pack)
@@ -1387,7 +1438,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function updatePlantButtonUI() {
         if (!plantLabel) return;
         const count = state.placedPlants.length;
-        plantLabel.innerText = count > 0 ? `Cozy Plants (${count})` : 'Cozy Plants';
+        plantLabel.innerText = count > 0 ? `Cozy Decor (${count})` : 'Cozy Decor';
     }
 
     // Computes all well-organized, non-overlapping plant spots on the current bookcase
@@ -1691,9 +1742,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 state.placedPlants = [];
                 savePlacedPlants();
                 refreshMarkers();
-                showToast('Cleared all plants from the shelf', 'success');
+                showToast('Cleared all decorations from the shelf', 'success');
             });
         }
+
+        // Category Filter Pills (All / Cats / Knick-Knacks / Toys / Plants)
+        document.querySelectorAll('.decor-cat-pill').forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.activeDecorCategory = btn.dataset.cat || 'all';
+                document.querySelectorAll('.decor-cat-pill').forEach(b => {
+                    b.classList.toggle('active', b === btn);
+                });
+                renderCatalogGrid();
+            });
+        });
 
         // Target Spot Filter Pills (Best Open Spot / Shelftop / Top of Stack / Shelf Nook)
         document.querySelectorAll('.plant-spot-pill').forEach(btn => {
@@ -1707,104 +1769,117 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
 
-        if (!catalogGrid) return;
-        catalogGrid.innerHTML = '';
+        function renderCatalogGrid() {
+            if (!catalogGrid) return;
+            catalogGrid.innerHTML = '';
 
-        COZY_PLANTS.forEach((plant) => {
-            const card = document.createElement('div');
-            card.className = 'plant-tray-item';
-            card.title = `Click to place ${plant.name} into the selected shelf spot, or drag anywhere`;
-            card.innerHTML = `
-                <img src="assets/images/plants/${plant.file}" alt="${escapeHtml(plant.name)}">
-                <span class="plant-tray-name">${escapeHtml(plant.name)}</span>
-            `;
+            const filteredItems = state.activeDecorCategory === 'all'
+                ? COZY_DECOR_CATALOG
+                : COZY_DECOR_CATALOG.filter(item => item.category === state.activeDecorCategory);
 
-            // Pointer-based drag from tray onto bookcase (or click to auto-place into organized spot)
-            card.addEventListener('pointerdown', (e) => {
-                if (e.button !== 0 && e.pointerType === 'mouse') return;
-                e.preventDefault();
+            filteredItems.forEach((decorItem) => {
+                const card = document.createElement('div');
+                card.className = 'plant-tray-item';
+                card.title = `Click to place ${decorItem.name} into the selected shelf spot, or drag anywhere`;
+                const itemImgSrc = getDecorImgSrc(decorItem);
+                card.innerHTML = `
+                    <img src="${itemImgSrc}" alt="${escapeHtml(decorItem.name)}">
+                    <span class="plant-tray-name">${escapeHtml(decorItem.name)}</span>
+                `;
 
-                const startX = e.clientX;
-                const startY = e.clientY;
-                let isDragging = false;
-                let ghost = null;
-                const defaultSize = 80;
+                // Pointer-based drag from tray onto bookcase (or click to auto-place into organized spot)
+                card.addEventListener('pointerdown', (e) => {
+                    if (e.button !== 0 && e.pointerType === 'mouse') return;
+                    e.preventDefault();
 
-                const onPointerMove = (moveEv) => {
-                    const dx = moveEv.clientX - startX;
-                    const dy = moveEv.clientY - startY;
-                    if (!isDragging && Math.hypot(dx, dy) > 6) {
-                        isDragging = true;
-                        ghost = document.createElement('img');
-                        ghost.src = `assets/images/plants/${plant.file}`;
-                        ghost.className = 'plant-drag-ghost';
-                        ghost.style.width = `${defaultSize}px`;
-                        ghost.style.height = `${defaultSize}px`;
-                        document.body.appendChild(ghost);
-                    }
-                    if (isDragging && ghost) {
-                        ghost.style.left = `${moveEv.clientX}px`;
-                        ghost.style.top = `${moveEv.clientY}px`;
-                    }
-                };
+                    const startX = e.clientX;
+                    const startY = e.clientY;
+                    let isDragging = false;
+                    let ghost = null;
+                    const defaultSize = decorItem.defaultSize || 80;
 
-                const onPointerUp = (upEv) => {
-                    window.removeEventListener('pointermove', onPointerMove);
-                    window.removeEventListener('pointerup', onPointerUp);
-                    if (ghost) ghost.remove();
+                    const onPointerMove = (moveEv) => {
+                        const dx = moveEv.clientX - startX;
+                        const dy = moveEv.clientY - startY;
+                        if (!isDragging && Math.hypot(dx, dy) > 6) {
+                            isDragging = true;
+                            ghost = document.createElement('img');
+                            ghost.src = itemImgSrc;
+                            ghost.className = 'plant-drag-ghost';
+                            ghost.style.width = `${defaultSize}px`;
+                            ghost.style.height = `${defaultSize}px`;
+                            document.body.appendChild(ghost);
+                        }
+                        if (isDragging && ghost) {
+                            ghost.style.left = `${moveEv.clientX}px`;
+                            ghost.style.top = `${moveEv.clientY}px`;
+                        }
+                    };
 
-                    const bookcaseEl = document.querySelector('.wooden-bookcase');
-                    if (!bookcaseEl) return;
-                    const bcRect = bookcaseEl.getBoundingClientRect();
+                    const onPointerUp = (upEv) => {
+                        window.removeEventListener('pointermove', onPointerMove);
+                        window.removeEventListener('pointerup', onPointerUp);
+                        if (ghost) ghost.remove();
 
-                    if (isDragging) {
-                        // Check if released over or just above the bookcase (including shelftop crown area)
-                        const inHorizontal = upEv.clientX >= bcRect.left - 30 && upEv.clientX <= bcRect.right + 30;
-                        const inVertical = upEv.clientY >= bcRect.top - 110 && upEv.clientY <= bcRect.bottom + 30;
-                        if (inHorizontal && inVertical) {
-                            const rawX = upEv.clientX - bcRect.left - (defaultSize / 2);
-                            const xPercent = Math.max(0, Math.min(92, (rawX / bcRect.width) * 100));
-                            const rawYPx = upEv.clientY - bcRect.top - (defaultSize * 0.85);
-                            const snappedY = snapPlantPosition(bookcaseEl, xPercent, rawYPx, defaultSize);
+                        const bookcaseEl = document.querySelector('.wooden-bookcase');
+                        if (!bookcaseEl) return;
+                        const bcRect = bookcaseEl.getBoundingClientRect();
 
+                        if (isDragging) {
+                            // Check if released over or just above the bookcase (including shelftop crown area)
+                            const inHorizontal = upEv.clientX >= bcRect.left - 30 && upEv.clientX <= bcRect.right + 30;
+                            const inVertical = upEv.clientY >= bcRect.top - 110 && upEv.clientY <= bcRect.bottom + 30;
+                            if (inHorizontal && inVertical) {
+                                const rawX = upEv.clientX - bcRect.left - (defaultSize / 2);
+                                const xPercent = Math.max(0, Math.min(92, (rawX / bcRect.width) * 100));
+                                const rawYPx = upEv.clientY - bcRect.top - (defaultSize * 0.85);
+                                const snappedY = snapPlantPosition(bookcaseEl, xPercent, rawYPx, defaultSize);
+
+                                state.placedPlants.push({
+                                    id: 'decor-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                                    file: decorItem.file,
+                                    name: decorItem.name,
+                                    category: decorItem.category,
+                                    folder: decorItem.folder,
+                                    xPercent: Number(xPercent.toFixed(2)),
+                                    yPx: snappedY,
+                                    size: defaultSize,
+                                    flipped: false
+                                });
+                                savePlacedPlants();
+                                renderPlacedPlants(bookcaseEl);
+                                showToast(`Placed ${decorItem.name} on the shelf!`, 'success');
+                            }
+                        } else {
+                            // Organized click-to-place: automatically finds the best open spot (or user-targeted spot)
+                            const bestSpot = pickBestOrganizedSpot(bookcaseEl, activeSpotFilter);
+                            const sz = decorItem.defaultSize || bestSpot.defaultSize || 80;
                             state.placedPlants.push({
-                                id: 'plant-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-                                file: plant.file,
-                                name: plant.name,
-                                xPercent: Number(xPercent.toFixed(2)),
-                                yPx: snappedY,
-                                size: defaultSize,
+                                id: 'decor-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                                file: decorItem.file,
+                                name: decorItem.name,
+                                category: decorItem.category,
+                                folder: decorItem.folder,
+                                xPercent: bestSpot.xPercent,
+                                yPx: bestSpot.surfaceY - sz,
+                                size: sz,
                                 flipped: false
                             });
                             savePlacedPlants();
                             renderPlacedPlants(bookcaseEl);
-                            showToast(`Placed ${plant.name} on the shelf!`, 'success');
+                            showToast(`Placed ${decorItem.name} in ${bestSpot.label}!`, 'success');
                         }
-                    } else {
-                        // Organized click-to-place: automatically finds the best open spot (or user-targeted spot)
-                        const bestSpot = pickBestOrganizedSpot(bookcaseEl, activeSpotFilter);
-                        const sz = bestSpot.defaultSize || 80;
-                        state.placedPlants.push({
-                            id: 'plant-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-                            file: plant.file,
-                            name: plant.name,
-                            xPercent: bestSpot.xPercent,
-                            yPx: bestSpot.surfaceY - sz,
-                            size: sz,
-                            flipped: false
-                        });
-                        savePlacedPlants();
-                        renderPlacedPlants(bookcaseEl);
-                        showToast(`Placed ${plant.name} in ${bestSpot.label}!`, 'success');
-                    }
-                };
+                    };
 
-                window.addEventListener('pointermove', onPointerMove);
-                window.addEventListener('pointerup', onPointerUp);
+                    window.addEventListener('pointermove', onPointerMove);
+                    window.addEventListener('pointerup', onPointerUp);
+                });
+
+                catalogGrid.appendChild(card);
             });
+        }
 
-            catalogGrid.appendChild(card);
-        });
+        renderCatalogGrid();
     }
 
     // Dismiss pinned plant toolbar when clicking outside any placed plant
@@ -1836,7 +1911,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 marker.className = `shelf-plant-spot-marker ${targetedSpotId === spot.spotId ? 'is-targeted' : ''}`;
                 marker.style.left = `${spot.xPercent}%`;
                 marker.style.top = `${spot.surfaceY - 58}px`;
-                marker.title = `Click to target ${spot.label} for your next plant`;
+                marker.title = `Click to target ${spot.label} for your next decoration`;
                 marker.innerHTML = `
                     <span class="text-xs leading-none">+</span>
                     <span>${escapeHtml(spot.label)}</span>
@@ -1846,7 +1921,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     targetedSpotId = (targetedSpotId === spot.spotId) ? null : spot.spotId;
                     renderPlacedPlants(bookcaseEl);
                     if (targetedSpotId) {
-                        showToast(`Selected "${spot.label}" — click any plant above to place it here!`, 'success');
+                        showToast(`Selected "${spot.label}" — click any item above to place it here!`, 'success');
                     }
                 });
                 bookcaseEl.appendChild(marker);
@@ -1862,6 +1937,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             wrap.title = `${p.name} (Click for controls, drag to move)`;
 
             const sizeLabel = size <= 64 ? 'S' : (size >= 96 ? 'L' : 'M');
+            const itemImgSrc = getDecorImgSrc(p);
 
             wrap.innerHTML = `
                 <div class="plant-action-bar">
@@ -1869,11 +1945,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <img src="assets/images/icons/reload.png" alt="Flip" class="w-3 h-3 pixel-art-img inline-block">
                     </button>
                     <button type="button" class="plant-ctrl-btn btn-size" title="Change size (S / M / L)">${sizeLabel}</button>
-                    <button type="button" class="plant-ctrl-btn btn-del" title="Remove plant">
+                    <button type="button" class="plant-ctrl-btn btn-del" title="Remove decoration">
                         <img src="assets/images/icons/close.png" alt="Remove" class="w-2.5 h-2.5 pixel-art-img inline-block">
                     </button>
                 </div>
-                <img src="assets/images/plants/${p.file}" alt="${escapeHtml(p.name)}" 
+                <img src="${itemImgSrc}" alt="${escapeHtml(p.name)}" 
                      class="placed-plant-sprite ${p.flipped ? 'is-flipped' : ''}" 
                      style="width: ${size}px; height: ${size}px;">
             `;
