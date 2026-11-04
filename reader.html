@@ -17,11 +17,13 @@
     <!-- Reader Top Navigation -->
     <header class="reader-header" id="readerHeader">
         <div class="nav-left">
-            <a href="index.html" class="hand-nav-btn" title="Return to Wooden Shelves">
-                ← Shelf
+            <a href="index.html" class="hand-nav-btn flex items-center gap-1.5" title="Return to Wooden Shelves">
+                <img src="assets/images/ui/arrow_wood_left.png" alt="" class="w-3.5 h-2 pixel-art-img">
+                <span>Shelf</span>
             </a>
-            <button class="hand-nav-btn hidden lg:inline-flex" id="btnToggleDrawer" title="Reading Menu & Contents">
-                <span>☰ Menu</span>
+            <button class="hand-nav-btn hidden lg:inline-flex items-center gap-1.5" id="btnToggleDrawer" title="Reading Menu & Contents">
+                <img src="assets/images/ui/cat_paw.png" alt="" class="w-4 h-4 pixel-art-img">
+                <span>Menu</span>
                 <span id="headerBookmarkBadge" class="hidden text-xs bg-[#e07a5f] text-white px-1.5 py-0.2 rounded-full font-bold">0</span>
             </button>
             <div class="book-meta hidden lg:block">
@@ -50,14 +52,14 @@
 
         <div class="nav-right">
             <!-- Fullscreen Button (Desktop) -->
-            <button class="hand-nav-btn hidden lg:inline-flex" id="btnFullscreen" title="Toggle Full Screen (F)">
-                <span id="fullscreenIcon">⛶</span>
+            <button class="hand-nav-btn hidden lg:inline-flex items-center gap-1.5" id="btnFullscreen" title="Toggle Full Screen (F)">
+                <span id="fullscreenIcon"><img src="assets/images/icons/settings.png" alt="" class="w-3.5 h-3.5 pixel-art-img"></span>
                 <span id="fullscreenText">Full Screen</span>
             </button>
 
             <!-- Bookmark Button -->
-            <button class="hand-nav-btn" id="btnAddBookmark" title="Bookmark current page">
-                <span id="bookmarkIcon" class="hidden"></span>
+            <button class="hand-nav-btn flex items-center gap-1.5" id="btnAddBookmark" title="Bookmark current page">
+                <span id="bookmarkIcon"><img src="assets/images/icons/star.png" alt="" class="w-3.5 h-3.5 pixel-art-img"></span>
                 <span id="bookmarkText">Bookmark</span>
             </button>
 
@@ -99,11 +101,13 @@
                     <div class="menu-section pt-1 border-t border-[var(--border-chrome)]">
                         <label>VIEW CONTROLS</label>
                         <div class="flex flex-col gap-1.5">
-                            <button type="button" class="hand-nav-btn w-full justify-center text-center" id="btnMenuFullscreen">
-                                ⛶ Toggle Full Screen (F)
+                            <button type="button" class="hand-nav-btn w-full justify-center text-center flex items-center gap-2" id="btnMenuFullscreen">
+                                <img src="assets/images/icons/settings.png" alt="" class="w-3.5 h-3.5 pixel-art-img">
+                                <span>Toggle Full Screen (F)</span>
                             </button>
-                            <button type="button" class="hand-nav-btn w-full justify-center text-center" id="btnMenuZen">
-                                🌿 Distraction-Free (Z)
+                            <button type="button" class="hand-nav-btn w-full justify-center text-center flex items-center gap-2" id="btnMenuZen">
+                                <img src="assets/images/icons/moon.png" alt="" class="w-3.5 h-3.5 pixel-art-img">
+                                <span>Distraction-Free (Z)</span>
                             </button>
                         </div>
                     </div>
@@ -119,16 +123,18 @@
     <!-- Reader Main Stage -->
     <div class="reader-stage" id="readerStage">
         <!-- Tactile Pull Tab for Mobile/Tablet Side Panel -->
-        <button class="reader-pull-tab lg:hidden" id="btnReaderPullTab" title="Open Reading Panel">
-            <span id="readerPullTabIcon">☰</span>
+        <button class="reader-pull-tab lg:hidden flex items-center justify-center" id="btnReaderPullTab" title="Open Reading Panel">
+            <span id="readerPullTabIcon" class="flex items-center justify-center">
+                <img src="assets/images/ui/cat_paw.png" alt="" class="w-4 h-4 pixel-art-img select-none">
+            </span>
         </button>
 
         <!-- Backdrop overlay for slide-out drawer -->
         <div class="reader-drawer-backdrop" id="readerDrawerBackdrop"></div>
 
         <!-- Floating Zen / Distraction-Free Toggle Pill -->
-        <button id="btnFloatingZen" class="floating-zen-btn" title="Toggle distraction-free view (Z)">
-            <span id="zenIcon">🌿</span>
+        <button id="btnFloatingZen" class="floating-zen-btn flex items-center gap-1.5" title="Toggle distraction-free view (Z)">
+            <span id="zenIcon"><img src="assets/images/icons/moon.png" alt="" class="w-3.5 h-3.5 pixel-art-img"></span>
             <span id="zenText">Zen View</span>
         </button>
 
@@ -139,9 +145,12 @@
         <aside class="toc-sidebar" id="tocSidebar">
             <div class="toc-header">
                 <div class="flex items-center gap-2">
-                    <span class="font-bold text-base text-[#2c221e]">📖 Reading Panel</span>
+                    <img src="assets/images/icons/book_open.png" alt="" class="w-4 h-4 pixel-art-img">
+                    <span class="font-bold text-base text-[#2c221e]">Reading Panel</span>
                 </div>
-                <button class="btn-icon" id="btnCloseDrawer" title="Close Panel">✕</button>
+                <button class="btn-icon flex items-center justify-center" id="btnCloseDrawer" title="Close Panel">
+                    <img src="assets/images/icons/close.png" alt="Close" class="w-3.5 h-3.5 pixel-art-img">
+                </button>
             </div>
 
             <!-- Reading Options & Quick Controls Card -->
@@ -151,14 +160,17 @@
                     <span class="text-[11px] text-[#8c7b6f] font-normal">Page flow</span>
                 </div>
                 <div class="sidebar-mode-grid">
-                    <button class="sidebar-mode-btn active" data-mode="single" id="btnSidebarSingle">
-                        📄 Single Page
+                    <button class="sidebar-mode-btn active flex items-center justify-center gap-1.5" data-mode="single" id="btnSidebarSingle">
+                        <img src="assets/images/icons/book.png" alt="" class="w-3.5 h-3.5 pixel-art-img">
+                        <span>Single Page</span>
                     </button>
-                    <button class="sidebar-mode-btn" data-mode="scroll" id="btnSidebarScroll">
-                        📜 Endless Scroll
+                    <button class="sidebar-mode-btn flex items-center justify-center gap-1.5" data-mode="scroll" id="btnSidebarScroll">
+                        <img src="assets/images/icons/reload.png" alt="" class="w-3.5 h-3.5 pixel-art-img">
+                        <span>Endless Scroll</span>
                     </button>
-                    <button class="sidebar-mode-btn col-span-2 hidden sm:block" data-mode="spread" id="btnSidebarSpread">
-                        📖 Two Pages Spread
+                    <button class="sidebar-mode-btn col-span-2 hidden sm:flex items-center justify-center gap-1.5" data-mode="spread" id="btnSidebarSpread">
+                        <img src="assets/images/icons/book_open.png" alt="" class="w-3.5 h-3.5 pixel-art-img">
+                        <span>Two Pages Spread</span>
                     </button>
                 </div>
 
@@ -166,20 +178,20 @@
                     <span>DISPLAY & QUICK ACTIONS</span>
                 </div>
                 <div class="sidebar-action-grid">
-                    <button class="sidebar-action-btn" id="btnSidebarFullscreen">
-                        <span id="sidebarFullscreenIcon">⛶</span>
+                    <button class="sidebar-action-btn flex items-center justify-center gap-1.5" id="btnSidebarFullscreen">
+                        <span id="sidebarFullscreenIcon"><img src="assets/images/icons/settings.png" alt="" class="w-3.5 h-3.5 pixel-art-img"></span>
                         <span id="sidebarFullscreenText">Full Screen</span>
                     </button>
-                    <button class="sidebar-action-btn" id="btnSidebarZen">
-                        <span>🌿</span>
+                    <button class="sidebar-action-btn flex items-center justify-center gap-1.5" id="btnSidebarZen">
+                        <span><img src="assets/images/icons/moon.png" alt="" class="w-3.5 h-3.5 pixel-art-img"></span>
                         <span>Zen View</span>
                     </button>
-                    <button class="sidebar-action-btn col-span-2" id="btnSidebarBookmark">
-                        <span id="sidebarBookmarkIcon">🔖</span>
+                    <button class="sidebar-action-btn col-span-2 flex items-center justify-center gap-2" id="btnSidebarBookmark">
+                        <span id="sidebarBookmarkIcon"><img src="assets/images/icons/star.png" alt="" class="w-3.5 h-3.5 pixel-art-img"></span>
                         <span id="sidebarBookmarkText">Bookmark Current Page</span>
                     </button>
-                    <button class="sidebar-action-btn col-span-2" id="btnSidebarDownload">
-                        <span>💾</span>
+                    <button class="sidebar-action-btn col-span-2 flex items-center justify-center gap-2" id="btnSidebarDownload">
+                        <img src="assets/images/icons/inventory_bag.png" alt="" class="w-3.5 h-3.5 pixel-art-img">
                         <span>Download EPUB File</span>
                     </button>
                 </div>

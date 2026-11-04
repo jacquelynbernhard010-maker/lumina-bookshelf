@@ -18,11 +18,12 @@
         <!-- Compact Mobile Top Bar (Shown on phones/small tablets < 768px) -->
         <div class="mobile-top-bar md:hidden bg-[#fffdf9] border-2 border-[#2c221e] rounded-2xl px-4 py-2 mb-4 shadow-[3px_3px_0px_#2c221e] flex items-center justify-between gap-2">
             <div class="flex items-center gap-2">
-                <span class="text-xl select-none">📚</span>
+                <img src="assets/images/icons/book.png" alt="" class="w-6 h-6 pixel-art-img select-none">
                 <h1 class="text-xl font-bold tracking-wide truncate">The Cozy Nook</h1>
             </div>
-            <button type="button" id="btnQuickMobileUpload" class="hand-btn hand-btn-sm px-3.5 py-1 text-sm font-bold hand-btn-terracotta" title="Slip a Book In">
-                <span>+ Book</span>
+            <button type="button" id="btnQuickMobileUpload" class="hand-btn hand-btn-sm px-3.5 py-1 text-sm font-bold hand-btn-terracotta flex items-center gap-1.5" title="Slip a Book In">
+                <img src="assets/images/icons/plus.png" alt="" class="w-3.5 h-3.5 pixel-art-img">
+                <span>Book</span>
             </button>
         </div>
 
@@ -32,8 +33,10 @@
         <!-- Top Hand-Drawn Header on Desktop / Retractable Left Side Panel on Mobile (< 768px) -->
         <header id="mainNavPanel" class="cozy-nav-panel bg-[#fffdf9] wobbly-border p-6 mb-8 shadow-[4px_4px_0px_#2c221e] relative">
             <!-- Tactile Left-Edge Pull Tab on Mobile to Expand/Retract Side Panel anytime -->
-            <button type="button" id="btnMobilePullTab" class="mobile-pull-tab md:hidden" title="Toggle Side Panel">
-                <span id="mobilePullTabIcon">☰</span>
+            <button type="button" id="btnMobilePullTab" class="mobile-pull-tab md:hidden flex items-center justify-center" title="Toggle Side Panel">
+                <span id="mobilePullTabIcon" class="flex items-center justify-center">
+                    <img id="mobilePullTabImg" src="assets/images/ui/cat_paw.png" alt="" class="w-5 h-5 pixel-art-img select-none">
+                </span>
             </button>
 
             <!-- Washi tape at top (desktop) -->
@@ -48,15 +51,16 @@
                         </div>
                         <p class="text-sm md:text-lg text-[#6b584d] -mt-0.5 md:-mt-1">your quiet little corner of hand-picked digital books ~</p>
                     </div>
-                    <button type="button" id="btnCloseMobileSidebar" class="md:hidden w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] flex items-center justify-center font-bold text-sm flex-shrink-0" title="Retract Side Panel">
-                        ◀
+                    <button type="button" id="btnCloseMobileSidebar" class="md:hidden w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] flex items-center justify-center font-bold text-sm flex-shrink-0 hover:scale-105 active:scale-95 transition-transform" title="Retract Side Panel">
+                        <img src="assets/images/icons/close.png" alt="Close" class="w-3 h-3 pixel-art-img">
                     </button>
                 </div>
 
                 <!-- Handcrafted UI Buttons -->
                 <div class="cozy-nav-actions flex flex-wrap items-center gap-2.5 md:gap-3 w-full md:w-auto">
                     <button id="btnOpenUpload" class="hand-btn px-5 py-2 text-base font-bold hand-btn-terracotta flex items-center justify-center gap-2 w-full md:w-auto order-first md:order-last">
-                        <span>+ Slip a Book In</span>
+                        <img src="assets/images/icons/plus.png" alt="" class="w-4 h-4 pixel-art-img">
+                        <span>Slip a Book In</span>
                     </button>
 
                     <button id="btnWoodTheme" class="hand-btn px-3.5 py-2 text-sm font-bold flex items-center justify-center gap-1.5 bg-[#f4e8d6] flex-1 md:flex-initial" title="Change Bookcase Wood Finish">
@@ -69,7 +73,8 @@
                     </button>
 
                     <button id="btnOpenBulkImport" class="hand-btn px-4 py-2 text-sm md:text-base font-bold flex items-center justify-center gap-2 flex-1 md:flex-initial hand-btn-honey" title="Import multiple books or an entire folder">
-                        <span>📁 Import Folder</span>
+                        <img src="assets/images/icons/folder.png" alt="" class="w-4 h-4 pixel-art-img">
+                        <span>Import Folder</span>
                     </button>
                 </div>
             </div>
@@ -101,8 +106,8 @@
                     <button id="btnClearPlants" class="hand-btn hand-btn-sm bg-[#fffdf7] text-xs font-bold px-3 py-1" title="Remove all plants from the shelf">
                         Clear All
                     </button>
-                    <button id="btnClosePlantTray" class="w-7 h-7 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold text-xs hover:scale-105 transition-transform" title="Close Greenhouse">
-                        ✕
+                    <button id="btnClosePlantTray" class="w-7 h-7 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold text-xs hover:scale-105 active:scale-95 transition-transform" title="Close Greenhouse">
+                        <img src="assets/images/icons/close.png" alt="Close" class="w-3 h-3 pixel-art-img">
                     </button>
                 </div>
             </div>
@@ -134,14 +139,17 @@
 
         <!-- Empty State -->
         <div id="emptyState" class="text-center py-16 px-4 bg-[#fffdf9] wobbly-border shadow-[4px_4px_0px_#2c221e] mt-6 hidden">
+            <img src="assets/images/decorations/books.png" alt="" class="w-20 h-16 pixel-art-img mx-auto mb-3 select-none">
             <h3 class="text-2xl font-bold mb-1">This wooden shelf is empty!</h3>
             <p class="text-[#786457] text-lg mb-4">Slip your favorite .epub or .pdf book into this cozy corner</p>
             <div class="flex flex-wrap items-center justify-center gap-3">
-                <button class="hand-btn hand-btn-terracotta" onclick="document.getElementById('btnOpenUpload').click()">
-                    + Slip a Book In
+                <button class="hand-btn hand-btn-terracotta flex items-center gap-2" onclick="document.getElementById('btnOpenUpload').click()">
+                    <img src="assets/images/icons/plus.png" alt="" class="w-4 h-4 pixel-art-img">
+                    <span>Slip a Book In</span>
                 </button>
-                <button class="hand-btn hand-btn-honey" onclick="document.getElementById('btnOpenBulkImport').click()">
-                    📁 Import Folder / Bulk
+                <button class="hand-btn hand-btn-honey flex items-center gap-2" onclick="document.getElementById('btnOpenBulkImport').click()">
+                    <img src="assets/images/icons/folder.png" alt="" class="w-4 h-4 pixel-art-img">
+                    <span>Import Folder / Bulk</span>
                 </button>
             </div>
         </div>
@@ -163,7 +171,7 @@
             <div class="hidden sm:block absolute -top-3 left-1/2 -translate-x-1/2 w-32 h-6 washi-tape"></div>
 
             <button id="btnCloseReadModal" class="absolute top-3.5 right-3.5 md:top-4 md:right-4 w-9 h-9 rounded-full bg-[#faedcd] border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] flex items-center justify-center font-bold text-lg hover:scale-110 active:scale-95 transition-transform z-20" title="Put back on shelf">
-                ✕
+                <img src="assets/images/icons/close.png" alt="Close" class="w-3.5 h-3.5 pixel-art-img">
             </button>
 
             <div class="flex flex-col md:flex-row gap-4 md:gap-6 items-center md:items-start mt-1 md:mt-2">
@@ -196,7 +204,8 @@
                                 <span class="text-xs font-bold px-2 py-0.5 bg-[#fefae0] border border-[#2c221e] rounded">CURRENTLY READING</span>
                                 <span class="text-xs text-[#8c786c]" id="modalShelfBadge">Saved to your shelf</span>
                             </div>
-                            <button type="button" id="btnToggleFavorite" class="hand-btn hand-btn-sm bg-white text-xs font-bold py-1 px-3 flex items-center gap-1.5">
+                            <button type="button" id="btnToggleFavorite" class="hand-btn hand-btn-sm bg-white text-xs font-bold py-1 px-3 flex items-center gap-1.5 hover:bg-[#fff9e6] transition-colors">
+                                <img src="assets/images/icons/star.png" id="modalFavoriteIconImg" alt="" class="w-3.5 h-3.5 pixel-art-img">
                                 <span id="favoriteBtnText">Mark as Favorite</span>
                             </button>
                         </div>
@@ -237,15 +246,17 @@
                         </div>
 
                         <div class="flex items-center justify-between gap-2 mt-4 md:mt-5">
-                            <button id="btnDeleteBook" class="text-xs font-bold text-[#a84242] hover:underline">
-                                Remove from shelf
+                            <button id="btnDeleteBook" class="text-xs font-bold text-[#a84242] hover:underline flex items-center gap-1">
+                                <img src="assets/images/icons/trash.png" alt="" class="w-3.5 h-3.5 pixel-art-img">
+                                <span>Remove from shelf</span>
                             </button>
                             <div class="flex items-center gap-2">
                                 <button id="btnPutBack" class="hand-btn hand-btn-sm bg-[#faedcd]">
                                     Put Back
                                 </button>
-                                <button id="btnOpenReader" class="hand-btn hand-btn-sm hand-btn-terracotta text-white">
-                                    Open &amp; Read ➔
+                                <button id="btnOpenReader" class="hand-btn hand-btn-sm hand-btn-terracotta text-white flex items-center gap-1.5">
+                                    <span>Open &amp; Read</span>
+                                    <img src="assets/images/ui/arrow_wood_right.png" alt="" class="w-3.5 h-2 pixel-art-img">
                                 </button>
                             </div>
                         </div>
@@ -258,7 +269,9 @@
     <!-- ================= ADD BOOK MODAL ================= -->
     <div id="uploadModal" class="modal-backdrop">
         <div class="bounce-in bg-[#fffefb] wobbly-border max-w-md w-full max-h-[90dvh] overflow-y-auto cozy-scroll p-5 md:p-6 shadow-[8px_8px_0px_#2c221e] relative">
-            <button id="btnCloseUploadModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold">✕</button>
+            <button id="btnCloseUploadModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold hover:scale-105 active:scale-95 transition-transform" title="Close">
+                <img src="assets/images/icons/close.png" alt="Close" class="w-3 h-3 pixel-art-img">
+            </button>
             
             <h3 class="text-2xl font-bold mb-1">Slip a New Book In</h3>
             <p class="text-sm text-[#7d695c] mb-3">Drop an .epub or .pdf file (covers &amp; titles auto-extracted!)</p>
@@ -267,6 +280,7 @@
                 <input type="file" id="bookFileInput" accept=".epub,.pdf,.mobi" required hidden>
                 
                 <div id="dropZone" class="border-2 border-dashed border-[#2c221e] rounded-xl p-6 text-center bg-[#fdfaf3] mb-4 cursor-pointer hover:bg-[#f8f2e2] transition-colors">
+                    <img src="assets/images/icons/book_stack.png" alt="" class="w-10 h-8 pixel-art-img mx-auto mb-2 select-none">
                     <p class="font-bold text-base">Drop your book file here</p>
                     <p class="text-xs text-[#8c786c]">or click to browse your computer</p>
                 </div>
@@ -275,7 +289,9 @@
                     <div class="flex items-center gap-2">
                         <span id="fileNameLabel" class="font-bold text-sm truncate max-w-[220px]">book.epub</span>
                     </div>
-                    <button type="button" id="btnRemoveFile" class="font-bold text-sm text-red-700">✕</button>
+                    <button type="button" id="btnRemoveFile" class="font-bold text-sm text-red-700 hover:scale-110 active:scale-95 transition-transform" title="Remove selected file">
+                        <img src="assets/images/icons/close.png" alt="Remove" class="w-3 h-3 pixel-art-img">
+                    </button>
                 </div>
 
                 <!-- Cover Preview & Choice Option -->
@@ -338,10 +354,12 @@
     <!-- ================= BULK & FOLDER IMPORT MODAL ================= -->
     <div id="bulkImportModal" class="modal-backdrop">
         <div class="bounce-in bg-[#fffefb] wobbly-border max-w-lg w-full max-h-[90dvh] overflow-y-auto cozy-scroll p-6 md:p-8 shadow-[8px_8px_0px_#2c221e] relative">
-            <button type="button" id="btnCloseBulkModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold hover:scale-105 transition-transform" title="Close">✕</button>
+            <button type="button" id="btnCloseBulkModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold hover:scale-105 active:scale-95 transition-transform" title="Close">
+                <img src="assets/images/icons/close.png" alt="Close" class="w-3.5 h-3.5 pixel-art-img">
+            </button>
 
             <div class="flex items-center gap-2 mb-1">
-                <span class="text-2xl select-none">📁</span>
+                <img src="assets/images/icons/folder.png" alt="" class="w-6 h-6 pixel-art-img select-none">
                 <h3 class="text-2xl font-bold">Import Books in Bulk</h3>
             </div>
             <p class="text-sm text-[#7d695c] mb-5">
@@ -352,7 +370,7 @@
             <div id="bulkImportChooser" class="space-y-4">
                 <!-- Drop zone for bulk drag & drop -->
                 <div id="bulkDropZone" class="border-2 border-dashed border-[#2c221e] rounded-xl p-6 text-center bg-[#fdfbf7] cursor-pointer hover:bg-[#f6efe2] transition-colors">
-                    <span class="text-4xl block mb-2 select-none">📚</span>
+                    <img src="assets/images/decorations/books.png" alt="" class="w-14 h-11 pixel-art-img mx-auto mb-2 select-none">
                     <p class="font-bold text-base text-[#2c221e] mb-1">Drag &amp; drop an entire folder or book files here</p>
                     <p class="text-xs text-[#7d695c]">or choose one of the options below</p>
                 </div>
@@ -360,7 +378,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <!-- Option A: Pick an entire folder -->
                     <button type="button" id="btnTriggerFolderPick" class="hand-btn p-4 flex flex-col items-center justify-center gap-2 text-center bg-[#faedcd] hover:bg-[#f5e3b5] transition-all">
-                        <span class="text-3xl select-none">📂</span>
+                        <img src="assets/images/icons/folder.png" alt="" class="w-8 h-8 pixel-art-img select-none mb-1">
                         <div>
                             <span class="block font-bold text-base text-[#2c221e]">Select Folder</span>
                             <span class="block text-xs text-[#7d695c]">Recursively imports folder</span>
@@ -371,7 +389,7 @@
 
                     <!-- Option B: Select multiple files -->
                     <button type="button" id="btnTriggerMultiFilesPick" class="hand-btn p-4 flex flex-col items-center justify-center gap-2 text-center bg-[#e2f0cb] hover:bg-[#d4e7b8] transition-all">
-                        <span class="text-3xl select-none">📑</span>
+                        <img src="assets/images/icons/book_open.png" alt="" class="w-8 h-8 pixel-art-img select-none mb-1">
                         <div>
                             <span class="block font-bold text-base text-[#2c221e]">Select Files</span>
                             <span class="block text-xs text-[#7d695c]">Pick multiple .epub / .pdf</span>
@@ -389,7 +407,7 @@
             <!-- State 2: Progress Indicator during Batch Processing -->
             <div id="bulkImportProgress" class="hidden py-6 text-center space-y-4">
                 <div class="inline-block p-4 rounded-full bg-[#faedcd] border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] animate-bounce">
-                    <span class="text-4xl select-none">📖</span>
+                    <img src="assets/images/decorations/cat_sleeping_1.png" alt="" class="w-12 h-10 pixel-art-img mx-auto select-none">
                 </div>
                 <div>
                     <h4 id="bulkProgressTitle" class="text-xl font-bold text-[#2c221e]">Placing Books on Shelf...</h4>

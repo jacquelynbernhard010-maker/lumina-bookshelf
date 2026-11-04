@@ -597,16 +597,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.body.classList.toggle('is-fullscreen', active);
         if (btnFullscreen) {
             btnFullscreen.classList.toggle('is-active-fullscreen', active);
-            if (fullscreenIcon) fullscreenIcon.innerText = active ? '🗗' : '⛶';
+            if (fullscreenIcon) {
+                fullscreenIcon.innerHTML = `<img src="assets/images/icons/${active ? 'close.png' : 'settings.png'}" alt="" class="w-3.5 h-3.5 pixel-art-img">`;
+            }
             if (fullscreenText) fullscreenText.innerText = active ? 'Exit Full' : 'Full Screen';
             btnFullscreen.title = active ? 'Exit Full Screen (F or Esc)' : 'Toggle Full Screen (F)';
         }
         if (btnMenuFullscreen) {
-            btnMenuFullscreen.innerText = active ? '🗗 Exit Full Screen (F)' : '⛶ Toggle Full Screen (F)';
+            btnMenuFullscreen.innerHTML = `<img src="assets/images/icons/${active ? 'close.png' : 'settings.png'}" alt="" class="w-3.5 h-3.5 pixel-art-img mr-2"> <span>${active ? 'Exit Full Screen (F)' : 'Toggle Full Screen (F)'}</span>`;
         }
         if (btnSidebarFullscreen) {
             btnSidebarFullscreen.classList.toggle('active-action', active);
-            if (sidebarFullscreenIcon) sidebarFullscreenIcon.innerText = active ? '🗗' : '⛶';
+            if (sidebarFullscreenIcon) {
+                sidebarFullscreenIcon.innerHTML = `<img src="assets/images/icons/${active ? 'close.png' : 'settings.png'}" alt="" class="w-3.5 h-3.5 pixel-art-img">`;
+            }
             if (sidebarFullscreenText) sidebarFullscreenText.innerText = active ? 'Exit Full' : 'Full Screen';
         }
         showToast(active ? 'Entered Full Screen' : 'Exited Full Screen', 'info');
@@ -623,9 +627,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     function toggleZenMode() {
         isZenMode = !isZenMode;
         document.body.classList.toggle('zen-mode', isZenMode);
-        if (zenIcon) zenIcon.innerText = isZenMode ? '📖' : '🌿';
+        if (zenIcon) {
+            zenIcon.innerHTML = `<img src="assets/images/icons/${isZenMode ? 'book_open.png' : 'moon.png'}" alt="" class="w-3.5 h-3.5 pixel-art-img">`;
+        }
         if (zenText) zenText.innerText = isZenMode ? 'Show Menu' : 'Zen View';
-        if (btnMenuZen) btnMenuZen.innerText = isZenMode ? '📖 Show Menu Bars (Z)' : '🌿 Distraction-Free (Z)';
+        if (btnMenuZen) {
+            btnMenuZen.innerHTML = `<img src="assets/images/icons/${isZenMode ? 'book_open.png' : 'moon.png'}" alt="" class="w-3.5 h-3.5 pixel-art-img mr-2"> <span>${isZenMode ? 'Show Menu Bars (Z)' : 'Distraction-Free (Z)'}</span>`;
+        }
         showToast(isZenMode ? 'Distraction-free mode enabled' : 'Menu bars restored', 'info');
         setTimeout(() => {
             if (rendition) rendition.resize();
@@ -705,7 +713,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Already bookmarked -> Remove bookmark
             const bmId = bookmarks[existingIndex].id;
             await window.storageEngine.removeBookmark(book.id, bmId);
-            showToast('Bookmark removed ✕', 'info');
+            showToast('Bookmark removed', 'info');
         } else {
             // Calculate progress percentage
             let percent = 0;
@@ -774,14 +782,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="font-bold text-sm text-[#2c221e] flex items-center gap-1.5">
                         <span>${escapeHtml(bm.title || `Bookmark #${idx + 1}`)}</span>
                     </div>
-                    <button class="btn-delete-bookmark text-xs font-bold text-red-600 hover:text-red-800 p-1" title="Remove bookmark">✕</button>
+                    <button class="btn-delete-bookmark p-1 hover:scale-110 active:scale-95 transition-transform" title="Remove bookmark">
+                        <img src="assets/images/icons/close.png" alt="Remove" class="w-2.5 h-2.5 pixel-art-img">
+                    </button>
                 </div>
                 <div class="text-xs text-[#786457] mt-1 flex items-center justify-between">
                     <span>${escapeHtml(bm.snippet || '')}</span>
                     <span class="text-[10px] text-[#a39488]">${escapeHtml(bm.date || '')}</span>
                 </div>
                 <div class="mt-2 pt-1 border-t border-[#f0e7d8] text-right">
-                    <span class="text-xs font-bold text-[#e07a5f] hover:underline">Jump to page ➔</span>
+                    <span class="text-xs font-bold text-[#e07a5f] hover:underline inline-flex items-center gap-1 justify-end">
+                        <span>Jump to page</span>
+                        <img src="assets/images/ui/arrow_wood_right.png" alt="" class="w-3.5 h-2 pixel-art-img">
+                    </span>
                 </div>
             `;
 
@@ -815,20 +828,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (isBm) {
             btnAddBookmark.classList.add('is-bookmarked');
-            bookmarkIcon.innerText = '';
+            bookmarkIcon.innerHTML = '<img src="assets/images/icons/star_large.png" alt="" class="w-3.5 h-3.5 pixel-art-img">';
             bookmarkText.innerText = 'Bookmarked';
             if (pageBookmarkRibbon) pageBookmarkRibbon.classList.add('active');
             if (btnSidebarBookmark) {
                 btnSidebarBookmark.classList.add('is-bookmarked');
-                if (sidebarBookmarkText) sidebarBookmarkText.innerText = 'Page Bookmarked ✓';
+                if (sidebarBookmarkIcon) sidebarBookmarkIcon.innerHTML = '<img src="assets/images/icons/star_large.png" alt="" class="w-3.5 h-3.5 pixel-art-img">';
+                if (sidebarBookmarkText) sidebarBookmarkText.innerText = 'Page Bookmarked';
             }
         } else {
             btnAddBookmark.classList.remove('is-bookmarked');
-            bookmarkIcon.innerText = '';
+            bookmarkIcon.innerHTML = '<img src="assets/images/icons/star.png" alt="" class="w-3.5 h-3.5 pixel-art-img">';
             bookmarkText.innerText = 'Bookmark';
             if (pageBookmarkRibbon) pageBookmarkRibbon.classList.remove('active');
             if (btnSidebarBookmark) {
                 btnSidebarBookmark.classList.remove('is-bookmarked');
+                if (sidebarBookmarkIcon) sidebarBookmarkIcon.innerHTML = '<img src="assets/images/icons/star.png" alt="" class="w-3.5 h-3.5 pixel-art-img">';
                 if (sidebarBookmarkText) sidebarBookmarkText.innerText = 'Bookmark Current Page';
             }
         }
@@ -854,11 +869,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (isOpen) {
             tocSidebar.classList.add('open');
             if (readerDrawerBackdrop) readerDrawerBackdrop.classList.add('active');
-            if (readerPullTabIcon) readerPullTabIcon.innerText = '✕';
+            if (readerPullTabIcon) {
+                readerPullTabIcon.innerHTML = '<img src="assets/images/icons/close.png" alt="Close" class="w-3.5 h-3.5 pixel-art-img">';
+            }
         } else {
             tocSidebar.classList.remove('open');
             if (readerDrawerBackdrop) readerDrawerBackdrop.classList.remove('active');
-            if (readerPullTabIcon) readerPullTabIcon.innerText = '☰';
+            if (readerPullTabIcon) {
+                readerPullTabIcon.innerHTML = '<img src="assets/images/ui/cat_paw.png" alt="Menu" class="w-4 h-4 pixel-art-img select-none">';
+            }
         }
     }
 
