@@ -92,6 +92,11 @@ body {
   color: #fff;
 }
 
+.hand-btn-honey {
+  background-color: var(--honey);
+  color: var(--ink);
+}
+
 .hand-btn-sm {
   padding: 5px 12px;
   font-size: 0.95rem;

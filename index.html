@@ -68,8 +68,8 @@
                         <span id="plantLabel">Cozy Plants</span>
                     </button>
 
-                    <button id="btnOpenCloud" class="hand-btn px-4 py-2 text-sm md:text-base font-bold flex items-center justify-center gap-2 flex-1 md:flex-initial" title="Supabase Cloud Sync">
-                        <span id="cloudLabel">Cloud Sync</span>
+                    <button id="btnOpenBulkImport" class="hand-btn px-4 py-2 text-sm md:text-base font-bold flex items-center justify-center gap-2 flex-1 md:flex-initial hand-btn-honey" title="Import multiple books or an entire folder">
+                        <span>📁 Import Folder</span>
                     </button>
                 </div>
             </div>
@@ -136,18 +136,21 @@
         <div id="emptyState" class="text-center py-16 px-4 bg-[#fffdf9] wobbly-border shadow-[4px_4px_0px_#2c221e] mt-6 hidden">
             <h3 class="text-2xl font-bold mb-1">This wooden shelf is empty!</h3>
             <p class="text-[#786457] text-lg mb-4">Slip your favorite .epub or .pdf book into this cozy corner</p>
-            <button class="hand-btn hand-btn-terracotta" onclick="document.getElementById('btnOpenUpload').click()">
-                + Slip Your First Book In
-            </button>
+            <div class="flex flex-wrap items-center justify-center gap-3">
+                <button class="hand-btn hand-btn-terracotta" onclick="document.getElementById('btnOpenUpload').click()">
+                    + Slip a Book In
+                </button>
+                <button class="hand-btn hand-btn-honey" onclick="document.getElementById('btnOpenBulkImport').click()">
+                    📁 Import Folder / Bulk
+                </button>
+            </div>
         </div>
 
         <!-- Hand-drawn Footer -->
         <footer class="mt-14 text-center text-[#786457] text-base flex flex-col items-center gap-1">
             <p>Drawn with ink, tea, and warm thoughts for your digital reading</p>
             <div class="flex flex-wrap items-center justify-center gap-2 text-xs text-[#9a8576] mt-1">
-                <span id="storageModeLabel">Stored locally in your browser</span>
-                <span>•</span>
-                <span class="cursor-pointer underline hover:text-[#2c221e]" onclick="document.getElementById('btnOpenCloud').click()">Cloud Sync</span>
+                <span id="storageModeLabel">Stored safely in your local browser</span>
                 <span>•</span>
                 <button type="button" id="btnResetApp" class="underline hover:text-[#2c221e] cursor-pointer" title="Reset bookshelf data if anything looks wrong">Reset Cache</button>
             </div>
@@ -332,34 +335,71 @@
         </div>
     </div>
 
-    <!-- ================= SUPABASE CLOUD MODAL ================= -->
-    <div id="cloudModal" class="modal-backdrop">
-        <div class="bounce-in bg-[#fffefb] wobbly-border max-w-md w-full max-h-[90dvh] overflow-y-auto cozy-scroll p-5 md:p-6 shadow-[8px_8px_0px_#2c221e] relative">
-            <button id="btnCloseCloudModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold">✕</button>
+    <!-- ================= BULK & FOLDER IMPORT MODAL ================= -->
+    <div id="bulkImportModal" class="modal-backdrop">
+        <div class="bounce-in bg-[#fffefb] wobbly-border max-w-lg w-full max-h-[90dvh] overflow-y-auto cozy-scroll p-6 md:p-8 shadow-[8px_8px_0px_#2c221e] relative">
+            <button type="button" id="btnCloseBulkModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold hover:scale-105 transition-transform" title="Close">✕</button>
 
-            <h3 class="text-2xl font-bold mb-1">Supabase Cloud Sync</h3>
-            <p class="text-sm text-[#7d695c] mb-4">Sync books, covers &amp; progress across your devices</p>
+            <div class="flex items-center gap-2 mb-1">
+                <span class="text-2xl select-none">📁</span>
+                <h3 class="text-2xl font-bold">Import Books in Bulk</h3>
+            </div>
+            <p class="text-sm text-[#7d695c] mb-5">
+                Quickly add books from an entire folder or bulk select multiple ebooks. Titles, authors, and official covers are detected automatically!
+            </p>
 
-            <form id="cloudForm" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-[#5a483d] mb-1">Supabase Project URL</label>
-                    <input type="url" id="supabaseUrlInput" placeholder="https://xyz.supabase.co" class="w-full p-2.5 bg-white border-2 border-[#2c221e] rounded-lg text-sm" required>
+            <!-- State 1: Choose Option / Drag & Drop -->
+            <div id="bulkImportChooser" class="space-y-4">
+                <!-- Drop zone for bulk drag & drop -->
+                <div id="bulkDropZone" class="border-2 border-dashed border-[#2c221e] rounded-xl p-6 text-center bg-[#fdfbf7] cursor-pointer hover:bg-[#f6efe2] transition-colors">
+                    <span class="text-4xl block mb-2 select-none">📚</span>
+                    <p class="font-bold text-base text-[#2c221e] mb-1">Drag &amp; drop an entire folder or book files here</p>
+                    <p class="text-xs text-[#7d695c]">or choose one of the options below</p>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-[#5a483d] mb-1">Supabase Anon Public API Key</label>
-                    <input type="password" id="supabaseKeyInput" placeholder="eyJhbGciOi..." class="w-full p-2.5 bg-white border-2 border-[#2c221e] rounded-lg text-sm font-mono" required>
-                </div>
 
-                <div class="flex justify-between items-center pt-2">
-                    <button type="button" id="btnDisconnectCloud" class="text-xs text-red-700 font-bold hover:underline" style="display: none;">
-                        Disconnect Cloud
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <!-- Option A: Pick an entire folder -->
+                    <button type="button" id="btnTriggerFolderPick" class="hand-btn p-4 flex flex-col items-center justify-center gap-2 text-center bg-[#faedcd] hover:bg-[#f5e3b5] transition-all">
+                        <span class="text-3xl select-none">📂</span>
+                        <div>
+                            <span class="block font-bold text-base text-[#2c221e]">Select Folder</span>
+                            <span class="block text-xs text-[#7d695c]">Recursively imports folder</span>
+                        </div>
                     </button>
-                    <div class="flex gap-2 ml-auto">
-                        <button type="button" id="btnCancelCloud" class="hand-btn hand-btn-sm bg-[#faedcd]">Cancel</button>
-                        <button type="submit" class="hand-btn hand-btn-sm hand-btn-matcha text-white">Connect</button>
-                    </div>
+                    <!-- Hidden input for webkitdirectory folder upload -->
+                    <input type="file" id="bulkFolderInput" webkitdirectory directory multiple accept=".epub,.pdf" class="hidden">
+
+                    <!-- Option B: Select multiple files -->
+                    <button type="button" id="btnTriggerMultiFilesPick" class="hand-btn p-4 flex flex-col items-center justify-center gap-2 text-center bg-[#e2f0cb] hover:bg-[#d4e7b8] transition-all">
+                        <span class="text-3xl select-none">📑</span>
+                        <div>
+                            <span class="block font-bold text-base text-[#2c221e]">Select Files</span>
+                            <span class="block text-xs text-[#7d695c]">Pick multiple .epub / .pdf</span>
+                        </div>
+                    </button>
+                    <!-- Hidden input for multiple files upload -->
+                    <input type="file" id="bulkFilesInput" multiple accept=".epub,.pdf" class="hidden">
                 </div>
-            </form>
+
+                <div class="text-xs text-[#8c786a] text-center pt-2 border-t border-dashed border-[#e6dcce]">
+                    Supports <b>.epub</b> and <b>.pdf</b> ebooks. Covers are parsed in high quality with automatic spine styling.
+                </div>
+            </div>
+
+            <!-- State 2: Progress Indicator during Batch Processing -->
+            <div id="bulkImportProgress" class="hidden py-6 text-center space-y-4">
+                <div class="inline-block p-4 rounded-full bg-[#faedcd] border-2 border-[#2c221e] shadow-[2px_2px_0px_#2c221e] animate-bounce">
+                    <span class="text-4xl select-none">📖</span>
+                </div>
+                <div>
+                    <h4 id="bulkProgressTitle" class="text-xl font-bold text-[#2c221e]">Placing Books on Shelf...</h4>
+                    <p id="bulkProgressSub" class="text-xs text-[#7d695c] mt-1 truncate max-w-xs mx-auto">Reading metadata...</p>
+                </div>
+                <div class="w-full bg-[#ede4d8] border-2 border-[#2c221e] rounded-full h-5 overflow-hidden relative shadow-inner">
+                    <div id="bulkProgressBar" class="h-full bg-[#e07a5f] transition-all duration-200" style="width: 0%;"></div>
+                </div>
+                <p id="bulkProgressCount" class="text-sm font-bold text-[#2c221e]">0 of 0 books processed</p>
+            </div>
         </div>
     </div>
 
@@ -369,9 +409,8 @@
     <!-- Client Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="assets/js/db.js?v=2.2"></script>
-    <script src="assets/js/epub_extractor.js?v=2.2"></script>
-    <script src="assets/js/app.js?v=2.2"></script>
+    <script src="assets/js/db.js?v=2.3"></script>
+    <script src="assets/js/epub_extractor.js?v=2.3"></script>
+    <script src="assets/js/app.js?v=2.3"></script>
 </body>
 </html>

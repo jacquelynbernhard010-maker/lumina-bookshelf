@@ -1,5 +1,5 @@
 /**
- * The Cozy Nook - Storage Engine (IndexedDB + Supabase)
+ * The Cozy Nook - Storage Engine (Safe Local-First IndexedDB)
  * Supports Bookmarks, EPUB covers, reading modes, and shelf customization
  */
 
@@ -8,46 +8,14 @@ class StorageEngine {
         this.dbName = 'CozyNookDB';
         this.dbVersion = 2;
         this.db = null;
-        this.supabase = null;
-        this.isCloudEnabled = false;
-
-        this.initSupabase();
-    }
-
-    initSupabase() {
-        const url = localStorage.getItem('lumina_supabase_url');
-        const key = localStorage.getItem('lumina_supabase_key');
-        if (url && key && window.supabase) {
-            try {
-                this.supabase = window.supabase.createClient(url, key);
-                this.isCloudEnabled = true;
-            } catch (e) {
-                this.isCloudEnabled = false;
-            }
-        } else {
-            this.isCloudEnabled = false;
-        }
-    }
-
-    setSupabaseConfig(url, key) {
-        if (!url || !key) {
-            localStorage.removeItem('lumina_supabase_url');
-            localStorage.removeItem('lumina_supabase_key');
-            this.supabase = null;
-            this.isCloudEnabled = false;
-            return;
-        }
-        localStorage.setItem('lumina_supabase_url', url.trim());
-        localStorage.setItem('lumina_supabase_key', key.trim());
-        this.initSupabase();
     }
 
     getSupabaseConfig() {
-        return {
-            url: localStorage.getItem('lumina_supabase_url') || '',
-            key: localStorage.getItem('lumina_supabase_key') || '',
-            isEnabled: this.isCloudEnabled
-        };
+        return { url: '', key: '', isEnabled: false };
+    }
+
+    setSupabaseConfig() {
+        // Cloud sync removed per configuration
     }
 
     async initIndexedDB() {
@@ -190,18 +158,10 @@ class StorageEngine {
 
     async getShelves() {
         let shelves = [];
-        if (this.isCloudEnabled && this.supabase) {
-            try {
-                const { data, error } = await this.supabase.from('shelves').select('*').order('id', { ascending: true });
-                if (!error && data && data.length > 0) shelves = data;
-            } catch (err) {}
-        }
-        if (shelves.length === 0) {
-            try {
-                shelves = await this.getLocalShelves();
-            } catch (e) {
-                shelves = [];
-            }
+        try {
+            shelves = await this.getLocalShelves();
+        } catch (e) {
+            shelves = [];
         }
         shelves = shelves.filter(s => s.name !== 'Bedtime Stories' && s.name !== 'Poetry & Lore' && s.slug !== 'bedtime-stories' && s.slug !== 'poetry-lore');
         if (shelves.length === 0) {
@@ -242,17 +202,6 @@ class StorageEngine {
     async createShelf(name, color = '#81b29a') {
         const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Math.floor(Math.random() * 1000);
         const shelfData = { name, slug, color };
-
-        if (this.isCloudEnabled) {
-            try {
-                const { data, error } = await this.supabase.from('shelves').insert([shelfData]).select();
-                if (!error && data && data.length > 0) {
-                    await this.saveLocalShelf(data[0]);
-                    return data[0];
-                }
-            } catch (err) {}
-        }
-
         const localShelf = { id: Date.now(), ...shelfData };
         await this.saveLocalShelf(localShelf);
         return localShelf;
@@ -324,29 +273,6 @@ class StorageEngine {
 
         const id = await this.saveLocalBook(localRecord);
         localRecord.id = id;
-
-        // If Cloud enabled, upload in background
-        if (this.isCloudEnabled) {
-            try {
-                const safeName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9_\.-]/g, '_')}`;
-                await this.supabase.storage.from('books').upload(`files/${safeName}`, file);
-                const { data } = this.supabase.storage.from('books').getPublicUrl(`files/${safeName}`);
-                await this.supabase.from('books').insert([{
-                    title: localRecord.title,
-                    author: localRecord.author,
-                    description: localRecord.description,
-                    file_url: data.publicUrl,
-                    file_name: file.name,
-                    file_size: file.size,
-                    file_type: fileExt,
-                    cover_url: cover_url || '',
-                    shelf_id: localRecord.shelf_id
-                }]);
-            } catch (err) {
-                console.warn('Background cloud upload error:', err);
-            }
-        }
-
         return localRecord;
     }
 

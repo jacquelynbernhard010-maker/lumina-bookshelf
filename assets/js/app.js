@@ -348,12 +348,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const bookTitleInput = document.getElementById('bookTitleInput');
     const bookAuthorInput = document.getElementById('bookAuthorInput');
 
-    // Cloud Elements
-    const btnOpenCloud = document.getElementById('btnOpenCloud');
-    const btnCloseCloudModal = document.getElementById('btnCloseCloudModal');
-    const btnCancelCloud = document.getElementById('btnCancelCloud');
-    const cloudForm = document.getElementById('cloudForm');
-    const btnDisconnectCloud = document.getElementById('btnDisconnectCloud');
+    // Bulk & Folder Import Elements
+    const btnOpenBulkImport = document.getElementById('btnOpenBulkImport');
+    const bulkImportModal = document.getElementById('bulkImportModal');
+    const btnCloseBulkModal = document.getElementById('btnCloseBulkModal');
+    const btnTriggerFolderPick = document.getElementById('btnTriggerFolderPick');
+    const bulkFolderInput = document.getElementById('bulkFolderInput');
+    const btnTriggerMultiFilesPick = document.getElementById('btnTriggerMultiFilesPick');
+    const bulkFilesInput = document.getElementById('bulkFilesInput');
+    const bulkDropZone = document.getElementById('bulkDropZone');
+    const bulkImportChooser = document.getElementById('bulkImportChooser');
+    const bulkImportProgress = document.getElementById('bulkImportProgress');
+    const bulkProgressSub = document.getElementById('bulkProgressSub');
+    const bulkProgressBar = document.getElementById('bulkProgressBar');
+    const bulkProgressCount = document.getElementById('bulkProgressCount');
     const storageModeLabel = document.getElementById('storageModeLabel');
 
     // Initialize Storage with Safeguard
@@ -362,10 +370,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
         console.error('Storage initialization fallback:', err);
     }
-    
-    try {
-        updateCloudStatusUI();
-    } catch (err) {}
 
     // Initial Load with Safeguard
     try {
@@ -378,17 +382,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupEventListeners();
     } catch (err) {
         console.error('Setup event listeners fallback:', err);
-    }
-
-    function updateCloudStatusUI() {
-        const config = window.storageEngine.getSupabaseConfig();
-        if (config.isEnabled) {
-            storageModeLabel.innerText = 'Synced with Supabase Cloud';
-            document.getElementById('cloudLabel').innerText = 'Cloud Connected';
-        } else {
-            storageModeLabel.innerText = 'Stored locally in your browser';
-            document.getElementById('cloudLabel').innerText = 'Cloud Sync';
-        }
     }
 
     async function reloadData() {
@@ -498,17 +491,73 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnCloseUploadModal.addEventListener('click', () => uploadModal.classList.remove('active'));
         btnCancelUpload.addEventListener('click', () => uploadModal.classList.remove('active'));
 
-        btnOpenCloud.addEventListener('click', () => {
-            setMobileSidebarOpen(false);
-            const cfg = window.storageEngine.getSupabaseConfig();
-            document.getElementById('supabaseUrlInput').value = cfg.url || '';
-            document.getElementById('supabaseKeyInput').value = cfg.key || '';
-            btnDisconnectCloud.style.display = cfg.isEnabled ? 'block' : 'none';
-            cloudModal.classList.add('active');
-        });
+        // Bulk & Folder Import Listeners
+        if (btnOpenBulkImport) {
+            btnOpenBulkImport.addEventListener('click', () => {
+                setMobileSidebarOpen(false);
+                resetBulkImportModal();
+                bulkImportModal.classList.add('active');
+            });
+        }
+        if (btnCloseBulkModal) {
+            btnCloseBulkModal.addEventListener('click', () => {
+                bulkImportModal.classList.remove('active');
+            });
+        }
+        if (btnTriggerFolderPick && bulkFolderInput) {
+            btnTriggerFolderPick.addEventListener('click', () => {
+                bulkFolderInput.click();
+            });
+        }
+        if (btnTriggerMultiFilesPick && bulkFilesInput) {
+            btnTriggerMultiFilesPick.addEventListener('click', () => {
+                bulkFilesInput.click();
+            });
+        }
+        if (bulkFolderInput) {
+            bulkFolderInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                    processBulkFiles(e.target.files);
+                }
+            });
+        }
+        if (bulkFilesInput) {
+            bulkFilesInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                    processBulkFiles(e.target.files);
+                }
+            });
+        }
 
-        btnCloseCloudModal.addEventListener('click', () => cloudModal.classList.remove('active'));
-        btnCancelCloud.addEventListener('click', () => cloudModal.classList.remove('active'));
+        // Bulk Drop Zone Drag & Drop
+        if (bulkDropZone) {
+            ['dragenter', 'dragover'].forEach(name => {
+                bulkDropZone.addEventListener(name, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    bulkDropZone.classList.add('bg-[#f4ebd9]');
+                });
+            });
+            ['dragleave', 'drop'].forEach(name => {
+                bulkDropZone.addEventListener(name, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    bulkDropZone.classList.remove('bg-[#f4ebd9]');
+                });
+            });
+            bulkDropZone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                bulkDropZone.classList.remove('bg-[#f4ebd9]');
+                const files = await getFilesFromDataTransfer(e.dataTransfer);
+                if (files && files.length > 0) {
+                    processBulkFiles(files);
+                }
+            });
+            bulkDropZone.addEventListener('click', () => {
+                if (btnTriggerFolderPick) btnTriggerFolderPick.click();
+            });
+        }
 
         // One-Click User Troubleshooting & Cache Reset Safeguard
         const btnResetApp = document.getElementById('btnResetApp');
@@ -525,8 +574,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
         }
-        cloudForm.addEventListener('submit', handleCloudSubmit);
-        btnDisconnectCloud.addEventListener('click', handleDisconnectCloud);
 
         // Read Modal Actions
         btnCloseReadModal.addEventListener('click', () => readModal.classList.remove('active'));
@@ -705,9 +752,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         uploadModal.addEventListener('click', (e) => {
             if (e.target === uploadModal) uploadModal.classList.remove('active');
         });
-        cloudModal.addEventListener('click', (e) => {
-            if (e.target === cloudModal) cloudModal.classList.remove('active');
-        });
+        if (bulkImportModal) {
+            bulkImportModal.addEventListener('click', (e) => {
+                if (e.target === bulkImportModal) {
+                    if (bulkImportProgress && !bulkImportProgress.classList.contains('hidden')) return;
+                    bulkImportModal.classList.remove('active');
+                }
+            });
+        }
     }
 
     async function handleFileSelected(file) {
@@ -788,26 +840,134 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    async function handleCloudSubmit(e) {
-        e.preventDefault();
-        const url = document.getElementById('supabaseUrlInput').value.trim();
-        const key = document.getElementById('supabaseKeyInput').value.trim();
-
-        if (!url || !key) return;
-
-        window.storageEngine.setSupabaseConfig(url, key);
-        updateCloudStatusUI();
-        cloudModal.classList.remove('active');
-        showToast('Supabase cloud connected!', 'success');
-        await reloadData();
+    function resetBulkImportModal() {
+        if (bulkImportChooser) bulkImportChooser.classList.remove('hidden');
+        if (bulkImportProgress) bulkImportProgress.classList.add('hidden');
+        if (bulkProgressBar) bulkProgressBar.style.width = '0%';
+        if (bulkProgressCount) bulkProgressCount.textContent = '0 of 0 books processed';
+        if (bulkProgressSub) bulkProgressSub.textContent = 'Reading metadata...';
+        if (bulkFolderInput) bulkFolderInput.value = '';
+        if (bulkFilesInput) bulkFilesInput.value = '';
     }
 
-    function handleDisconnectCloud() {
-        window.storageEngine.setSupabaseConfig('', '');
-        updateCloudStatusUI();
-        cloudModal.classList.remove('active');
-        showToast('Using local browser memory', 'info');
-        reloadData();
+    async function getFilesFromDataTransfer(dataTransfer) {
+        const result = [];
+        if (!dataTransfer) return result;
+
+        if (dataTransfer.items && dataTransfer.items.length > 0) {
+            const queue = [];
+            for (let i = 0; i < dataTransfer.items.length; i++) {
+                const item = dataTransfer.items[i];
+                if (item.webkitGetAsEntry) {
+                    const entry = item.webkitGetAsEntry();
+                    if (entry) queue.push(entry);
+                }
+            }
+            if (queue.length > 0) {
+                async function readEntry(entry) {
+                    if (entry.isFile) {
+                        return new Promise((resolve) => {
+                            entry.file(f => { result.push(f); resolve(); }, () => resolve());
+                        });
+                    } else if (entry.isDirectory) {
+                        const reader = entry.createReader();
+                        const readAllBatch = async () => {
+                            return new Promise((resolve) => {
+                                reader.readEntries(async (entries) => {
+                                    if (!entries || entries.length === 0) {
+                                        resolve();
+                                    } else {
+                                        for (const child of entries) {
+                                            await readEntry(child);
+                                        }
+                                        await readAllBatch();
+                                        resolve();
+                                    }
+                                }, () => resolve());
+                            });
+                        };
+                        await readAllBatch();
+                    }
+                }
+                for (const entry of queue) {
+                    await readEntry(entry);
+                }
+                return result;
+            }
+        }
+
+        if (dataTransfer.files && dataTransfer.files.length > 0) {
+            for (let i = 0; i < dataTransfer.files.length; i++) {
+                result.push(dataTransfer.files[i]);
+            }
+        }
+        return result;
+    }
+
+    async function processBulkFiles(rawFileList) {
+        const bookFiles = Array.from(rawFileList).filter(f => {
+            const name = (f.name || '').toLowerCase();
+            return (name.endsWith('.epub') || name.endsWith('.pdf')) && !name.startsWith('._') && !name.startsWith('.');
+        });
+
+        if (bookFiles.length === 0) {
+            showToast('No .epub or .pdf books found in the selection.', 'error');
+            resetBulkImportModal();
+            return;
+        }
+
+        if (bulkImportChooser) bulkImportChooser.classList.add('hidden');
+        if (bulkImportProgress) bulkImportProgress.classList.remove('hidden');
+
+        let successCount = 0;
+        const total = bookFiles.length;
+
+        for (let i = 0; i < total; i++) {
+            const file = bookFiles[i];
+            const percent = Math.round(((i) / total) * 100);
+            if (bulkProgressBar) bulkProgressBar.style.width = `${percent}%`;
+            if (bulkProgressCount) bulkProgressCount.textContent = `${i + 1} of ${total} books processed`;
+            if (bulkProgressSub) bulkProgressSub.textContent = `Extracting: ${file.name}`;
+
+            try {
+                let extracted = null;
+                try {
+                    extracted = await window.EpubExtractor.extract(file);
+                } catch (extErr) {
+                    console.warn('Metadata extractor fallback for', file.name, extErr);
+                }
+
+                const title = cleanTitle((extracted && extracted.title) ? extracted.title : file.name);
+                const author = (extracted && extracted.author) ? cleanAuthor(extracted.author) : 'Unknown Author';
+                const cover_url = (extracted && extracted.cover_url) ? extracted.cover_url : '';
+                const spine_color = (extracted && extracted.dominant_color) ? extracted.dominant_color : '#81b29a';
+
+                await window.storageEngine.saveBook({
+                    file,
+                    title,
+                    author,
+                    shelf_id: 1,
+                    cover_url,
+                    spine_color,
+                    spine_style: 'spine'
+                });
+                successCount++;
+            } catch (err) {
+                console.error('Error importing book:', file.name, err);
+            }
+        }
+
+        if (bulkProgressBar) bulkProgressBar.style.width = '100%';
+        if (bulkProgressCount) bulkProgressCount.textContent = `Finished! ${successCount} of ${total} books added`;
+        if (bulkProgressSub) bulkProgressSub.textContent = 'Updating your bookshelf...';
+
+        await new Promise(r => setTimeout(r, 450));
+
+        if (bulkImportModal) bulkImportModal.classList.remove('active');
+        resetBulkImportModal();
+
+        showToast(`✨ Successfully imported ${successCount} books!`, 'success');
+        await reloadData();
     }
 
     // --- Data Rendering ---
