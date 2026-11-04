@@ -53,29 +53,79 @@ class StorageEngine {
     async initIndexedDB() {
         if (this.db) return this.db;
 
-        return new Promise((resolve, reject) => {
-            const req = indexedDB.open(this.dbName, this.dbVersion);
+        const openDB = () => {
+            return new Promise((resolve, reject) => {
+                let isSettled = false;
+                const timer = setTimeout(() => {
+                    if (!isSettled) {
+                        isSettled = true;
+                        reject(new Error('IndexedDB open timed out after 4 seconds'));
+                    }
+                }, 4000);
 
-            req.onupgradeneeded = (e) => {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains('shelves')) {
-                    const shelfStore = db.createObjectStore('shelves', { keyPath: 'id', autoIncrement: true });
-                    shelfStore.createIndex('slug', 'slug', { unique: true });
-                }
-                if (!db.objectStoreNames.contains('books')) {
-                    const bookStore = db.createObjectStore('books', { keyPath: 'id', autoIncrement: true });
-                    bookStore.createIndex('shelf_id', 'shelf_id', { unique: false });
-                }
-            };
+                const req = indexedDB.open(this.dbName, this.dbVersion);
 
-            req.onsuccess = async (e) => {
-                this.db = e.target.result;
-                await this.seedDefaultDataIfNeeded();
-                resolve(this.db);
-            };
+                req.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('shelves')) {
+                        const shelfStore = db.createObjectStore('shelves', { keyPath: 'id', autoIncrement: true });
+                        shelfStore.createIndex('slug', 'slug', { unique: true });
+                    }
+                    if (!db.objectStoreNames.contains('books')) {
+                        const bookStore = db.createObjectStore('books', { keyPath: 'id', autoIncrement: true });
+                        bookStore.createIndex('shelf_id', 'shelf_id', { unique: false });
+                    }
+                };
 
-            req.onerror = (e) => reject(e.target.error);
-        });
+                req.onblocked = () => {
+                    console.warn('CozyNookDB upgrade blocked by an existing open tab.');
+                };
+
+                req.onsuccess = async (e) => {
+                    if (isSettled) return;
+                    isSettled = true;
+                    clearTimeout(timer);
+                    this.db = e.target.result;
+                    this.db.onversionchange = () => {
+                        if (this.db) {
+                            this.db.close();
+                            this.db = null;
+                        }
+                    };
+                    try {
+                        await this.seedDefaultDataIfNeeded();
+                    } catch (err) {
+                        console.warn('Seed error ignored:', err);
+                    }
+                    resolve(this.db);
+                };
+
+                req.onerror = (e) => {
+                    if (isSettled) return;
+                    isSettled = true;
+                    clearTimeout(timer);
+                    reject(e.target.error || new Error('IndexedDB open failed'));
+                };
+            });
+        };
+
+        try {
+            return await openDB();
+        } catch (err) {
+            console.warn('Primary IndexedDB initialization failed, starting auto-recovery:', err);
+            try {
+                await new Promise((resolve) => {
+                    const delReq = indexedDB.deleteDatabase(this.dbName);
+                    delReq.onsuccess = () => resolve();
+                    delReq.onerror = () => resolve();
+                    delReq.onblocked = () => resolve();
+                });
+                return await openDB();
+            } catch (recoveryErr) {
+                console.error('Self-healing IndexedDB recreation failed:', recoveryErr);
+                return null;
+            }
+        }
     }
 
     async seedDefaultDataIfNeeded() {
@@ -140,16 +190,53 @@ class StorageEngine {
 
     async getShelves() {
         let shelves = [];
-        if (this.isCloudEnabled) {
+        if (this.isCloudEnabled && this.supabase) {
             try {
                 const { data, error } = await this.supabase.from('shelves').select('*').order('id', { ascending: true });
                 if (!error && data && data.length > 0) shelves = data;
             } catch (err) {}
         }
         if (shelves.length === 0) {
-            shelves = await this.getLocalShelves();
+            try {
+                shelves = await this.getLocalShelves();
+            } catch (e) {
+                shelves = [];
+            }
         }
-        return shelves.filter(s => s.name !== 'Bedtime Stories' && s.name !== 'Poetry & Lore' && s.slug !== 'bedtime-stories' && s.slug !== 'poetry-lore');
+        shelves = shelves.filter(s => s.name !== 'Bedtime Stories' && s.name !== 'Poetry & Lore' && s.slug !== 'bedtime-stories' && s.slug !== 'poetry-lore');
+        if (shelves.length === 0) {
+            shelves = [
+                { id: 1, name: 'Currently Reading', slug: 'currently-reading', color: '#e07a5f' },
+                { id: 2, name: 'Favorites', slug: 'favorites', color: '#81b29a' }
+            ];
+        }
+        return shelves;
+    }
+
+    async resetAllLocalData() {
+        try {
+            if (this.db) {
+                this.db.close();
+                this.db = null;
+            }
+            await new Promise((resolve) => {
+                const req = indexedDB.deleteDatabase(this.dbName);
+                req.onsuccess = () => resolve();
+                req.onerror = () => resolve();
+                req.onblocked = () => resolve();
+            });
+        } catch (e) {}
+
+        try {
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && (k.startsWith('cozy_') || k.startsWith('lumina_'))) {
+                    keysToRemove.push(k);
+                }
+            }
+            keysToRemove.forEach(k => localStorage.removeItem(k));
+        } catch (e) {}
     }
 
     async createShelf(name, color = '#81b29a') {

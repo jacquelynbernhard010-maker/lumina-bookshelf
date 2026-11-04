@@ -356,13 +356,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnDisconnectCloud = document.getElementById('btnDisconnectCloud');
     const storageModeLabel = document.getElementById('storageModeLabel');
 
-    // Initialize Storage
-    await window.storageEngine.initIndexedDB();
-    updateCloudStatusUI();
+    // Initialize Storage with Safeguard
+    try {
+        await window.storageEngine.initIndexedDB();
+    } catch (err) {
+        console.error('Storage initialization fallback:', err);
+    }
+    
+    try {
+        updateCloudStatusUI();
+    } catch (err) {}
 
-    // Initial Load
-    await reloadData();
-    setupEventListeners();
+    // Initial Load with Safeguard
+    try {
+        await reloadData();
+    } catch (err) {
+        console.error('Initial bookshelf load fallback:', err);
+    }
+
+    try {
+        setupEventListeners();
+    } catch (err) {
+        console.error('Setup event listeners fallback:', err);
+    }
 
     function updateCloudStatusUI() {
         const config = window.storageEngine.getSupabaseConfig();
@@ -493,6 +509,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         btnCloseCloudModal.addEventListener('click', () => cloudModal.classList.remove('active'));
         btnCancelCloud.addEventListener('click', () => cloudModal.classList.remove('active'));
+
+        // One-Click User Troubleshooting & Cache Reset Safeguard
+        const btnResetApp = document.getElementById('btnResetApp');
+        if (btnResetApp) {
+            btnResetApp.addEventListener('click', async (e) => {
+                e.preventDefault();
+                if (confirm('Reset local bookshelf data and refresh? This clears local browser storage so your bookshelf initializes fresh.')) {
+                    if (window.storageEngine && typeof window.storageEngine.resetAllLocalData === 'function') {
+                        await window.storageEngine.resetAllLocalData();
+                    } else {
+                        localStorage.clear();
+                    }
+                    window.location.reload();
+                }
+            });
+        }
         cloudForm.addEventListener('submit', handleCloudSubmit);
         btnDisconnectCloud.addEventListener('click', handleDisconnectCloud);
 
