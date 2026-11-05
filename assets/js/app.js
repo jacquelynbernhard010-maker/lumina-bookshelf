@@ -1784,92 +1784,151 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <span class="plant-tray-name">${escapeHtml(decorItem.name)}</span>
                 `;
 
-                // Pointer-based drag from tray onto bookcase (or click to auto-place into organized spot)
+                // Handle placing items cleanly across touch and desktop:
+                // Mobile/Touch: Native fluid scrolling; only intentional taps place items (scrolling gestures never generate decor).
+                // Desktop/Mouse: Click to place, or drag-and-drop directly onto bookcase.
+                const placeInOrganizedSpot = () => {
+                    const bookcaseEl = document.querySelector('.wooden-bookcase');
+                    if (!bookcaseEl) return;
+                    const bestSpot = pickBestOrganizedSpot(bookcaseEl, activeSpotFilter);
+                    const sz = decorItem.defaultSize || bestSpot.defaultSize || 80;
+                    state.placedPlants.push({
+                        id: 'decor-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                        file: decorItem.file,
+                        name: decorItem.name,
+                        category: decorItem.category,
+                        folder: decorItem.folder,
+                        xPercent: bestSpot.xPercent,
+                        yPx: bestSpot.surfaceY - sz,
+                        size: sz,
+                        flipped: false
+                    });
+                    savePlacedPlants();
+                    renderPlacedPlants(bookcaseEl);
+                    showToast(`Placed ${decorItem.name} in ${bestSpot.label}!`, 'success');
+                };
+
+                let touchMoved = false;
+                let touchStartX = 0;
+                let touchStartY = 0;
+                let touchStartTime = 0;
+                let mouseJustDragged = false;
+
+                // Track touch gestures to prevent accidental placement while scrolling
                 card.addEventListener('pointerdown', (e) => {
-                    if (e.button !== 0 && e.pointerType === 'mouse') return;
-                    e.preventDefault();
+                    if (e.pointerType === 'touch') {
+                        // DO NOT preventDefault! Allow native touch scrolling.
+                        touchMoved = false;
+                        touchStartX = e.clientX;
+                        touchStartY = e.clientY;
+                        touchStartTime = Date.now();
 
-                    const startX = e.clientX;
-                    const startY = e.clientY;
-                    let isDragging = false;
-                    let ghost = null;
-                    const defaultSize = decorItem.defaultSize || 80;
-
-                    const onPointerMove = (moveEv) => {
-                        const dx = moveEv.clientX - startX;
-                        const dy = moveEv.clientY - startY;
-                        if (!isDragging && Math.hypot(dx, dy) > 6) {
-                            isDragging = true;
-                            ghost = document.createElement('img');
-                            ghost.src = itemImgSrc;
-                            ghost.className = 'plant-drag-ghost';
-                            ghost.style.width = `${defaultSize}px`;
-                            ghost.style.height = `${defaultSize}px`;
-                            document.body.appendChild(ghost);
-                        }
-                        if (isDragging && ghost) {
-                            ghost.style.left = `${moveEv.clientX}px`;
-                            ghost.style.top = `${moveEv.clientY}px`;
-                        }
-                    };
-
-                    const onPointerUp = (upEv) => {
-                        window.removeEventListener('pointermove', onPointerMove);
-                        window.removeEventListener('pointerup', onPointerUp);
-                        if (ghost) ghost.remove();
-
-                        const bookcaseEl = document.querySelector('.wooden-bookcase');
-                        if (!bookcaseEl) return;
-                        const bcRect = bookcaseEl.getBoundingClientRect();
-
-                        if (isDragging) {
-                            // Check if released over or just above the bookcase (including shelftop crown area)
-                            const inHorizontal = upEv.clientX >= bcRect.left - 30 && upEv.clientX <= bcRect.right + 30;
-                            const inVertical = upEv.clientY >= bcRect.top - 110 && upEv.clientY <= bcRect.bottom + 30;
-                            if (inHorizontal && inVertical) {
-                                const rawX = upEv.clientX - bcRect.left - (defaultSize / 2);
-                                const xPercent = Math.max(0, Math.min(92, (rawX / bcRect.width) * 100));
-                                const rawYPx = upEv.clientY - bcRect.top - (defaultSize * 0.85);
-                                const snappedY = snapPlantPosition(bookcaseEl, xPercent, rawYPx, defaultSize);
-
-                                state.placedPlants.push({
-                                    id: 'decor-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-                                    file: decorItem.file,
-                                    name: decorItem.name,
-                                    category: decorItem.category,
-                                    folder: decorItem.folder,
-                                    xPercent: Number(xPercent.toFixed(2)),
-                                    yPx: snappedY,
-                                    size: defaultSize,
-                                    flipped: false
-                                });
-                                savePlacedPlants();
-                                renderPlacedPlants(bookcaseEl);
-                                showToast(`Placed ${decorItem.name} on the shelf!`, 'success');
+                        const onTouchMove = (moveEv) => {
+                            if (Math.hypot(moveEv.clientX - touchStartX, moveEv.clientY - touchStartY) > 8) {
+                                touchMoved = true;
                             }
-                        } else {
-                            // Organized click-to-place: automatically finds the best open spot (or user-targeted spot)
-                            const bestSpot = pickBestOrganizedSpot(bookcaseEl, activeSpotFilter);
-                            const sz = decorItem.defaultSize || bestSpot.defaultSize || 80;
-                            state.placedPlants.push({
-                                id: 'decor-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-                                file: decorItem.file,
-                                name: decorItem.name,
-                                category: decorItem.category,
-                                folder: decorItem.folder,
-                                xPercent: bestSpot.xPercent,
-                                yPx: bestSpot.surfaceY - sz,
-                                size: sz,
-                                flipped: false
-                            });
-                            savePlacedPlants();
-                            renderPlacedPlants(bookcaseEl);
-                            showToast(`Placed ${decorItem.name} in ${bestSpot.label}!`, 'success');
-                        }
-                    };
+                        };
+                        const onTouchEnd = () => {
+                            window.removeEventListener('pointermove', onTouchMove);
+                            window.removeEventListener('pointerup', onTouchEnd);
+                            window.removeEventListener('pointercancel', onTouchCancel);
+                        };
+                        const onTouchCancel = () => {
+                            touchMoved = true;
+                            onTouchEnd();
+                        };
 
-                    window.addEventListener('pointermove', onPointerMove);
-                    window.addEventListener('pointerup', onPointerUp);
+                        window.addEventListener('pointermove', onTouchMove, { passive: true });
+                        window.addEventListener('pointerup', onTouchEnd, { passive: true });
+                        window.addEventListener('pointercancel', onTouchCancel, { passive: true });
+                        return;
+                    }
+
+                    // Mouse drag-and-drop to bookcase
+                    if (e.pointerType === 'mouse') {
+                        if (e.button !== 0) return;
+                        e.preventDefault();
+
+                        const startX = e.clientX;
+                        const startY = e.clientY;
+                        let isDragging = false;
+                        let ghost = null;
+                        const defaultSize = decorItem.defaultSize || 80;
+
+                        const onMouseMove = (moveEv) => {
+                            const dx = moveEv.clientX - startX;
+                            const dy = moveEv.clientY - startY;
+                            if (!isDragging && Math.hypot(dx, dy) > 6) {
+                                isDragging = true;
+                                mouseJustDragged = true;
+                                ghost = document.createElement('img');
+                                ghost.src = itemImgSrc;
+                                ghost.className = 'plant-drag-ghost';
+                                ghost.style.width = `${defaultSize}px`;
+                                ghost.style.height = `${defaultSize}px`;
+                                document.body.appendChild(ghost);
+                            }
+                            if (isDragging && ghost) {
+                                ghost.style.left = `${moveEv.clientX}px`;
+                                ghost.style.top = `${moveEv.clientY}px`;
+                            }
+                        };
+
+                        const onMouseUp = (upEv) => {
+                            window.removeEventListener('pointermove', onMouseMove);
+                            window.removeEventListener('pointerup', onMouseUp);
+                            if (ghost) ghost.remove();
+
+                            if (isDragging) {
+                                const bookcaseEl = document.querySelector('.wooden-bookcase');
+                                if (bookcaseEl) {
+                                    const bcRect = bookcaseEl.getBoundingClientRect();
+                                    const inHorizontal = upEv.clientX >= bcRect.left - 30 && upEv.clientX <= bcRect.right + 30;
+                                    const inVertical = upEv.clientY >= bcRect.top - 110 && upEv.clientY <= bcRect.bottom + 30;
+                                    if (inHorizontal && inVertical) {
+                                        const rawX = upEv.clientX - bcRect.left - (defaultSize / 2);
+                                        const xPercent = Math.max(0, Math.min(92, (rawX / bcRect.width) * 100));
+                                        const rawYPx = upEv.clientY - bcRect.top - (defaultSize * 0.85);
+                                        const snappedY = snapPlantPosition(bookcaseEl, xPercent, rawYPx, defaultSize);
+
+                                        state.placedPlants.push({
+                                            id: 'decor-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                                            file: decorItem.file,
+                                            name: decorItem.name,
+                                            category: decorItem.category,
+                                            folder: decorItem.folder,
+                                            xPercent: Number(xPercent.toFixed(2)),
+                                            yPx: snappedY,
+                                            size: defaultSize,
+                                            flipped: false
+                                        });
+                                        savePlacedPlants();
+                                        renderPlacedPlants(bookcaseEl);
+                                        showToast(`Placed ${decorItem.name} on the shelf!`, 'success');
+                                    }
+                                }
+                                setTimeout(() => { mouseJustDragged = false; }, 100);
+                            }
+                        };
+
+                        window.addEventListener('pointermove', onMouseMove);
+                        window.addEventListener('pointerup', onMouseUp);
+                    }
+                });
+
+                // Click event handles taps and clicks; ignores scrolls and mouse drags
+                card.addEventListener('click', (e) => {
+                    if (mouseJustDragged) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
+                    }
+                    if (touchMoved || (touchStartTime && (Date.now() - touchStartTime > 400))) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
+                    }
+                    placeInOrganizedSpot();
                 });
 
                 catalogGrid.appendChild(card);

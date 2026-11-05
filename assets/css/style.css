@@ -1024,6 +1024,9 @@ body {
   gap: 8px;
   max-height: 224px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
   padding: 4px 2px;
 }
 
@@ -1039,6 +1042,8 @@ body {
   box-shadow: 2px 2px 0px var(--ink);
   cursor: grab;
   user-select: none;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
   transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
