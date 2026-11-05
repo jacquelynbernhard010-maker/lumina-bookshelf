@@ -466,11 +466,10 @@ body::-webkit-scrollbar {
 
 .reader-pull-tab {
   position: fixed;
-  top: 48%;
+  top: 74px;
   left: 0;
-  transform: translateY(-50%);
-  width: 24px;
-  height: 48px;
+  width: 28px;
+  height: 46px;
   background: rgba(254, 250, 240, 0.95);
   border: 2px solid var(--border-chrome);
   border-left: none;
@@ -489,8 +488,12 @@ body::-webkit-scrollbar {
 
 .reader-pull-tab:hover {
   background: var(--honey);
-  transform: translateY(-50%) scale(1.08);
+  transform: scale(1.08);
   box-shadow: 3px 3px 0px var(--border-chrome);
+}
+
+body.zen-mode .reader-pull-tab {
+  top: 18px;
 }
 
 .toc-header {
