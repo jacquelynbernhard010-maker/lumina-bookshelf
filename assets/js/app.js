@@ -518,6 +518,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateWoodThemeButtonUI();
         if (btnWoodTheme) {
             btnWoodTheme.addEventListener('click', () => {
+                if (window.SoundFx) window.SoundFx.play('coin');
                 const themes = ['oak', 'walnut', 'sage'];
                 const nextIdx = (themes.indexOf(state.woodTheme) + 1) % themes.length;
                 state.woodTheme = themes[nextIdx];
@@ -530,6 +531,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
+        // Sound FX Toggle button
+        const btnToggleSound = document.getElementById('btnToggleSound');
+        const soundLabel = document.getElementById('soundLabel');
+
+        function updateSoundButtonUI() {
+            if (!soundLabel) return;
+            const isOn = window.SoundFx && window.SoundFx.enabled;
+            soundLabel.innerText = isOn ? 'Sound: On' : 'Sound: Muted';
+            if (btnToggleSound) {
+                btnToggleSound.style.opacity = isOn ? '1' : '0.65';
+                btnToggleSound.title = isOn ? 'Sound effects are active - click to mute' : 'Sound effects are muted - click to enable';
+            }
+        }
+
+        if (btnToggleSound) {
+            updateSoundButtonUI();
+            btnToggleSound.addEventListener('click', () => {
+                if (window.SoundFx) {
+                    const nowOn = window.SoundFx.toggle();
+                    updateSoundButtonUI();
+                    if (nowOn) window.SoundFx.play('toggle');
+                    showToast(nowOn ? 'Cozy UI sounds turned on' : 'UI sounds muted', 'info');
+                }
+            });
+        }
+
         // Cozy Houseplants Greenhouse Drawer & Catalog (stored for future reimplementation)
         if (ENABLE_COZY_PLANTS) {
             initPlantGreenhouseTray();
@@ -538,10 +565,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Modals
         btnOpenUpload.addEventListener('click', () => {
             setMobileSidebarOpen(false);
+            if (window.SoundFx) window.SoundFx.play('click');
             uploadModal.classList.add('active');
         });
-        btnCloseUploadModal.addEventListener('click', () => uploadModal.classList.remove('active'));
-        btnCancelUpload.addEventListener('click', () => uploadModal.classList.remove('active'));
+        btnCloseUploadModal.addEventListener('click', () => {
+            if (window.SoundFx) window.SoundFx.play('cancel');
+            uploadModal.classList.remove('active');
+        });
+        btnCancelUpload.addEventListener('click', () => {
+            if (window.SoundFx) window.SoundFx.play('cancel');
+            uploadModal.classList.remove('active');
+        });
 
         // Bulk & Folder Import Listeners
         if (btnOpenBulkImport) {
@@ -628,9 +662,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // Read Modal Actions
-        btnCloseReadModal.addEventListener('click', () => readModal.classList.remove('active'));
-        btnPutBack.addEventListener('click', () => readModal.classList.remove('active'));
+        btnCloseReadModal.addEventListener('click', () => {
+            if (window.SoundFx) window.SoundFx.play('cancel');
+            readModal.classList.remove('active');
+        });
+        btnPutBack.addEventListener('click', () => {
+            if (window.SoundFx) window.SoundFx.play('cancel');
+            readModal.classList.remove('active');
+        });
         btnOpenReader.addEventListener('click', () => {
+            if (window.SoundFx) window.SoundFx.play('confirm');
             if (state.selectedBook) {
                 window.location.href = `reader.html?id=${state.selectedBook.id}`;
             }
@@ -671,6 +712,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     shelf_id: state.selectedBook.shelf_id
                 });
 
+                if (window.SoundFx) window.SoundFx.play('toggle');
                 showToast(isFavNow ? 'Marked as Favorite' : 'Removed from Favorites', 'success');
                 await fetchBooks();
             });
@@ -679,6 +721,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnDeleteBook.addEventListener('click', async () => {
             if (!state.selectedBook) return;
             if (confirm(`Remove "${state.selectedBook.title}" from your shelf?`)) {
+                if (window.SoundFx) window.SoundFx.play('bonk');
                 await window.storageEngine.deleteBook(state.selectedBook.id);
                 readModal.classList.remove('active');
                 showToast('Book removed from shelf', 'info');
@@ -885,6 +928,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             state.extractedDominantColor = '';
             state.extractedDescription = '';
 
+            if (window.SoundFx) window.SoundFx.play('confirm');
             showToast(`"${title}" slipped onto the shelf!`, 'success');
             await reloadData();
         } catch (err) {
@@ -1018,6 +1062,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (bulkImportModal) bulkImportModal.classList.remove('active');
         resetBulkImportModal();
 
+        if (window.SoundFx) window.SoundFx.play('confirm');
         showToast(`Successfully imported ${successCount} books!`, 'success');
         await reloadData();
     }
@@ -1326,6 +1371,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const cozyCat = topHeader.querySelector('#cozyCat');
         if (cozyCat) {
             cozyCat.addEventListener('click', () => {
+                if (window.SoundFx) window.SoundFx.play('meow');
                 const curIdx = CAT_POSES.findIndex(p => p.id === state.catPose);
                 const nextIdx = (curIdx + 1) % CAT_POSES.length;
                 state.catPose = CAT_POSES[nextIdx].id;
@@ -1723,12 +1769,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (btnPlant && trayDrawer) {
             btnPlant.addEventListener('click', () => {
                 setMobileSidebarOpen(false);
+                const isOpening = trayDrawer.classList.contains('hidden');
                 trayDrawer.classList.toggle('hidden');
+                if (window.SoundFx) window.SoundFx.play(isOpening ? 'toggle' : 'cancel');
                 refreshMarkers();
             });
         }
         if (btnCloseTray && trayDrawer) {
             btnCloseTray.addEventListener('click', () => {
+                if (window.SoundFx) window.SoundFx.play('cancel');
                 trayDrawer.classList.add('hidden');
                 targetedSpotId = null;
                 refreshMarkers();
@@ -1736,6 +1785,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if (btnClearPlants) {
             btnClearPlants.addEventListener('click', () => {
+                if (window.SoundFx) window.SoundFx.play('bonk');
                 state.placedPlants = [];
                 savePlacedPlants();
                 refreshMarkers();
@@ -1805,6 +1855,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                     savePlacedPlants();
                     renderPlacedPlants(bookcaseEl);
+                    const isCat = decorItem.category === 'cats' || (decorItem.name && decorItem.name.toLowerCase().includes('cat'));
+                    if (window.SoundFx) window.SoundFx.play(isCat ? 'meow' : 'pop');
                     showToast(`Placed ${decorItem.name} in ${bestSpot.label}!`, 'success');
                 };
 
@@ -1904,6 +1956,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         });
                                         savePlacedPlants();
                                         renderPlacedPlants(bookcaseEl);
+                                        const isCat = decorItem.category === 'cats' || (decorItem.name && decorItem.name.toLowerCase().includes('cat'));
+                                        if (window.SoundFx) window.SoundFx.play(isCat ? 'meow' : 'pop');
                                         showToast(`Placed ${decorItem.name} on the shelf!`, 'success');
                                     }
                                 }
@@ -2804,6 +2858,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         renderSpineColorSwatches(book, theme);
 
+        if (window.SoundFx) window.SoundFx.play('pop');
         readModal.classList.add('active');
     }
 

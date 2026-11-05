@@ -992,6 +992,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnPrevPage.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (window.SoundFx) window.SoundFx.play('click', 0.28);
         if (bookFormat === 'pdf') {
             pdfPrevPage();
         } else if (bookFormat === 'mobi') {
@@ -1006,6 +1007,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnNextPage.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (window.SoundFx) window.SoundFx.play('click', 0.28);
         if (bookFormat === 'pdf') {
             pdfNextPage();
         } else if (bookFormat === 'mobi') {
@@ -1178,6 +1180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (existingIndex !== -1) {
             const bmId = bookmarks[existingIndex].id;
             await window.storageEngine.removeBookmark(book.id, bmId);
+            if (window.SoundFx) window.SoundFx.play('bonk');
             showToast('Bookmark removed', 'info');
         } else {
             const curChapter = (chapterTitleEl && chapterTitleEl.innerText.trim()) ? chapterTitleEl.innerText.trim() : 'Bookmarked Page';
@@ -1186,6 +1189,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 title: curChapter,
                 snippet: `${pageText} • Saved spot`
             });
+            if (window.SoundFx) window.SoundFx.play('coin');
             showToast(`Page bookmarked (${percent}% read)!`, 'success');
             showBookmarksTab();
         }
@@ -1395,6 +1399,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             themeChoices.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            if (window.SoundFx) window.SoundFx.play('toggle');
             applyCurrentTheme();
         });
     });
@@ -1437,7 +1442,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Progress Persistence ---
     let saveTimer;
+    let hasPlayedLevelUp = false;
     function saveReadingProgress(cfi, progress) {
+        if (progress >= 100 && !hasPlayedLevelUp && (!book.reading_progress || book.reading_progress < 100)) {
+            hasPlayedLevelUp = true;
+            if (window.SoundFx) window.SoundFx.play('levelUp');
+            showToast('Book completed! Dangle ribbon awarded on shelf ~', 'success');
+        }
         clearTimeout(saveTimer);
         saveTimer = setTimeout(async () => {
             try {
@@ -1453,6 +1464,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const tc = document.getElementById('toastContainer');
         if (tc) tc.appendChild(toast);
         setTimeout(() => toast.remove(), 2500);
+    }
+
+    // Return to shelf link sound
+    const btnBackToShelf = document.querySelector('a[href="index.html"]');
+    if (btnBackToShelf) {
+        btnBackToShelf.addEventListener('click', () => {
+            if (window.SoundFx) window.SoundFx.play('cancel');
+        });
     }
 
     function escapeHtml(str) {
