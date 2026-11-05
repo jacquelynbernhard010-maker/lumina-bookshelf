@@ -1,6 +1,7 @@
 /**
- * The Cozy Nook - Reader Engine
- * Single-page / Two-page / Continuous scroll modes + Bookmark management
+ * The Cozy Nook - Universal Reader Engine
+ * Multi-format reading: EPUB, PDF, and MOBI
+ * Modes: Single-page / Two-page spread / Continuous scroll + Bookmark management
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -80,7 +81,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnSidebarDownload = document.getElementById('btnSidebarDownload');
 
     // State
-    let currentReadingMode = localStorage.getItem('cozy_reading_mode') || 'single'; // 'single', 'spread', or 'scroll'
+    let currentReadingMode = localStorage.getItem('cozy_reading_mode') || 'single';
     if (window.innerWidth < 640 && currentReadingMode === 'spread') {
         currentReadingMode = 'single';
     }
@@ -90,7 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.body.className = currentTheme;
     document.documentElement.style.setProperty('--reader-font', currentFontFamily);
-    fontSizeDisplay.innerText = currentFontSize + '%';
+    if (fontSizeDisplay) fontSizeDisplay.innerText = currentFontSize + '%';
 
     // Synchronize active states on UI buttons immediately
     themeChoices.forEach(b => {
@@ -120,13 +121,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (mobileCenterTitle) mobileCenterTitle.innerText = title;
     }
 
+    // Determine book file format
+    let bookFormat = (book.file_type || '').toLowerCase();
+    if (!bookFormat && book.file_name) {
+        bookFormat = book.file_name.split('.').pop().toLowerCase();
+    }
+
     // Download handler for both desktop and mobile side panel
     function handleDownloadBook() {
         if (book.file_blob) {
             const url = URL.createObjectURL(book.file_blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = book.file_name || `${book.title}.epub`;
+            const ext = bookFormat ? `.${bookFormat}` : '.epub';
+            a.download = book.file_name || `${book.title}${ext}`;
             a.click();
             URL.revokeObjectURL(url);
         } else if (book.file_url) {
@@ -136,7 +144,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnDownloadBook) btnDownloadBook.addEventListener('click', handleDownloadBook);
     if (btnSidebarDownload) btnSidebarDownload.addEventListener('click', handleDownloadBook);
 
-    // Prepare ePub input source
+    // Prepare input source
     let epubSource;
     if (book.file_blob) {
         epubSource = await book.file_blob.arrayBuffer();
@@ -144,10 +152,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         epubSource = book.file_url;
     }
 
-    let epubBook, rendition;
+    // Magic bytes fallback check
+    if (epubSource instanceof ArrayBuffer && epubSource.byteLength >= 4) {
+        const u8 = new Uint8Array(epubSource.slice(0, 4));
+        if (u8[0] === 0x25 && u8[1] === 0x50 && u8[2] === 0x44 && u8[3] === 0x46) {
+            bookFormat = 'pdf';
+        } else if (u8[0] === 0x50 && u8[1] === 0x4B) {
+            bookFormat = 'epub';
+        } else if (epubSource.byteLength >= 68) {
+            const view = new DataView(epubSource);
+            const creator = view.getUint32(64, false);
+            if (creator === 0x4D4F4249 || creator === 0x50616C6D) {
+                bookFormat = 'mobi';
+            }
+        }
+    }
+    if (!bookFormat) bookFormat = 'epub';
 
     // --- Reader Themes & Typography Engine ---
-
     const THEME_CONFIG = {
         'theme-light': {
             bg: '#ffffff',
@@ -202,7 +224,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 -moz-osx-font-smoothing: grayscale !important;
             }
 
-            /* Unconditionally override publisher CSS on ALL chapter headings, titles, subheadings, and text */
             *, *:before, *:after,
             html body, html body *,
             body, p, span, div, small,
@@ -249,7 +270,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 margin: 12px auto !important;
             }
 
-            /* Hide scrollbars inside iframe */
             html, body {
                 scrollbar-width: none !important;
                 -ms-overflow-style: none !important;
@@ -267,7 +287,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const head = doc.head || doc.getElementsByTagName('head')[0] || doc.documentElement;
         if (!head) return;
 
-        // 1. Ensure Google Fonts stylesheet link is present in iframe head
         if (!doc.getElementById('cozy-google-fonts')) {
             const fontLink = doc.createElement('link');
             fontLink.id = 'cozy-google-fonts';
@@ -276,7 +295,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             head.appendChild(fontLink);
         }
 
-        // 2. Ensure OpenDyslexic fonts are present in iframe head
         if (!doc.getElementById('cozy-dyslexic-fonts')) {
             const dysLink = doc.createElement('link');
             dysLink.id = 'cozy-dyslexic-fonts';
@@ -291,14 +309,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             head.appendChild(dysBold);
         }
 
-        // 3. Inject or update custom theme & typography stylesheet
         let styleTag = doc.getElementById('cozy-reader-injected-style');
         if (!styleTag) {
             styleTag = doc.createElement('style');
             styleTag.id = 'cozy-reader-injected-style';
             head.appendChild(styleTag);
         } else {
-            // Append at end of head so it always has highest cascade priority over book styles
             head.appendChild(styleTag);
         }
         styleTag.textContent = generateReaderCSS(currentTheme, currentFontFamily, currentFontSize);
@@ -308,26 +324,452 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.body.className = currentTheme;
         document.documentElement.style.setProperty('--reader-font', currentFontFamily);
 
-        // Immediately update all loaded iframes
-        const iframes = epubViewer.querySelectorAll('iframe');
-        iframes.forEach(iframe => {
-            try {
-                const doc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
-                if (doc) injectStylesIntoDoc(doc);
-            } catch (e) {
-                console.warn('Cannot inject styles into iframe:', e);
+        if (bookFormat === 'mobi' && mobiIframe && mobiIframe.contentDocument) {
+            injectStylesIntoDoc(mobiIframe.contentDocument);
+            applyMobiModeStyles(mobiIframe.contentDocument, currentReadingMode);
+        } else if (bookFormat === 'epub') {
+            const iframes = epubViewer.querySelectorAll('iframe');
+            iframes.forEach(iframe => {
+                try {
+                    const doc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+                    if (doc) injectStylesIntoDoc(doc);
+                } catch (e) {}
+            });
+
+            if (rendition) {
+                try {
+                    rendition.themes.select(currentTheme);
+                    rendition.themes.fontSize(currentFontSize + '%');
+                    rendition.themes.font(currentFontFamily);
+                } catch (e) {}
+            }
+        }
+    }
+
+    // ========================================================
+    // ENGINE 1: PDF READING ENGINE
+    // ========================================================
+    let pdfDoc = null;
+    let pdfCurrentPage = 1;
+    let pdfTotalPages = 1;
+
+    async function initPdfEngine() {
+        if (typeof pdfjsLib === 'undefined') {
+            throw new Error('PDF.js library is not loaded');
+        }
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        if (book.last_cfi && book.last_cfi.startsWith('page-')) {
+            const savedP = parseInt(book.last_cfi.replace('page-', ''), 10);
+            if (!isNaN(savedP) && savedP >= 1) pdfCurrentPage = savedP;
+        }
+
+        const loadingTask = pdfjsLib.getDocument({ data: epubSource });
+        pdfDoc = await loadingTask.promise;
+        pdfTotalPages = pdfDoc.numPages;
+
+        if (pdfCurrentPage > pdfTotalPages) pdfCurrentPage = 1;
+
+        try {
+            const outline = await pdfDoc.getOutline();
+            renderPdfOutline(outline);
+        } catch (e) {
+            renderPdfPageList(pdfTotalPages);
+        }
+
+        renderBookmarksList();
+        renderPdfMode(currentReadingMode);
+    }
+
+    function renderPdfMode(mode) {
+        currentReadingMode = mode;
+        localStorage.setItem('cozy_reading_mode', mode);
+
+        modeButtons.forEach(b => {
+            if (b) b.classList.toggle('active', b.dataset.mode === mode);
+        });
+        document.querySelectorAll('.sidebar-mode-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.mode === mode);
+        });
+
+        epubViewer.innerHTML = '';
+        epubViewer.className = `epub-viewer ${mode}-page-mode`;
+
+        if (mode === 'scroll') {
+            btnPrevPage.style.display = 'none';
+            btnNextPage.style.display = 'none';
+            renderPdfScrollMode();
+        } else {
+            btnPrevPage.style.display = 'flex';
+            btnNextPage.style.display = 'flex';
+            renderPdfPaginatedMode();
+        }
+    }
+
+    async function renderPdfPageToCanvas(pageNum, canvas) {
+        if (!pdfDoc || pageNum < 1 || pageNum > pdfTotalPages) return;
+        const page = await pdfDoc.getPage(pageNum);
+        const unscaledViewport = page.getViewport({ scale: 1.0 });
+
+        const containerWidth = epubViewer.clientWidth || window.innerWidth;
+        const containerHeight = (epubViewer.clientHeight || window.innerHeight) - 40;
+        const dpr = window.devicePixelRatio || 1;
+
+        let targetWidth = containerWidth - 36;
+        if (currentReadingMode === 'spread') {
+            targetWidth = (containerWidth / 2) - 44;
+        }
+        if (targetWidth > 820) targetWidth = 820;
+
+        let scale = targetWidth / unscaledViewport.width;
+        if (scale * unscaledViewport.height > containerHeight && currentReadingMode !== 'scroll') {
+            scale = containerHeight / unscaledViewport.height;
+        }
+        if (scale < 0.25) scale = 0.25;
+
+        const viewport = page.getViewport({ scale: scale * dpr });
+        canvas.width = Math.round(viewport.width);
+        canvas.height = Math.round(viewport.height);
+        canvas.style.width = `${Math.round(viewport.width / dpr)}px`;
+        canvas.style.height = `${Math.round(viewport.height / dpr)}px`;
+        canvas.className = 'pdf-page-canvas';
+
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+    }
+
+    async function renderPdfPaginatedMode() {
+        readerLoader.style.display = 'block';
+        epubViewer.innerHTML = '';
+
+        const wrap = document.createElement('div');
+        wrap.className = 'pdf-viewer-wrap';
+
+        const container = document.createElement('div');
+        container.className = 'pdf-canvas-container';
+
+        const canvas1 = document.createElement('canvas');
+        container.appendChild(canvas1);
+        await renderPdfPageToCanvas(pdfCurrentPage, canvas1);
+
+        const isWide = window.innerWidth >= 640;
+        if (currentReadingMode === 'spread' && isWide && pdfCurrentPage + 1 <= pdfTotalPages) {
+            const canvas2 = document.createElement('canvas');
+            container.appendChild(canvas2);
+            await renderPdfPageToCanvas(pdfCurrentPage + 1, canvas2);
+        }
+
+        wrap.appendChild(container);
+        epubViewer.appendChild(wrap);
+
+        wrap.addEventListener('click', (e) => {
+            const w = window.innerWidth;
+            if (e.clientX < w * 0.35) {
+                pdfPrevPage();
+            } else if (e.clientX > w * 0.65) {
+                pdfNextPage();
             }
         });
 
-        // Also keep ePub.js rendition updated
-        if (rendition) {
-            try {
-                rendition.themes.select(currentTheme);
-                rendition.themes.fontSize(currentFontSize + '%');
-                rendition.themes.font(currentFontFamily);
-            } catch (e) {}
+        let touchStartX = 0;
+        let touchStartY = 0;
+        wrap.addEventListener('touchstart', (e) => {
+            if (!e.changedTouches || !e.changedTouches.length) return;
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        wrap.addEventListener('touchend', (e) => {
+            if (!e.changedTouches || !e.changedTouches.length) return;
+            const deltaX = e.changedTouches[0].screenX - touchStartX;
+            const deltaY = e.changedTouches[0].screenY - touchStartY;
+            if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
+                if (deltaX < 0) {
+                    pdfNextPage();
+                } else {
+                    pdfPrevPage();
+                }
+            }
+        }, { passive: true });
+
+        readerLoader.style.display = 'none';
+        updatePdfProgress();
+    }
+
+    async function renderPdfScrollMode() {
+        readerLoader.style.display = 'block';
+        epubViewer.innerHTML = '';
+
+        const scrollList = document.createElement('div');
+        scrollList.className = 'pdf-scroll-list';
+
+        for (let p = 1; p <= pdfTotalPages; p++) {
+            const pageWrap = document.createElement('div');
+            pageWrap.className = 'pdf-scroll-page-slot';
+            pageWrap.dataset.pageNum = p;
+            pageWrap.style.minHeight = '300px';
+
+            const canvas = document.createElement('canvas');
+            canvas.dataset.pageNum = p;
+            pageWrap.appendChild(canvas);
+            scrollList.appendChild(pageWrap);
+        }
+
+        epubViewer.appendChild(scrollList);
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const canvas = entry.target.querySelector('canvas');
+                    const pageNum = parseInt(entry.target.dataset.pageNum, 10);
+                    if (canvas && !canvas.dataset.rendered) {
+                        canvas.dataset.rendered = 'true';
+                        renderPdfPageToCanvas(pageNum, canvas);
+                    }
+                    pdfCurrentPage = pageNum;
+                    updatePdfProgress();
+                }
+            });
+        }, { root: epubViewer, rootMargin: '400px 0px 400px 0px', threshold: 0.1 });
+
+        scrollList.querySelectorAll('.pdf-scroll-page-slot').forEach(slot => observer.observe(slot));
+
+        if (pdfCurrentPage > 1) {
+            setTimeout(() => {
+                const targetSlot = scrollList.querySelector(`.pdf-scroll-page-slot[data-page-num="${pdfCurrentPage}"]`);
+                if (targetSlot) targetSlot.scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        }
+
+        readerLoader.style.display = 'none';
+        updatePdfProgress();
+    }
+
+    function updatePdfProgress() {
+        const percent = Math.max(1, Math.min(100, Math.floor((pdfCurrentPage / pdfTotalPages) * 100)));
+        if (footerProgress) footerProgress.innerText = `Page ${pdfCurrentPage} of ${pdfTotalPages} (${percent}%)`;
+        if (progressFill) progressFill.style.width = `${percent}%`;
+        updateChapterTitle(`Page ${pdfCurrentPage} of ${pdfTotalPages}`);
+        checkIfCurrentPageIsBookmarked(`page-${pdfCurrentPage}`);
+        saveReadingProgress(`page-${pdfCurrentPage}`, percent);
+    }
+
+    function pdfNextPage() {
+        if (!pdfDoc) return;
+        const step = (currentReadingMode === 'spread' && window.innerWidth >= 640) ? 2 : 1;
+        if (pdfCurrentPage + step <= pdfTotalPages) {
+            pdfCurrentPage += step;
+            renderPdfPaginatedMode();
+        } else if (pdfCurrentPage < pdfTotalPages) {
+            pdfCurrentPage = pdfTotalPages;
+            renderPdfPaginatedMode();
         }
     }
+
+    function pdfPrevPage() {
+        if (!pdfDoc) return;
+        const step = (currentReadingMode === 'spread' && window.innerWidth >= 640) ? 2 : 1;
+        if (pdfCurrentPage - step >= 1) {
+            pdfCurrentPage -= step;
+            renderPdfPaginatedMode();
+        } else if (pdfCurrentPage > 1) {
+            pdfCurrentPage = 1;
+            renderPdfPaginatedMode();
+        }
+    }
+
+    function renderPdfOutline(outline) {
+        tocList.innerHTML = '';
+        if (!outline || outline.length === 0) {
+            renderPdfPageList(pdfTotalPages);
+            return;
+        }
+
+        const addItems = (items) => {
+            items.forEach(item => {
+                const link = document.createElement('a');
+                link.className = 'toc-item';
+                link.innerText = item.title ? item.title.trim() : 'Section';
+                link.href = 'javascript:void(0)';
+                link.addEventListener('click', async () => {
+                    let destPage = 1;
+                    if (typeof item.dest === 'string') {
+                        const dest = await pdfDoc.getDestination(item.dest);
+                        if (dest && dest[0]) {
+                            const pageIndex = await pdfDoc.getPageIndex(dest[0]);
+                            destPage = pageIndex + 1;
+                        }
+                    } else if (Array.isArray(item.dest) && item.dest[0]) {
+                        const pageIndex = await pdfDoc.getPageIndex(item.dest[0]);
+                        destPage = pageIndex + 1;
+                    }
+                    pdfCurrentPage = destPage;
+                    setDrawerOpen(false);
+                    renderPdfMode(currentReadingMode);
+                });
+                tocList.appendChild(link);
+                if (item.items && item.items.length) {
+                    addItems(item.items);
+                }
+            });
+        };
+        addItems(outline);
+    }
+
+    function renderPdfPageList(totalPages) {
+        tocList.innerHTML = '';
+        const step = totalPages > 40 ? 5 : 1;
+        for (let p = 1; p <= totalPages; p += step) {
+            const link = document.createElement('a');
+            link.className = 'toc-item';
+            link.innerText = step === 1 ? `Page ${p}` : `Page ${p} - ${Math.min(totalPages, p + step - 1)}`;
+            link.href = 'javascript:void(0)';
+            const targetPage = p;
+            link.addEventListener('click', () => {
+                pdfCurrentPage = targetPage;
+                setDrawerOpen(false);
+                renderPdfMode(currentReadingMode);
+            });
+            tocList.appendChild(link);
+        }
+    }
+
+    // ========================================================
+    // ENGINE 2: MOBI READING ENGINE
+    // ========================================================
+    let mobiData = null;
+    let mobiIframe = null;
+
+    async function initMobiEngine() {
+        if (typeof MobiParser === 'undefined') {
+            throw new Error('MobiParser library is not loaded');
+        }
+
+        mobiData = await MobiParser.parse(epubSource);
+        if (!mobiData || !mobiData.html) {
+            throw new Error('Could not parse MOBI content');
+        }
+
+        renderBookmarksList();
+        renderMobiMode(currentReadingMode);
+    }
+
+    function renderMobiMode(mode) {
+        currentReadingMode = mode;
+        localStorage.setItem('cozy_reading_mode', mode);
+
+        modeButtons.forEach(b => {
+            if (b) b.classList.toggle('active', b.dataset.mode === mode);
+        });
+        document.querySelectorAll('.sidebar-mode-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.mode === mode);
+        });
+
+        epubViewer.innerHTML = '';
+        epubViewer.className = `epub-viewer ${mode}-page-mode`;
+
+        readerLoader.style.display = 'block';
+
+        const iframe = document.createElement('iframe');
+        iframe.className = 'mobi-viewer-iframe';
+        iframe.src = 'about:blank';
+        epubViewer.appendChild(iframe);
+        mobiIframe = iframe;
+
+        iframe.onload = () => {
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            doc.open();
+            doc.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                </head>
+                <body>
+                    <div id="mobiContentWrap">
+                        ${mobiData.html}
+                    </div>
+                </body>
+                </html>
+            `);
+            doc.close();
+
+            injectStylesIntoDoc(doc);
+            applyMobiModeStyles(doc, mode);
+
+            const win = iframe.contentWindow;
+            win.addEventListener('scroll', () => {
+                const sTop = win.scrollY || doc.documentElement.scrollTop;
+                const sHeight = doc.documentElement.scrollHeight - win.innerHeight;
+                if (sHeight > 0) {
+                    const percent = Math.max(0, Math.min(100, Math.round((sTop / sHeight) * 100)));
+                    if (footerProgress) footerProgress.innerText = `${percent}% read`;
+                    if (progressFill) progressFill.style.width = `${percent}%`;
+                    saveReadingProgress(`mobi-${percent}`, percent);
+                }
+            }, { passive: true });
+
+            if (book.last_cfi && book.last_cfi.startsWith('mobi-')) {
+                const savedPercent = parseInt(book.last_cfi.replace('mobi-', ''), 10);
+                if (!isNaN(savedPercent) && savedPercent > 0) {
+                    setTimeout(() => {
+                        const sHeight = doc.documentElement.scrollHeight - win.innerHeight;
+                        win.scrollTo({ top: (savedPercent / 100) * sHeight, behavior: 'auto' });
+                    }, 200);
+                }
+            }
+
+            doc.addEventListener('keydown', (e) => {
+                if (e.key === 'f' || e.key === 'F') {
+                    e.preventDefault();
+                    toggleFullscreen();
+                } else if (e.key === 'z' || e.key === 'Z') {
+                    e.preventDefault();
+                    toggleZenMode();
+                } else if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+                    win.scrollBy({ top: win.innerHeight * 0.85, behavior: 'smooth' });
+                } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                    win.scrollBy({ top: -win.innerHeight * 0.85, behavior: 'smooth' });
+                }
+            });
+
+            readerLoader.style.display = 'none';
+        };
+
+        btnPrevPage.style.display = mode === 'scroll' ? 'none' : 'flex';
+        btnNextPage.style.display = mode === 'scroll' ? 'none' : 'flex';
+    }
+
+    function applyMobiModeStyles(doc, mode) {
+        if (!doc) return;
+        let modeStyle = doc.getElementById('cozy-mobi-mode-style');
+        if (!modeStyle) {
+            modeStyle = doc.createElement('style');
+            modeStyle.id = 'cozy-mobi-mode-style';
+            doc.head.appendChild(modeStyle);
+        }
+
+        const maxW = mode === 'spread' ? '1100px' : (mode === 'single' ? '740px' : '760px');
+        const columns = (mode === 'spread' && window.innerWidth >= 640) ? '2' : '1';
+
+        modeStyle.textContent = `
+            #mobiContentWrap {
+                max-width: ${maxW};
+                margin: 0 auto;
+                padding: 24px 20px;
+                box-sizing: border-box;
+                ${columns === '2' ? 'column-count: 2; column-gap: 40px;' : ''}
+            }
+        `;
+    }
+
+    // ========================================================
+    // ENGINE 3: EPUB READING ENGINE
+    // ========================================================
+    let epubBook, rendition;
 
     function registerEpubThemes() {
         Object.keys(THEME_CONFIG).forEach(themeKey => {
@@ -344,7 +786,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentReadingMode = mode;
         localStorage.setItem('cozy_reading_mode', mode);
 
-        // Update mode button styles (top bar and side panel)
         modeButtons.forEach(b => {
             if (b) b.classList.toggle('active', b.dataset.mode === mode);
         });
@@ -352,7 +793,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             b.classList.toggle('active', b.dataset.mode === mode);
         });
 
-        // Configure viewer container CSS
         epubViewer.className = `epub-viewer ${mode}-page-mode`;
         if (mode === 'scroll') {
             epubViewer.className = 'epub-viewer scroll-mode';
@@ -363,7 +803,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             btnNextPage.style.display = 'flex';
         }
 
-        // Clean existing rendition
         if (rendition) {
             try { rendition.destroy(); } catch(e) {}
         }
@@ -378,7 +817,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (mode === 'single') {
             options.spread = "none";
             options.flow = "paginated";
-            options.minSpreadWidth = 10000; // Never collapse into two-page spread in single mode
+            options.minSpreadWidth = 10000;
         } else if (mode === 'spread') {
             options.spread = "always";
             options.flow = "paginated";
@@ -391,20 +830,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         rendition = epubBook.renderTo("epubViewer", options);
         registerEpubThemes();
 
-        // Injected rules: cleanly configured without breaking column navigation
         rendition.hooks.content.register((contents) => {
             const doc = contents.document;
             if (doc) {
                 injectStylesIntoDoc(doc);
 
-                // Click inside page to turn pages, or mousewheel in scroll mode
                 if (currentReadingMode === 'scroll') {
                     doc.addEventListener('wheel', (e) => {
                         epubViewer.scrollBy({ top: e.deltaY, behavior: 'auto' });
                     }, { passive: true });
                 } else {
                     doc.addEventListener('click', (e) => {
-                        // In single or spread mode: tap/click right side -> next page, left side -> prev page!
                         const pageWidth = contents.window.innerWidth;
                         if (e.clientX < pageWidth * 0.35) {
                             if (rendition) rendition.prev();
@@ -413,7 +849,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     });
 
-                    // Horizontal touch swipe for phones & tablets
                     let touchStartX = 0;
                     let touchStartY = 0;
                     doc.addEventListener('touchstart', (e) => {
@@ -436,7 +871,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }, { passive: true });
                 }
 
-                // Keyboard shortcuts inside EPUB iframe
                 doc.addEventListener('keydown', (e) => {
                     if (e.key === 'f' || e.key === 'F') {
                         e.preventDefault();
@@ -451,7 +885,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 });
 
-                // Auto reveal header if hovering near top edge inside EPUB
                 doc.addEventListener('mousemove', (e) => {
                     if (!isZenMode) return;
                     if (e.clientY < 30) {
@@ -463,14 +896,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        // Ensure newly rendered chapters and sections immediately get styled
         rendition.on('rendered', (section, view) => {
             if (view && view.document) {
                 injectStylesIntoDoc(view.document);
             }
         });
 
-        // Infinite Scroll listener: when nearing the bottom, auto-trigger next section so user never gets stuck!
         let scrollThrottle = false;
         epubViewer.onscroll = () => {
             if (currentReadingMode !== 'scroll' || !rendition || scrollThrottle) return;
@@ -482,7 +913,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         };
 
-        // Restore saved CFI or beginning
         const startTarget = book.last_cfi || undefined;
         rendition.display(startTarget).then(() => {
             readerLoader.style.display = 'none';
@@ -492,7 +922,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             readerLoader.style.display = 'none';
         });
 
-        // Relocated event: tracks location, percentage, and checks bookmark status
         rendition.on('relocated', (location) => {
             if (!location || !location.start) return;
 
@@ -510,7 +939,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             saveReadingProgress(cfi, percent);
         });
 
-        // Click to turn page in paginated mode
         if (mode !== 'scroll') {
             rendition.on('click', (e) => {
                 const width = window.innerWidth;
@@ -520,48 +948,76 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    try {
+    function initEpubEngine() {
         epubBook = ePub(epubSource);
-
-        // Initial render with saved mode (default: single page)
         renderReaderEngine(currentReadingMode);
 
-        // Generate location map
         epubBook.ready.then(() => epubBook.locations.generate(1000));
-
-        // Load chapters & bookmarks
         epubBook.loaded.navigation.then(nav => {
             renderChapters(nav.toc);
         });
         renderBookmarksList();
+    }
 
+    // Launch Format Engine
+    try {
+        if (bookFormat === 'pdf') {
+            await initPdfEngine();
+        } else if (bookFormat === 'mobi' || bookFormat === 'azw' || bookFormat === 'azw3' || bookFormat === 'prc') {
+            await initMobiEngine();
+        } else {
+            initEpubEngine();
+        }
     } catch (err) {
-        console.error('EPUB Error:', err);
+        console.error('Book Load Error:', err);
         readerLoader.innerHTML = `<p style="color:#ef4444;">Could not load book.<br><small>${err.message}</small></p>`;
     }
 
     // --- Mode Switcher Clicks ---
+    function handleSwitchMode(mode) {
+        if (bookFormat === 'pdf') {
+            renderPdfMode(mode);
+        } else if (bookFormat === 'mobi' || bookFormat === 'azw' || bookFormat === 'azw3' || bookFormat === 'prc') {
+            renderMobiMode(mode);
+        } else {
+            renderReaderEngine(mode);
+        }
+    }
 
-    btnModeSingle.addEventListener('click', () => renderReaderEngine('single'));
-    btnModeSpread.addEventListener('click', () => renderReaderEngine('spread'));
-    btnModeScroll.addEventListener('click', () => renderReaderEngine('scroll'));
+    btnModeSingle.addEventListener('click', () => handleSwitchMode('single'));
+    btnModeSpread.addEventListener('click', () => handleSwitchMode('spread'));
+    btnModeScroll.addEventListener('click', () => handleSwitchMode('scroll'));
 
     // --- Navigation Controls ---
-
     btnPrevPage.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (rendition) rendition.prev();
+        if (bookFormat === 'pdf') {
+            pdfPrevPage();
+        } else if (bookFormat === 'mobi') {
+            if (mobiIframe && mobiIframe.contentWindow) {
+                mobiIframe.contentWindow.scrollBy({ top: -mobiIframe.contentWindow.innerHeight * 0.85, behavior: 'smooth' });
+            }
+        } else {
+            if (rendition) rendition.prev();
+        }
     });
 
     btnNextPage.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (rendition) rendition.next();
+        if (bookFormat === 'pdf') {
+            pdfNextPage();
+        } else if (bookFormat === 'mobi') {
+            if (mobiIframe && mobiIframe.contentWindow) {
+                mobiIframe.contentWindow.scrollBy({ top: mobiIframe.contentWindow.innerHeight * 0.85, behavior: 'smooth' });
+            }
+        } else {
+            if (rendition) rendition.next();
+        }
     });
 
     // --- Full Screen & Zen Reading Engine ---
-
     function isFullscreenActive() {
         return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
     }
@@ -616,6 +1072,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         showToast(active ? 'Entered Full Screen' : 'Exited Full Screen', 'info');
         setTimeout(() => {
             if (rendition) rendition.resize();
+            if (bookFormat === 'pdf' && currentReadingMode !== 'scroll') renderPdfPaginatedMode();
         }, 150);
     }
 
@@ -637,6 +1094,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         showToast(isZenMode ? 'Distraction-free mode enabled' : 'Menu bars restored', 'info');
         setTimeout(() => {
             if (rendition) rendition.resize();
+            if (bookFormat === 'pdf' && currentReadingMode !== 'scroll') renderPdfPaginatedMode();
         }, 280);
     }
 
@@ -648,6 +1106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             toggleFullscreen();
         });
     }
+
     if (btnFloatingZen) btnFloatingZen.addEventListener('click', toggleZenMode);
     if (btnSidebarZen) btnSidebarZen.addEventListener('click', toggleZenMode);
     if (btnMenuZen) {
@@ -657,29 +1116,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Sidebar Mode button click listeners
-    document.querySelectorAll('.sidebar-mode-btn').forEach(b => {
-        b.addEventListener('click', () => {
-            renderReaderEngine(b.dataset.mode);
-        });
-    });
-
-    if (btnSidebarBookmark) {
-        btnSidebarBookmark.addEventListener('click', toggleBookmarkCurrentPage);
-    }
-
-    // Auto reveal header if mouse nears top in Zen mode
-    document.addEventListener('mousemove', (e) => {
-        if (!isZenMode) return;
-        if (e.clientY < 28) {
-            document.body.classList.add('hover-top');
-        } else if (e.clientY > 75) {
-            document.body.classList.remove('hover-top');
-        }
-    });
-
+    // Global keyboard shortcuts
     document.addEventListener('keydown', (e) => {
-        if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
         if (e.key === 'f' || e.key === 'F') {
             e.preventDefault();
             toggleFullscreen();
@@ -690,9 +1129,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             toggleZenMode();
             return;
         }
-        if (!rendition || currentReadingMode === 'scroll') return;
-        if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') rendition.next();
-        else if (e.key === 'ArrowLeft' || e.key === 'PageUp') rendition.prev();
+        if (currentReadingMode === 'scroll') return;
+        if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+            if (bookFormat === 'pdf') pdfNextPage();
+            else if (rendition) rendition.next();
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+            if (bookFormat === 'pdf') pdfPrevPage();
+            else if (rendition) rendition.prev();
+        }
     });
 
     // --- Bookmarks Feature ---
@@ -700,43 +1144,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     const headerBookmarkBadge = document.getElementById('headerBookmarkBadge');
 
     async function toggleBookmarkCurrentPage() {
-        if (!rendition) return;
-        const location = rendition.currentLocation();
-        if (!location || !location.start) return;
+        let cfi = '';
+        let pageText = '';
+        let percent = 0;
 
-        const cfi = location.start.cfi;
+        if (bookFormat === 'pdf') {
+            cfi = `page-${pdfCurrentPage}`;
+            percent = Math.floor((pdfCurrentPage / pdfTotalPages) * 100);
+            pageText = `Page ${pdfCurrentPage} of ${pdfTotalPages} (${percent}%)`;
+        } else if (bookFormat === 'mobi') {
+            percent = parseInt(footerProgress.innerText) || 0;
+            cfi = `mobi-${percent}`;
+            pageText = `${percent}% read`;
+        } else {
+            if (!rendition) return;
+            const location = rendition.currentLocation();
+            if (!location || !location.start) return;
+            cfi = location.start.cfi;
+            if (epubBook && epubBook.locations && epubBook.locations.total > 0) {
+                percent = Math.floor(epubBook.locations.percentageFromCfi(cfi) * 100);
+            } else if (footerProgress) {
+                percent = parseInt(footerProgress.innerText) || 0;
+            }
+            pageText = location.start.displayed && location.start.displayed.page 
+                ? `Page ${location.start.displayed.page} (${percent}%)` 
+                : `${percent}% read`;
+        }
+
         const curBook = await window.storageEngine.getBook(book.id);
         const bookmarks = curBook.bookmarks || [];
         const existingIndex = bookmarks.findIndex(b => b.cfi === cfi);
 
         if (existingIndex !== -1) {
-            // Already bookmarked -> Remove bookmark
             const bmId = bookmarks[existingIndex].id;
             await window.storageEngine.removeBookmark(book.id, bmId);
             showToast('Bookmark removed', 'info');
         } else {
-            // Calculate progress percentage
-            let percent = 0;
-            if (epubBook.locations && epubBook.locations.total > 0) {
-                percent = Math.floor(epubBook.locations.percentageFromCfi(cfi) * 100);
-            } else if (footerProgress) {
-                percent = parseInt(footerProgress.innerText) || 0;
-            }
-
             const curChapter = (chapterTitleEl && chapterTitleEl.innerText.trim()) ? chapterTitleEl.innerText.trim() : 'Bookmarked Page';
-            const pageText = location.start.displayed && location.start.displayed.page 
-                ? `Page ${location.start.displayed.page} (${percent}%)` 
-                : `${percent}% read`;
-
             await window.storageEngine.addBookmark(book.id, {
                 cfi: cfi,
                 title: curChapter,
                 snippet: `${pageText} • Saved spot`
             });
-
             showToast(`Page bookmarked (${percent}% read)!`, 'success');
-            
-            // Auto switch drawer to Bookmarks tab so it's ready when user opens Contents
             showBookmarksTab();
         }
 
@@ -744,15 +1194,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         await renderBookmarksList();
     }
 
-    btnAddBookmark.addEventListener('click', toggleBookmarkCurrentPage);
-    if (pageBookmarkRibbon) {
-        pageBookmarkRibbon.addEventListener('click', toggleBookmarkCurrentPage);
-    }
+    if (btnAddBookmark) btnAddBookmark.addEventListener('click', toggleBookmarkCurrentPage);
+    if (btnSidebarBookmark) btnSidebarBookmark.addEventListener('click', toggleBookmarkCurrentPage);
+    if (pageBookmarkRibbon) pageBookmarkRibbon.addEventListener('click', toggleBookmarkCurrentPage);
 
     async function renderBookmarksList() {
         const updatedBook = await window.storageEngine.getBook(book.id);
-        const bookmarks = updatedBook.bookmarks || [];
-        bookmarkCount.innerText = bookmarks.length;
+        const bookmarks = (updatedBook && updatedBook.bookmarks) ? updatedBook.bookmarks : [];
+        if (bookmarkCount) bookmarkCount.innerText = bookmarks.length;
 
         if (headerBookmarkBadge) {
             if (bookmarks.length > 0) {
@@ -798,21 +1247,35 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             `;
 
-            // Click jumps to bookmark
             card.addEventListener('click', (e) => {
                 if (e.target.closest('.btn-delete-bookmark')) return;
-                rendition.display(bm.cfi);
+                if (bookFormat === 'pdf') {
+                    if (bm.cfi && bm.cfi.startsWith('page-')) {
+                        const p = parseInt(bm.cfi.replace('page-', ''), 10);
+                        if (!isNaN(p)) {
+                            pdfCurrentPage = p;
+                            renderPdfMode(currentReadingMode);
+                        }
+                    }
+                } else if (bookFormat === 'mobi') {
+                    if (bm.cfi && bm.cfi.startsWith('mobi-') && mobiIframe && mobiIframe.contentWindow) {
+                        const pct = parseInt(bm.cfi.replace('mobi-', ''), 10);
+                        const doc = mobiIframe.contentDocument;
+                        const win = mobiIframe.contentWindow;
+                        const sHeight = doc.documentElement.scrollHeight - win.innerHeight;
+                        win.scrollTo({ top: (pct / 100) * sHeight, behavior: 'smooth' });
+                    }
+                } else {
+                    if (rendition) rendition.display(bm.cfi);
+                }
                 setDrawerOpen(false);
                 showToast(`Jumped to ${bm.title || 'bookmark'}`, 'info');
             });
 
-            // Delete bookmark
             card.querySelector('.btn-delete-bookmark').addEventListener('click', async (e) => {
                 e.stopPropagation();
                 await window.storageEngine.removeBookmark(book.id, bm.id);
                 showToast('Bookmark removed', 'info');
-                const curLoc = rendition.currentLocation();
-                if (curLoc && curLoc.start) checkIfCurrentPageIsBookmarked(curLoc.start.cfi);
                 await renderBookmarksList();
             });
 
@@ -827,9 +1290,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isBm = bookmarks.some(b => b.cfi === currentCfi);
 
         if (isBm) {
-            btnAddBookmark.classList.add('is-bookmarked');
-            bookmarkIcon.innerHTML = '<img src="assets/images/icons/star_large.png" alt="" class="w-3.5 h-3.5 pixel-art-img">';
-            bookmarkText.innerText = 'Bookmarked';
+            if (btnAddBookmark) {
+                btnAddBookmark.classList.add('is-bookmarked');
+                bookmarkIcon.innerHTML = '<img src="assets/images/icons/star_large.png" alt="" class="w-3.5 h-3.5 pixel-art-img">';
+                bookmarkText.innerText = 'Bookmarked';
+            }
             if (pageBookmarkRibbon) pageBookmarkRibbon.classList.add('active');
             if (btnSidebarBookmark) {
                 btnSidebarBookmark.classList.add('is-bookmarked');
@@ -837,9 +1302,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (sidebarBookmarkText) sidebarBookmarkText.innerText = 'Page Bookmarked';
             }
         } else {
-            btnAddBookmark.classList.remove('is-bookmarked');
-            bookmarkIcon.innerHTML = '<img src="assets/images/icons/star.png" alt="" class="w-3.5 h-3.5 pixel-art-img">';
-            bookmarkText.innerText = 'Bookmark';
+            if (btnAddBookmark) {
+                btnAddBookmark.classList.remove('is-bookmarked');
+                bookmarkIcon.innerHTML = '<img src="assets/images/icons/star.png" alt="" class="w-3.5 h-3.5 pixel-art-img">';
+                bookmarkText.innerText = 'Bookmark';
+            }
             if (pageBookmarkRibbon) pageBookmarkRibbon.classList.remove('active');
             if (btnSidebarBookmark) {
                 btnSidebarBookmark.classList.remove('is-bookmarked');
@@ -862,8 +1329,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         tocList.classList.remove('hidden');
         bookmarkList.classList.add('hidden');
     }
-
-    // --- Drawer / Side Panel Management ---
 
     function setDrawerOpen(isOpen) {
         if (isOpen) {
@@ -902,7 +1367,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             link.innerText = item.label ? item.label.trim() : 'Chapter';
             link.href = 'javascript:void(0)';
             link.addEventListener('click', () => {
-                rendition.display(item.href);
+                if (rendition) rendition.display(item.href);
                 setDrawerOpen(false);
                 updateChapterTitle(item.label.trim());
             });
@@ -911,14 +1376,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- Appearance Controls & Custom Typography ---
-
-    btnAppearance.addEventListener('click', (e) => {
-        e.stopPropagation();
-        appearanceMenu.classList.toggle('show');
-    });
+    if (btnAppearance) {
+        btnAppearance.addEventListener('click', (e) => {
+            e.stopPropagation();
+            appearanceMenu.classList.toggle('show');
+        });
+    }
 
     document.addEventListener('click', (e) => {
-        if (!e.target.closest('.dropdown-wrapper')) appearanceMenu.classList.remove('show');
+        if (!e.target.closest('.dropdown-wrapper') && appearanceMenu) appearanceMenu.classList.remove('show');
     });
 
     themeChoices.forEach(btn => {
@@ -945,28 +1411,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    btnFontInc.addEventListener('click', () => {
-        if (currentFontSize < 180) {
-            currentFontSize += 10;
-            updateFontSize();
-        }
-    });
+    if (btnFontInc) {
+        btnFontInc.addEventListener('click', () => {
+            if (currentFontSize < 180) {
+                currentFontSize += 10;
+                updateFontSize();
+            }
+        });
+    }
 
-    btnFontDec.addEventListener('click', () => {
-        if (currentFontSize > 70) {
-            currentFontSize -= 10;
-            updateFontSize();
-        }
-    });
+    if (btnFontDec) {
+        btnFontDec.addEventListener('click', () => {
+            if (currentFontSize > 70) {
+                currentFontSize -= 10;
+                updateFontSize();
+            }
+        });
+    }
 
     function updateFontSize() {
-        fontSizeDisplay.innerText = currentFontSize + '%';
+        if (fontSizeDisplay) fontSizeDisplay.innerText = currentFontSize + '%';
         localStorage.setItem('cozy_reader_font_size', currentFontSize);
         applyCurrentTheme();
     }
 
     // --- Progress Persistence ---
-
     let saveTimer;
     function saveReadingProgress(cfi, progress) {
         clearTimeout(saveTimer);
@@ -981,7 +1450,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const toast = document.createElement('div');
         toast.className = 'toast';
         toast.innerHTML = `<span>${escapeHtml(msg)}</span>`;
-        document.getElementById('toastContainer').appendChild(toast);
+        const tc = document.getElementById('toastContainer');
+        if (tc) tc.appendChild(toast);
         setTimeout(() => toast.remove(), 2500);
     }
 
@@ -992,5 +1462,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.addEventListener('resize', () => {
         if (rendition) rendition.resize();
+        if (bookFormat === 'pdf' && currentReadingMode !== 'scroll') {
+            renderPdfPaginatedMode();
+        }
     });
 });

@@ -286,10 +286,10 @@
             </button>
             
             <h3 class="text-2xl font-bold mb-1">Slip a New Book In</h3>
-            <p class="text-sm text-[#7d695c] mb-3">Drop an .epub or .pdf file (covers &amp; titles auto-extracted!)</p>
+            <p class="text-sm text-[#7d695c] mb-3">Drop an .epub, .pdf, or .mobi file (covers &amp; titles auto-extracted!)</p>
 
             <form id="uploadForm">
-                <input type="file" id="bookFileInput" accept=".epub,.pdf,.mobi" required hidden>
+                <input type="file" id="bookFileInput" accept=".epub,.pdf,.mobi,.azw,.azw3,application/pdf,application/epub+zip,application/x-mobipocket-ebook" required hidden>
                 
                 <div id="dropZone" class="border-2 border-dashed border-[#2c221e] rounded-xl p-6 text-center bg-[#fdfaf3] mb-4 cursor-pointer hover:bg-[#f8f2e2] transition-colors">
                     <img src="assets/images/icons/book_stack.png" alt="" class="w-10 h-8 pixel-art-img mx-auto mb-2 select-none">
@@ -397,22 +397,22 @@
                         </div>
                     </button>
                     <!-- Hidden input for webkitdirectory folder upload -->
-                    <input type="file" id="bulkFolderInput" webkitdirectory directory multiple accept=".epub,.pdf" class="hidden">
+                    <input type="file" id="bulkFolderInput" webkitdirectory directory multiple accept=".epub,.pdf,.mobi,.azw,.azw3" class="hidden">
 
                     <!-- Option B: Select multiple files -->
                     <button type="button" id="btnTriggerMultiFilesPick" class="hand-btn p-4 flex flex-col items-center justify-center gap-2 text-center bg-[#e2f0cb] hover:bg-[#d4e7b8] transition-all">
                         <img src="assets/images/icons/book_open.png" alt="" class="w-8 h-8 pixel-art-img select-none mb-1">
                         <div>
                             <span class="block font-bold text-base text-[#2c221e]">Select Files</span>
-                            <span class="block text-xs text-[#7d695c]">Pick multiple .epub / .pdf</span>
+                            <span class="block text-xs text-[#7d695c]">Pick multiple .epub, .pdf, .mobi</span>
                         </div>
                     </button>
                     <!-- Hidden input for multiple files upload -->
-                    <input type="file" id="bulkFilesInput" multiple accept=".epub,.pdf" class="hidden">
+                    <input type="file" id="bulkFilesInput" multiple accept=".epub,.pdf,.mobi,.azw,.azw3,application/pdf,application/epub+zip,application/x-mobipocket-ebook" class="hidden">
                 </div>
 
                 <div class="text-xs text-[#8c786a] text-center pt-2 border-t border-dashed border-[#e6dcce]">
-                    Supports <b>.epub</b> and <b>.pdf</b> ebooks. Covers are parsed in high quality with automatic spine styling.
+                    Supports <b>.epub</b>, <b>.pdf</b>, and <b>.mobi</b> ebooks. Covers are parsed in high quality with automatic spine styling.
                 </div>
             </div>
 
@@ -439,8 +439,10 @@
     <!-- Client Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
-    <script src="assets/js/db.js?v=2.3"></script>
-    <script src="assets/js/epub_extractor.js?v=2.3"></script>
-    <script src="assets/js/app.js?v=2.3"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="assets/js/mobi_parser.js?v=2.4"></script>
+    <script src="assets/js/db.js?v=2.4"></script>
+    <script src="assets/js/epub_extractor.js?v=2.4"></script>
+    <script src="assets/js/app.js?v=2.4"></script>
 </body>
 </html>

@@ -60,6 +60,32 @@ class EpubExtractor {
             } catch (err) {
                 console.warn('EPUB general extraction error:', err);
             }
+        } else if (ext === 'pdf') {
+            // PDF metadata & 1st page cover extraction via PDF.js
+            try {
+                const pdfData = await this.extractFromPdf(file);
+                if (pdfData) {
+                    if (pdfData.title) title = pdfData.title;
+                    if (pdfData.author) author = pdfData.author;
+                    if (pdfData.description) description = pdfData.description;
+                    if (pdfData.cover_url) coverUrl = pdfData.cover_url;
+                }
+            } catch (pdfErr) {
+                console.warn('PDF extraction error:', pdfErr);
+            }
+        } else if (ext === 'mobi' || ext === 'azw' || ext === 'azw3' || ext === 'prc') {
+            // MOBI metadata & embedded cover extraction via MobiParser
+            try {
+                const mobiData = await this.extractFromMobi(file);
+                if (mobiData) {
+                    if (mobiData.title) title = mobiData.title;
+                    if (mobiData.author) author = mobiData.author;
+                    if (mobiData.description) description = mobiData.description;
+                    if (mobiData.cover_url) coverUrl = mobiData.cover_url;
+                }
+            } catch (mobiErr) {
+                console.warn('MOBI extraction error:', mobiErr);
+            }
         }
 
         // 3. Online fallback: If cover is missing or was a tiny placeholder, query free Open Library Covers API
@@ -89,6 +115,90 @@ class EpubExtractor {
             dominant_color: dominantColor,
             file_blob: file
         };
+    }
+
+    // PDF Metadata & Page 1 Cover Thumbnail Extraction
+    static async extractFromPdf(file) {
+        if (typeof pdfjsLib === 'undefined' || !file) return null;
+        try {
+            if (pdfjsLib.GlobalWorkerOptions && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            }
+            const arrayBuffer = await file.arrayBuffer();
+            const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+            const pdf = await loadingTask.promise;
+
+            let title = '';
+            let author = '';
+            let description = '';
+
+            try {
+                const meta = await pdf.getMetadata();
+                if (meta && meta.info) {
+                    if (meta.info.Title && meta.info.Title.trim()) {
+                        title = meta.info.Title.trim().replace(/[_-]+/g, ' ');
+                    }
+                    if (meta.info.Author && meta.info.Author.trim()) {
+                        author = meta.info.Author.trim().replace(/[_-]+/g, ' ');
+                    }
+                    if (meta.info.Subject && meta.info.Subject.trim()) {
+                        description = meta.info.Subject.trim();
+                    }
+                }
+            } catch (mErr) {
+                console.warn('PDF metadata warning:', mErr);
+            }
+
+            let coverUrl = '';
+            try {
+                const page = await pdf.getPage(1);
+                const viewport = page.getViewport({ scale: 1.0 });
+                const targetWidth = 420;
+                const scale = Math.max(0.5, Math.min(2.5, targetWidth / (viewport.width || targetWidth)));
+                const scaledViewport = page.getViewport({ scale: scale });
+
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.round(scaledViewport.width);
+                canvas.height = Math.round(scaledViewport.height);
+                const ctx = canvas.getContext('2d');
+
+                await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
+                coverUrl = canvas.toDataURL('image/jpeg', 0.88);
+            } catch (cErr) {
+                console.warn('PDF cover render error:', cErr);
+            }
+
+            return {
+                title,
+                author,
+                description,
+                cover_url: coverUrl,
+                numPages: pdf.numPages
+            };
+        } catch (e) {
+            console.warn('PDF extraction failed:', e);
+            return null;
+        }
+    }
+
+    // MOBI & Kindle Format Metadata & Cover Extraction
+    static async extractFromMobi(file) {
+        if (typeof MobiParser === 'undefined' || !file) return null;
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const mobi = await MobiParser.parse(arrayBuffer);
+            if (!mobi) return null;
+            return {
+                title: mobi.title || '',
+                author: mobi.author || '',
+                description: mobi.description || '',
+                cover_url: mobi.coverUrl || '',
+                numPages: 0
+            };
+        } catch (e) {
+            console.warn('MOBI extraction failed:', e);
+            return null;
+        }
     }
 
     // Deep ZIP Extraction for Official Book Cover Images
@@ -428,17 +538,26 @@ class EpubExtractor {
     // Helper: Extracts only cover from a file blob (for background backfills)
     static async extractCoverOnly(file) {
         if (!file) return '';
+        const name = (file.name || '').toLowerCase();
         try {
-            const zipCover = await this.extractCoverFromZip(file);
-            if (zipCover && zipCover.length > 5000) return zipCover;
+            if (name.endsWith('.pdf')) {
+                const pdfRes = await this.extractFromPdf(file);
+                if (pdfRes && pdfRes.cover_url) return pdfRes.cover_url;
+            } else if (name.endsWith('.mobi') || name.endsWith('.azw') || name.endsWith('.azw3')) {
+                const mobiRes = await this.extractFromMobi(file);
+                if (mobiRes && mobiRes.cover_url) return mobiRes.cover_url;
+            } else {
+                const zipCover = await this.extractCoverFromZip(file);
+                if (zipCover && zipCover.length > 5000) return zipCover;
 
-            if (typeof ePub !== 'undefined') {
-                const arrayBuffer = await file.arrayBuffer();
-                const book = ePub(arrayBuffer);
-                const epCover = await book.coverUrl();
-                if (epCover) {
-                    const dataUrl = await this.blobUrlToDataUrl(epCover);
-                    if (dataUrl && dataUrl.length > 5000) return dataUrl;
+                if (typeof ePub !== 'undefined') {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const book = ePub(arrayBuffer);
+                    const epCover = await book.coverUrl();
+                    if (epCover) {
+                        const dataUrl = await this.blobUrlToDataUrl(epCover);
+                        if (dataUrl && dataUrl.length > 5000) return dataUrl;
+                    }
                 }
             }
         } catch (e) {}

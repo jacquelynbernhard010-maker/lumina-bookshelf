@@ -959,11 +959,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function processBulkFiles(rawFileList) {
         const bookFiles = Array.from(rawFileList).filter(f => {
             const name = (f.name || '').toLowerCase();
-            return (name.endsWith('.epub') || name.endsWith('.pdf')) && !name.startsWith('._') && !name.startsWith('.');
+            return (name.endsWith('.epub') || name.endsWith('.pdf') || name.endsWith('.mobi') || name.endsWith('.azw') || name.endsWith('.azw3') || name.endsWith('.prc')) && !name.startsWith('._') && !name.startsWith('.');
         });
 
         if (bookFiles.length === 0) {
-            showToast('No .epub or .pdf books found in the selection.', 'error');
+            showToast('No .epub, .pdf, or .mobi books found in the selection.', 'error');
             resetBulkImportModal();
             return;
         }

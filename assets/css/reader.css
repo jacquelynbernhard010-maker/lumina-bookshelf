@@ -950,3 +950,79 @@ body.zen-mode.hover-bottom .reader-footer {
     gap: 3px;
   }
 }
+
+
+/* =========================================================
+   PDF & MOBI Document Viewer Support
+   ========================================================= */
+
+.pdf-viewer-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pdf-canvas-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  max-width: 100%;
+}
+
+.pdf-page-canvas {
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.18);
+  border-radius: 4px;
+  max-width: 100%;
+  height: auto;
+  transition: filter 0.25s ease, transform 0.15s ease;
+  user-select: none;
+}
+
+/* Atmospheric Cozy Theme Filters for PDF canvas */
+body.theme-sepia .pdf-page-canvas {
+  filter: sepia(0.38) brightness(0.96) contrast(0.98);
+}
+
+body.theme-dark .pdf-page-canvas {
+  filter: invert(0.88) hue-rotate(180deg) brightness(0.95);
+  box-shadow: 0px 4px 24px rgba(0, 0, 0, 0.65);
+}
+
+body.theme-black .pdf-page-canvas {
+  filter: invert(0.96) hue-rotate(180deg) contrast(1.05);
+  box-shadow: 0px 4px 26px rgba(255, 255, 255, 0.06);
+}
+
+body.theme-light .pdf-page-canvas {
+  filter: none;
+}
+
+.pdf-scroll-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  padding: 24px 8px;
+  box-sizing: border-box;
+}
+
+.pdf-scroll-list .pdf-page-canvas {
+  max-width: min(100%, 820px);
+}
+
+/* MOBI Iframe Viewer */
+.mobi-viewer-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  display: block;
+}
