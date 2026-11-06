@@ -1,55 +1,43 @@
-# 📖 Lumina Bookshelf (Vercel + Supabase + IndexedDB Edition)
+# 📖 Lumina Bookshelf — Cozy Hand-Drawn Indie Digital Library
 
-A modern, fast, and elegant personal cloud library and in-browser e-reader designed to run on **Vercel** with **$0 hosting cost forever**.
+A warm, tactile personal ebook shelf and reader crafted with a hand-drawn indie aesthetic, interactive pixel-art shelf decorations, cozy audio feedback, and local-first privacy.
+
+---
 
 ## ✨ Features
-- **Dual Storage Engine**:
-  - **IndexedDB**: Works offline and out-of-the-box in any browser with zero configuration or keys.
-  - **Supabase Cloud Sync**: Connect your free Supabase account to sync your books, shelves, and reading progress across all your devices.
-- **In-Browser EPUB & PDF Reader**: Powered by `ePub.js` with:
-  - 4 Reading Themes (Light, Warm Sepia, Dark Slate, OLED Pitch Black)
-  - Font size controls and typography switcher
-  - Table of Contents navigation drawer
-  - Reading progress percentage & location (CFI) memory
-- **3D Wooden Bookshelf & Grid View**: Realistic wooden shelf rails with 3D spine depth effect, hover tilt, and view toggling.
-- **Custom Shelves**: Organize books into shelves with custom colors and live book counts.
+- **Local-First Privacy**: Stored securely in your browser's IndexedDB with zero tracking, no required accounts, and 100% offline access.
+- **Universal E-Reader**:
+  - Full support for **EPUB**, **PDF**, and **MOBI** formats.
+  - Automatic cover extraction & title/author metadata parsing.
+  - 4 Reading Themes (Cream Cozy, Warm Sepia, Dark Night, OLED Midnight).
+  - Tactile page turns, font sizing, line spacing, and single/dual/continuous scroll modes.
+  - Page-accurate bookmarking with snippet previews and progress percentage memory.
+- **Cozy Bookshelf Customization**:
+  - Realistic wooden bookshelf finishes: Natural Oak, Deep Walnut, and Vintage Sage Green.
+  - Dynamic 2D spine rendering with custom palette selection and completed-book dangle ribbons.
+  - 51-piece shelf decorator: animated cats (Mochi, sleeping loafs), houseplants (monsteras, palms, bonsai), knick-knacks, teacups, and cat toys.
+  - Tactile UI audio sound engine (zero-latency Web Audio API) with global mute control.
 
 ---
 
-## 🚀 How to Deploy on Vercel via GitHub Cloud (3 Minutes)
+## 🎨 Asset, Artist & Sound Attributions
 
-### Step 1: Initialize Git & Push to GitHub
-1. Open PowerShell or Terminal in this folder:
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit of Lumina Bookshelf"
-   ```
-2. Go to [github.com/new](https://github.com/new) and create a new repository named `lumina-bookshelf`.
-3. Link and push your repository:
-   ```bash
-   git remote add origin https://github.com/YOUR_USERNAME/lumina-bookshelf.git
-   git branch -M main
-   git push -u origin main
-   ```
+Lumina Bookshelf is created with immense gratitude to the generous, talented indie artists and audio designers whose game packs made this project possible:
 
-### Step 2: Deploy to Vercel
-1. Go to [vercel.com](https://vercel.com) and log in with your GitHub account.
-2. Click **"Add New..."** -> **"Project"**.
-3. Import your `lumina-bookshelf` GitHub repository.
-4. Framework Preset: Leave as **Other** (Static HTML).
-5. Click **"Deploy"**.
-6. In ~15 seconds, your bookshelf will be live at `https://lumina-bookshelf.vercel.app`!
+| Component | Asset Pack | Artist / Creator | Links & License |
+| :--- | :--- | :--- | :--- |
+| **Sound Effects (Audio FX)** | *Cosy UI Sound Pack Free Sampler* | **Leckie Pixel Studio** | Used under Free Creator Sampler License. Tactile page clicks, pops, coin chimes, and meows. |
+| **Wood UI & Buttons** | *Cozy UI Pack* | **dobo_ui** | [dobo-ui.itch.io](https://dobo-ui.itch.io/) — Free Demo Pack. Pixel wooden buttons, toggles & arrows. |
+| **Icons & Inventory Slots** | *Sprout Lands UI Pack* | **Cup Nooble** | [cupnooble.itch.io/sprout-lands-asset-pack](https://cupnooble.itch.io/sprout-lands-asset-pack) — Free Basic Pack. |
+| **Mini Animated Cats** | *Pixel Cats & Animation Sprites* | **SeepGood & Indie Artists** | Free itch.io creator pack. Mochi in box, idle tail flicks, and sleeping curled cats. |
+| **Houseplants & Knick-Knacks** | *Cozy Houseplants & Cat Room Decor* | **Indie Pixel Creators on itch.io** | Pixel-art potted plants (monsteras, palms, ferns), coffee mugs, photo frames, and cat cushions. |
+
+*All assets, illustrations, audio samples, and pixel sprites remain the intellectual property of their respective creators. They are used in this non-commercial personal reader project under their free creator and sampler guidelines.*
 
 ---
 
-## ☁️ Optional: Setting up Free Supabase Cloud Sync
-If you want to sync books across your laptop, phone, and tablet:
-1. Create a free account at [supabase.com](https://supabase.com).
-2. Create a new project.
-3. Open the **SQL Editor** in your Supabase dashboard.
-4. Copy and paste the contents of [`supabase_schema.sql`](supabase_schema.sql) and click **Run**.
-5. Go to **Project Settings -> API** to copy:
-   - **Project URL**
-   - **Anon Public Key**
-6. Open your live Vercel bookshelf, click **"Browser Storage / Supabase Cloud"** in the sidebar, paste your keys, and click **Connect**!
+## 🚀 Deployment
+
+The app is deployed on **Vercel** with continuous deployment from GitHub:
+- **Production**: [lumina-bookshelf.vercel.app](https://lumina-bookshelf.vercel.app)
+- **Staging**: [lumina-bookshelf-bcvbbxsoa-sadaf4.vercel.app](https://lumina-bookshelf-bcvbbxsoa-sadaf4.vercel.app)

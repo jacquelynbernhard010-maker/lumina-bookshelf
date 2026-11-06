@@ -855,6 +855,49 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
         }
+
+        // Artist & Creator Credits Modal Handlers
+        const btnOpenCredits = document.getElementById('btnOpenCredits');
+        const creditsModal = document.getElementById('creditsModal');
+        const btnCloseCreditsModal = document.getElementById('btnCloseCreditsModal');
+        const btnCreditsOk = document.getElementById('btnCreditsOk');
+
+        function openCredits() {
+            if (creditsModal) {
+                if (window.SoundFx) window.SoundFx.play('pop');
+                creditsModal.classList.add('active');
+            }
+        }
+
+        function closeCredits() {
+            if (creditsModal) {
+                if (window.SoundFx) window.SoundFx.play('cancel');
+                creditsModal.classList.remove('active');
+            }
+        }
+
+        if (btnOpenCredits) {
+            btnOpenCredits.addEventListener('click', (e) => {
+                e.preventDefault();
+                openCredits();
+            });
+        }
+
+        if (btnCloseCreditsModal) {
+            btnCloseCreditsModal.addEventListener('click', closeCredits);
+        }
+
+        if (btnCreditsOk) {
+            btnCreditsOk.addEventListener('click', closeCredits);
+        }
+
+        if (creditsModal) {
+            creditsModal.addEventListener('click', (e) => {
+                if (e.target === creditsModal) {
+                    closeCredits();
+                }
+            });
+        }
     }
 
     async function handleFileSelected(file) {

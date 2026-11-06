@@ -178,8 +178,92 @@
                 <span id="storageModeLabel">Stored safely in your local browser</span>
                 <span>•</span>
                 <button type="button" id="btnResetApp" class="underline hover:text-[#2c221e] cursor-pointer" title="Reset bookshelf data if anything looks wrong">Reset Cache</button>
+                <span>•</span>
+                <button type="button" id="btnOpenCredits" class="underline hover:text-[#2c221e] font-semibold cursor-pointer" title="View artist and creator credits">Credits &amp; Artists</button>
             </div>
+            <p class="text-[11px] text-[#a49182] mt-1 max-w-md mx-auto">
+                With gratitude to the talented indie pixel artists and audio creators whose game packs helped bring this cozy nook to life.
+            </p>
         </footer>
+    </div>
+
+    
+    <!-- ================= CREDITS & ATTRIBUTIONS MODAL ================= -->
+    <div id="creditsModal" class="modal-backdrop">
+        <div class="bounce-in bg-[#fffefb] wobbly-border max-w-lg w-full max-h-[90dvh] overflow-y-auto cozy-scroll p-6 md:p-8 shadow-[8px_8px_0px_#2c221e] relative">
+            <div class="hidden sm:block absolute -top-3 left-1/2 -translate-x-1/2 w-32 h-6 washi-tape"></div>
+
+            <button type="button" id="btnCloseCreditsModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#faedcd] border-2 border-[#2c221e] flex items-center justify-center font-bold hover:scale-105 active:scale-95 transition-transform" title="Close">
+                <img src="assets/images/icons/close.png" alt="Close" class="w-3.5 h-3.5 pixel-art-img">
+            </button>
+
+            <div class="flex items-center gap-2 mb-3">
+                <img src="assets/images/ui/cat_paw.png" alt="" class="w-5 h-5 pixel-art-img">
+                <h3 class="text-xl font-bold text-[#2c221e]">Artist &amp; Creator Credits</h3>
+            </div>
+            
+            <p class="text-xs text-[#786457] leading-relaxed mb-4">
+                Lumina Bookshelf is crafted with deep appreciation for indie creators. All original artwork, pixel illustrations, and audio files remain the intellectual property of their respective artists, used under their free creator and sampler licenses:
+            </p>
+
+            <div class="space-y-3 text-xs text-[#2c221e]">
+                <!-- Audio Pack -->
+                <div class="bg-[#fbf7ee] border border-[#d8c7b5] rounded-lg p-3">
+                    <div class="font-bold text-[#3e2c24] flex items-center justify-between">
+                        <span>Cosy UI Sound Pack</span>
+                        <span class="text-[10px] bg-[#e7d8c9] px-2 py-0.5 rounded font-semibold text-[#5e4334]">Audio FX</span>
+                    </div>
+                    <p class="text-[#786457] mt-0.5">Created by <strong class="text-[#2c221e]">Leckie Pixel Studio</strong></p>
+                    <p class="text-[11px] text-[#9a8576] mt-0.5">Tactile clicks, page turns, gentle pops, cat meows, and reward fanfare.</p>
+                </div>
+
+                <!-- Cozy UI Pack -->
+                <div class="bg-[#fbf7ee] border border-[#d8c7b5] rounded-lg p-3">
+                    <div class="font-bold text-[#3e2c24] flex items-center justify-between">
+                        <span>Cozy UI Pack</span>
+                        <span class="text-[10px] bg-[#e7d8c9] px-2 py-0.5 rounded font-semibold text-[#5e4334]">UI &amp; Wood</span>
+                    </div>
+                    <p class="text-[#786457] mt-0.5">Created by <strong class="text-[#2c221e]">dobo_ui</strong></p>
+                    <a href="https://dobo-ui.itch.io/" target="_blank" rel="noopener noreferrer" class="text-[11px] text-[#b55a30] underline hover:text-[#8f3e1b]">dobo-ui.itch.io</a>
+                </div>
+
+                <!-- Sprout Lands UI -->
+                <div class="bg-[#fbf7ee] border border-[#d8c7b5] rounded-lg p-3">
+                    <div class="font-bold text-[#3e2c24] flex items-center justify-between">
+                        <span>Sprout Lands UI Pack</span>
+                        <span class="text-[10px] bg-[#e7d8c9] px-2 py-0.5 rounded font-semibold text-[#5e4334]">Icons &amp; Slots</span>
+                    </div>
+                    <p class="text-[#786457] mt-0.5">Created by <strong class="text-[#2c221e]">Cup Nooble</strong></p>
+                    <a href="https://cupnooble.itch.io/sprout-lands-asset-pack" target="_blank" rel="noopener noreferrer" class="text-[11px] text-[#b55a30] underline hover:text-[#8f3e1b]">cupnooble.itch.io/sprout-lands-asset-pack</a>
+                </div>
+
+                <!-- Cat Animations -->
+                <div class="bg-[#fbf7ee] border border-[#d8c7b5] rounded-lg p-3">
+                    <div class="font-bold text-[#3e2c24] flex items-center justify-between">
+                        <span>Pixel Cats &amp; Animation Sprites</span>
+                        <span class="text-[10px] bg-[#e7d8c9] px-2 py-0.5 rounded font-semibold text-[#5e4334]">Characters</span>
+                    </div>
+                    <p class="text-[#786457] mt-0.5">Created by <strong class="text-[#2c221e]">SeepGood &amp; Indie Pixel Artists</strong></p>
+                    <p class="text-[11px] text-[#9a8576] mt-0.5">Mini animated cats: Mochi in box, idle grooming, and sleeping ginger loaf.</p>
+                </div>
+
+                <!-- Houseplants & Knick-Knacks -->
+                <div class="bg-[#fbf7ee] border border-[#d8c7b5] rounded-lg p-3">
+                    <div class="font-bold text-[#3e2c24] flex items-center justify-between">
+                        <span>Cozy Houseplants &amp; Cat Room Decor</span>
+                        <span class="text-[10px] bg-[#e7d8c9] px-2 py-0.5 rounded font-semibold text-[#5e4334]">Decor &amp; Plants</span>
+                    </div>
+                    <p class="text-[#786457] mt-0.5">Created by <strong class="text-[#2c221e]">Indie Pixel Creators on itch.io</strong></p>
+                    <p class="text-[11px] text-[#9a8576] mt-0.5">Houseplants (monsteras, palms, ferns), coffee cups, tea sets, cushions &amp; bells.</p>
+                </div>
+            </div>
+
+            <div class="mt-5 text-center">
+                <button type="button" id="btnCreditsOk" class="hand-btn px-6 py-2 bg-[#d4a373] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#c39262] transition-colors">
+                    Close Credits
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- ================= PULL-OUT BOOK MODAL ================= -->
