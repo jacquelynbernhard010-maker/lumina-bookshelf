@@ -1,0 +1,11 @@
+{
+  "appId": "com.luminabookshelf.app",
+  "appName": "Lumina Bookshelf",
+  "webDir": ".",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}

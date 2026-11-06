@@ -1,0 +1,48 @@
+{
+  "name": "Lumina Bookshelf",
+  "short_name": "Lumina",
+  "description": "A cozy, hand-drawn digital library and offline ebook reader.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fffdf9",
+  "theme_color": "#faedcd",
+  "icons": [
+    {
+      "src": "assets/images/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/images/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/images/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/images/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": [
+    "books",
+    "entertainment",
+    "lifestyle"
+  ],
+  "shortcuts": [
+    {
+      "name": "Open Shelf",
+      "url": "./index.html",
+      "description": "View your cozy wooden bookshelf"
+    }
+  ]
+}

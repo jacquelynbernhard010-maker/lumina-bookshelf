@@ -9,6 +9,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Gaegu:wght@400;700&family=Patrick+Hand&family=Lora:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
+    <!-- PWA & Mobile Web App Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#faedcd">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Lumina">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/images/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="assets/images/icons/apple-touch-icon.png">
 </head>
 <body class="p-3 sm:p-4 md:p-8">
 
@@ -534,5 +543,15 @@
     <script src="assets/js/epub_extractor.js?v=2.4"></script>
     <script src="assets/js/sound.js?v=2.5"></script>
     <script src="assets/js/app.js?v=2.5"></script>
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch((err) => {
+                    console.log('SW registration error:', err);
+                });
+            });
+        }
+    </script>
 </body>
 </html>

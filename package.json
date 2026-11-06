@@ -1,0 +1,16 @@
+{
+  "name": "lumina-bookshelf",
+  "version": "1.0.0",
+  "description": "A cozy, hand-drawn digital library and offline ebook reader.",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Static web assets ready'"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/cli": "^6.1.2"
+  }
+}
