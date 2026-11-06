@@ -2095,11 +2095,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             wrap.innerHTML = `
                 <div class="plant-action-bar">
                     <button type="button" class="plant-ctrl-btn btn-flip" title="Flip horizontal">
-                        <img src="assets/images/icons/reload.png" alt="Flip" class="w-3 h-3 pixel-art-img inline-block">
+                        <img src="assets/images/icons/reload.png" alt="Flip" class="w-3.5 h-3.5 pixel-art-img">
                     </button>
                     <button type="button" class="plant-ctrl-btn btn-size" title="Change size (S / M / L)">${sizeLabel}</button>
                     <button type="button" class="plant-ctrl-btn btn-del" title="Remove decoration">
-                        <img src="assets/images/icons/close.png" alt="Remove" class="w-2.5 h-2.5 pixel-art-img inline-block">
+                        <img src="assets/images/icons/close.png" alt="Remove" class="w-3 h-3 pixel-art-img">
                     </button>
                 </div>
                 <img src="${itemImgSrc}" alt="${escapeHtml(p.name)}" 

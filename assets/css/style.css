@@ -1174,10 +1174,21 @@ body {
   background: #f4e8d6;
   border: 1.5px solid var(--ink);
   border-radius: 999px;
-  padding: 1px 7px;
-  line-height: 1.35;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   cursor: pointer;
   transition: background-color 0.12s ease, transform 0.12s ease;
+  user-select: none;
+}
+
+.plant-ctrl-btn img {
+  display: block;
+  pointer-events: none;
 }
 
 .plant-ctrl-btn:hover {
@@ -1188,6 +1199,11 @@ body {
 .plant-ctrl-btn.btn-del:hover {
   background: #e07a5f;
   color: #fff;
+  border-color: #2c221e;
+}
+
+.plant-ctrl-btn.btn-del:hover img {
+  filter: brightness(0) invert(1);
 }
 
 /* Floating Drag Ghost when dragging from Tray onto Bookcase */
