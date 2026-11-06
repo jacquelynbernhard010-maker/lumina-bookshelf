@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Lumina Bookshelf</string>
+    <string name="title_activity_main">Lumina Bookshelf</string>
+    <string name="package_name">com.luminabookshelf.app</string>
+    <string name="custom_url_scheme">com.luminabookshelf.app</string>
+</resources>

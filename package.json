@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "A cozy, hand-drawn digital library and offline ebook reader.",
   "private": true,
+  "scripts": {
+    "build": "node scripts/prepare_app.js"
+  },
   "dependencies": {
     "@capacitor/core": "^6.1.2"
   },

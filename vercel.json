@@ -1,5 +1,5 @@
 {
-  "outputDirectory": ".",
+  "outputDirectory": "www",
   "headers": [
     {
       "source": "/(.*\\.html)?",
